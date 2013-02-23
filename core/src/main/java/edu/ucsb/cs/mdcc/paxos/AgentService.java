@@ -1,17 +1,14 @@
 package edu.ucsb.cs.mdcc.paxos;
 
-import edu.ucsb.cs.mdcc.messaging.RecordVersion;
+import edu.ucsb.cs.mdcc.messaging.BallotNumber;
 
 public interface AgentService {
-	public void onElection();
-
-    public void onVictory(String hostName, int port);
-
-    public boolean onLeaderQuery();
     
-    public boolean onAccept(String transaction, String object, RecordVersion oldVersion, String processId, String value);
+    public boolean onPrepare(String object, BallotNumber ballot);
+    
+    public boolean onAccept(String transaction, String object, long oldVersion, BallotNumber ballot, String value);
     
     public void onDecide(String transaction, boolean commit);
     
-    public String onGet(String object);
+    public String onRead(String object);
 }

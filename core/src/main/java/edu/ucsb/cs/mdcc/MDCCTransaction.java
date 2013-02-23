@@ -4,15 +4,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import edu.ucsb.cs.mdcc.messaging.BallotNumber;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicator;
-import edu.ucsb.cs.mdcc.messaging.RecordVersion;
 
 public class MDCCTransaction {
 	String id;
 	int fastQuorum;
 	Map<String, String> writes = new HashMap<String, String>();
 	
-	Map<String, RecordVersion> readVersions = new HashMap<String, RecordVersion>();
+	Map<String, Long> readVersions = new HashMap<String, Long>();
 	
 	String[] hosts;
 	int[] ports;
@@ -23,10 +23,9 @@ public class MDCCTransaction {
 		this.hosts = hosts;
 		this.ports = ports;
 		id = UUID.randomUUID().toString();
-		if (hosts.length < 5)
-			fastQuorum = hosts.length;
-		else
-			fastQuorum = hosts.length - 1;
+		int n = hosts.length;
+		//fastQuorum = n + 1 + (int)Math.ceil((double)n / 4.0) + ((n + 1) % 2);
+		fastQuorum = 4;
 		this.procId = procId;
 	}
 	
@@ -41,23 +40,26 @@ public class MDCCTransaction {
 		else
 		{
 			if (readString.startsWith("|"))
-				readVersions.put(object, new RecordVersion(0, ""));
+				readVersions.put(object, (long) 0);
 			else
 			{
-				String versionString = readString.substring(0,readString.indexOf('|'));
-				RecordVersion readVersion = new RecordVersion(
-						Long.parseLong(versionString.substring(0, versionString.indexOf(':'))),
-								versionString.substring(versionString.indexOf(':') + 1));
-				readVersions.put(object, readVersion);
+				readVersions.put(object, Long.parseLong(readString.substring(0, readString.indexOf('|'))));
 			}
-			return readString.substring(readString.indexOf('|') + 1);
+			readString = readString.substring(readString.indexOf('|') + 1);
+			readString = readString.substring(readString.indexOf('|') + 1);
+			return readString;
 		}
 	}
 	
 	public boolean write(String object, String value)
 	{
-		writes.put(object, value);
-		return true;
+		if (!readVersions.containsKey(object))
+			return false;
+		else
+		{
+			writes.put(object, value);
+			return true;
+		}
 	}
 	
 	public boolean commit()
@@ -70,11 +72,11 @@ public class MDCCTransaction {
 			int noaccepts = 0;
 			for(int i = 0; i < hosts.length; i++)
 			{
-				RecordVersion oldVersion = readVersions.get(writeObject);
-				RecordVersion newVersion = new RecordVersion( oldVersion.getBallot() + 1, procId);
+				long oldVersion = readVersions.get(writeObject);
+				BallotNumber ballot = new BallotNumber(-1, procId);
 	
 				if (comms.sendAccept(hosts[i], ports[i], id, writeObject, 
-						oldVersion, procId, writes.get(writeObject)))
+						oldVersion, ballot, writes.get(writeObject)))
 					accepts++;
 				else
 					noaccepts++;

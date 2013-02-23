@@ -25,7 +25,7 @@ import org.apache.thrift.server.TNonblockingServer;
 
 import edu.ucsb.cs.mdcc.paxos.Agent;
 import edu.ucsb.cs.mdcc.paxos.AgentService;
-import edu.ucsb.cs.mdcc.paxos.FPAgent;
+import edu.ucsb.cs.mdcc.paxos.StorageNode;
 
 public class MDCCCommunicator {
 	//protected final Log log = LogFactory.getLog(this.getClass());
@@ -64,11 +64,11 @@ public class MDCCCommunicator {
     }
 	
 	//send an accept message to another node, returns true if node accepts the proposal
-	public boolean sendAccept(String hostName, int port, String transaction, String object, RecordVersion oldVersion, String processId, String value) {
+	public boolean sendAccept(String hostName, int port, String transaction, String object, long oldVersion, BallotNumber ballot, String value) {
 		TTransport transport = new TFramedTransport(new TSocket(hostName, port));
         try {
             edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService.Client client = getClient(transport);
-            return client.accept(transaction, object, oldVersion, processId, value);
+            return client.accept(transaction, object, oldVersion, ballot, value);
         } catch (TException e) {
             handleException(hostName, e);
             return false;
@@ -105,7 +105,7 @@ public class MDCCCommunicator {
         }
 	}
 	
-	public void sendAcceptAsync(String hostName, int port, String transaction, String object, RecordVersion oldVersion, String processId, String value,
+	public void sendAcceptAsync(String hostName, int port, String transaction, String object, int oldVersion, BallotNumber ballot, String value,
 			AsyncMethodCallback<MDCCCommunicationService.AsyncClient.accept_call> callback) {
 
         try {
@@ -113,7 +113,7 @@ public class MDCCCommunicator {
                     AsyncClient(new TBinaryProtocol.Factory(), new TAsyncClientManager(),
                                 new TNonblockingSocket(hostName, port));
 
-            client.accept(transaction, object, oldVersion, processId, value, callback);
+            client.accept(transaction, object, oldVersion, ballot, value, callback);
 
         } catch (TTransportException e) {
             e.printStackTrace();
@@ -158,6 +158,6 @@ public class MDCCCommunicator {
             e.printStackTrace();
         }*/
     	MDCCCommunicator comms = new MDCCCommunicator();
-    	comms.StartListener(new FPAgent(), 7911);
+    	comms.StartListener(new StorageNode(), 7911);
     }
 }

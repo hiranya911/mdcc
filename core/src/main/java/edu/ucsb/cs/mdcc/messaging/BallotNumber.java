@@ -30,16 +30,16 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RecordVersion implements org.apache.thrift.TBase<RecordVersion, RecordVersion._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("RecordVersion");
+public class BallotNumber implements org.apache.thrift.TBase<BallotNumber, BallotNumber._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("BallotNumber");
 
   private static final org.apache.thrift.protocol.TField BALLOT_FIELD_DESC = new org.apache.thrift.protocol.TField("ballot", org.apache.thrift.protocol.TType.I64, (short)1);
   private static final org.apache.thrift.protocol.TField PROCESS_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("processId", org.apache.thrift.protocol.TType.STRING, (short)2);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
-    schemes.put(StandardScheme.class, new RecordVersionStandardSchemeFactory());
-    schemes.put(TupleScheme.class, new RecordVersionTupleSchemeFactory());
+    schemes.put(StandardScheme.class, new BallotNumberStandardSchemeFactory());
+    schemes.put(TupleScheme.class, new BallotNumberTupleSchemeFactory());
   }
 
   public long ballot; // required
@@ -117,13 +117,13 @@ public class RecordVersion implements org.apache.thrift.TBase<RecordVersion, Rec
     tmpMap.put(_Fields.PROCESS_ID, new org.apache.thrift.meta_data.FieldMetaData("processId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(RecordVersion.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(BallotNumber.class, metaDataMap);
   }
 
-  public RecordVersion() {
+  public BallotNumber() {
   }
 
-  public RecordVersion(
+  public BallotNumber(
     long ballot,
     String processId)
   {
@@ -136,7 +136,7 @@ public class RecordVersion implements org.apache.thrift.TBase<RecordVersion, Rec
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public RecordVersion(RecordVersion other) {
+  public BallotNumber(BallotNumber other) {
     __isset_bitfield = other.__isset_bitfield;
     this.ballot = other.ballot;
     if (other.isSetProcessId()) {
@@ -144,8 +144,8 @@ public class RecordVersion implements org.apache.thrift.TBase<RecordVersion, Rec
     }
   }
 
-  public RecordVersion deepCopy() {
-    return new RecordVersion(this);
+  public BallotNumber deepCopy() {
+    return new BallotNumber(this);
   }
 
   @Override
@@ -159,7 +159,7 @@ public class RecordVersion implements org.apache.thrift.TBase<RecordVersion, Rec
     return this.ballot;
   }
 
-  public RecordVersion setBallot(long ballot) {
+  public BallotNumber setBallot(long ballot) {
     this.ballot = ballot;
     setBallotIsSet(true);
     return this;
@@ -182,7 +182,7 @@ public class RecordVersion implements org.apache.thrift.TBase<RecordVersion, Rec
     return this.processId;
   }
 
-  public RecordVersion setProcessId(String processId) {
+  public BallotNumber setProcessId(String processId) {
     this.processId = processId;
     return this;
   }
@@ -254,12 +254,12 @@ public class RecordVersion implements org.apache.thrift.TBase<RecordVersion, Rec
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof RecordVersion)
-      return this.equals((RecordVersion)that);
+    if (that instanceof BallotNumber)
+      return this.equals((BallotNumber)that);
     return false;
   }
 
-  public boolean equals(RecordVersion that) {
+  public boolean equals(BallotNumber that) {
     if (that == null)
       return false;
 
@@ -289,13 +289,13 @@ public class RecordVersion implements org.apache.thrift.TBase<RecordVersion, Rec
     return 0;
   }
 
-  public int compareTo(RecordVersion other) {
+  public int compareTo(BallotNumber other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    RecordVersion typedOther = (RecordVersion)other;
+    BallotNumber typedOther = (BallotNumber)other;
 
     lastComparison = Boolean.valueOf(isSetBallot()).compareTo(typedOther.isSetBallot());
     if (lastComparison != 0) {
@@ -334,7 +334,7 @@ public class RecordVersion implements org.apache.thrift.TBase<RecordVersion, Rec
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("RecordVersion(");
+    StringBuilder sb = new StringBuilder("BallotNumber(");
     boolean first = true;
 
     sb.append("ballot:");
@@ -375,15 +375,15 @@ public class RecordVersion implements org.apache.thrift.TBase<RecordVersion, Rec
     }
   }
 
-  private static class RecordVersionStandardSchemeFactory implements SchemeFactory {
-    public RecordVersionStandardScheme getScheme() {
-      return new RecordVersionStandardScheme();
+  private static class BallotNumberStandardSchemeFactory implements SchemeFactory {
+    public BallotNumberStandardScheme getScheme() {
+      return new BallotNumberStandardScheme();
     }
   }
 
-  private static class RecordVersionStandardScheme extends StandardScheme<RecordVersion> {
+  private static class BallotNumberStandardScheme extends StandardScheme<BallotNumber> {
 
-    public void read(org.apache.thrift.protocol.TProtocol iprot, RecordVersion struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol iprot, BallotNumber struct) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField schemeField;
       iprot.readStructBegin();
       while (true)
@@ -420,7 +420,7 @@ public class RecordVersion implements org.apache.thrift.TBase<RecordVersion, Rec
       struct.validate();
     }
 
-    public void write(org.apache.thrift.protocol.TProtocol oprot, RecordVersion struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot, BallotNumber struct) throws org.apache.thrift.TException {
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -438,16 +438,16 @@ public class RecordVersion implements org.apache.thrift.TBase<RecordVersion, Rec
 
   }
 
-  private static class RecordVersionTupleSchemeFactory implements SchemeFactory {
-    public RecordVersionTupleScheme getScheme() {
-      return new RecordVersionTupleScheme();
+  private static class BallotNumberTupleSchemeFactory implements SchemeFactory {
+    public BallotNumberTupleScheme getScheme() {
+      return new BallotNumberTupleScheme();
     }
   }
 
-  private static class RecordVersionTupleScheme extends TupleScheme<RecordVersion> {
+  private static class BallotNumberTupleScheme extends TupleScheme<BallotNumber> {
 
     @Override
-    public void write(org.apache.thrift.protocol.TProtocol prot, RecordVersion struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol prot, BallotNumber struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       BitSet optionals = new BitSet();
       if (struct.isSetBallot()) {
@@ -466,7 +466,7 @@ public class RecordVersion implements org.apache.thrift.TBase<RecordVersion, Rec
     }
 
     @Override
-    public void read(org.apache.thrift.protocol.TProtocol prot, RecordVersion struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol prot, BallotNumber struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
       BitSet incoming = iprot.readBitSet(2);
       if (incoming.get(0)) {
