@@ -6,7 +6,7 @@ import org.apache.thrift.async.AsyncMethodCallback;
 import edu.ucsb.cs.mdcc.MDCCTransaction;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService.AsyncClient.accept_call;
 
-public class CommsTester {
+public class PaxosTester {
 
 	/**
 	 * @param args
@@ -34,15 +34,18 @@ public class CommsTester {
 		int[] ports = { 7911, 7912, 7913, 7914, 7915 };
 		String procId = "proc0";
 		
-		MDCCTransaction txn = new MDCCTransaction(hosts, ports, procId);
 		System.out.println("begin transaction");
+		MDCCTransaction txn = new MDCCTransaction(hosts, ports, procId);
 		System.out.println("read(a): " + txn.read("a"));
+		System.out.println("read(b): " + txn.read("b"));
 		System.out.println("write(a,hello): " + txn.write("a", "hello"));
+		System.out.println("write(b,5): " + txn.write("b", "5"));
 		System.out.println("commit: " + txn.commit());
 		
-		txn = new MDCCTransaction(hosts, ports, procId);
 		System.out.println("begin transaction");
+		txn = new MDCCTransaction(hosts, ports, procId);
 		System.out.println("read(a): " + txn.read("a"));
+		System.out.println("read(b): " + txn.read("b"));
 		System.out.println("write(a,goodbye): " + txn.write("a", "goodbye"));
 		System.out.println("commit: " + txn.commit());
         

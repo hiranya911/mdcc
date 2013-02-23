@@ -36,9 +36,9 @@ public class MDCCCommunicationService {
 
     public boolean ping() throws org.apache.thrift.TException;
 
-    public boolean prepare(String object, RecordVersion version) throws org.apache.thrift.TException;
+    public boolean prepare(String object, BallotNumber ballot) throws org.apache.thrift.TException;
 
-    public boolean accept(String transaction, String object, RecordVersion oldVersion, String processId, String newValue) throws org.apache.thrift.TException;
+    public boolean accept(String transaction, String object, long oldVersion, BallotNumber ballot, String newValue) throws org.apache.thrift.TException;
 
     public void decide(String transaction, boolean commit) throws org.apache.thrift.TException;
 
@@ -50,9 +50,9 @@ public class MDCCCommunicationService {
 
     public void ping(org.apache.thrift.async.AsyncMethodCallback<AsyncClient.ping_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void prepare(String object, RecordVersion version, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.prepare_call> resultHandler) throws org.apache.thrift.TException;
+    public void prepare(String object, BallotNumber ballot, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.prepare_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void accept(String transaction, String object, RecordVersion oldVersion, String processId, String newValue, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.accept_call> resultHandler) throws org.apache.thrift.TException;
+    public void accept(String transaction, String object, long oldVersion, BallotNumber ballot, String newValue, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.accept_call> resultHandler) throws org.apache.thrift.TException;
 
     public void decide(String transaction, boolean commit, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.decide_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -102,17 +102,17 @@ public class MDCCCommunicationService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "ping failed: unknown result");
     }
 
-    public boolean prepare(String object, RecordVersion version) throws org.apache.thrift.TException
+    public boolean prepare(String object, BallotNumber ballot) throws org.apache.thrift.TException
     {
-      send_prepare(object, version);
+      send_prepare(object, ballot);
       return recv_prepare();
     }
 
-    public void send_prepare(String object, RecordVersion version) throws org.apache.thrift.TException
+    public void send_prepare(String object, BallotNumber ballot) throws org.apache.thrift.TException
     {
       prepare_args args = new prepare_args();
       args.setObject(object);
-      args.setVersion(version);
+      args.setBallot(ballot);
       sendBase("prepare", args);
     }
 
@@ -126,19 +126,19 @@ public class MDCCCommunicationService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "prepare failed: unknown result");
     }
 
-    public boolean accept(String transaction, String object, RecordVersion oldVersion, String processId, String newValue) throws org.apache.thrift.TException
+    public boolean accept(String transaction, String object, long oldVersion, BallotNumber ballot, String newValue) throws org.apache.thrift.TException
     {
-      send_accept(transaction, object, oldVersion, processId, newValue);
+      send_accept(transaction, object, oldVersion, ballot, newValue);
       return recv_accept();
     }
 
-    public void send_accept(String transaction, String object, RecordVersion oldVersion, String processId, String newValue) throws org.apache.thrift.TException
+    public void send_accept(String transaction, String object, long oldVersion, BallotNumber ballot, String newValue) throws org.apache.thrift.TException
     {
       accept_args args = new accept_args();
       args.setTransaction(transaction);
       args.setObject(object);
       args.setOldVersion(oldVersion);
-      args.setProcessId(processId);
+      args.setBallot(ballot);
       args.setNewValue(newValue);
       sendBase("accept", args);
     }
@@ -244,27 +244,27 @@ public class MDCCCommunicationService {
       }
     }
 
-    public void prepare(String object, RecordVersion version, org.apache.thrift.async.AsyncMethodCallback<prepare_call> resultHandler) throws org.apache.thrift.TException {
+    public void prepare(String object, BallotNumber ballot, org.apache.thrift.async.AsyncMethodCallback<prepare_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      prepare_call method_call = new prepare_call(object, version, resultHandler, this, ___protocolFactory, ___transport);
+      prepare_call method_call = new prepare_call(object, ballot, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
     public static class prepare_call extends org.apache.thrift.async.TAsyncMethodCall {
       private String object;
-      private RecordVersion version;
-      public prepare_call(String object, RecordVersion version, org.apache.thrift.async.AsyncMethodCallback<prepare_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private BallotNumber ballot;
+      public prepare_call(String object, BallotNumber ballot, org.apache.thrift.async.AsyncMethodCallback<prepare_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.object = object;
-        this.version = version;
+        this.ballot = ballot;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
         prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("prepare", org.apache.thrift.protocol.TMessageType.CALL, 0));
         prepare_args args = new prepare_args();
         args.setObject(object);
-        args.setVersion(version);
+        args.setBallot(ballot);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -279,9 +279,9 @@ public class MDCCCommunicationService {
       }
     }
 
-    public void accept(String transaction, String object, RecordVersion oldVersion, String processId, String newValue, org.apache.thrift.async.AsyncMethodCallback<accept_call> resultHandler) throws org.apache.thrift.TException {
+    public void accept(String transaction, String object, long oldVersion, BallotNumber ballot, String newValue, org.apache.thrift.async.AsyncMethodCallback<accept_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      accept_call method_call = new accept_call(transaction, object, oldVersion, processId, newValue, resultHandler, this, ___protocolFactory, ___transport);
+      accept_call method_call = new accept_call(transaction, object, oldVersion, ballot, newValue, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
@@ -289,15 +289,15 @@ public class MDCCCommunicationService {
     public static class accept_call extends org.apache.thrift.async.TAsyncMethodCall {
       private String transaction;
       private String object;
-      private RecordVersion oldVersion;
-      private String processId;
+      private long oldVersion;
+      private BallotNumber ballot;
       private String newValue;
-      public accept_call(String transaction, String object, RecordVersion oldVersion, String processId, String newValue, org.apache.thrift.async.AsyncMethodCallback<accept_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public accept_call(String transaction, String object, long oldVersion, BallotNumber ballot, String newValue, org.apache.thrift.async.AsyncMethodCallback<accept_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.transaction = transaction;
         this.object = object;
         this.oldVersion = oldVersion;
-        this.processId = processId;
+        this.ballot = ballot;
         this.newValue = newValue;
       }
 
@@ -307,7 +307,7 @@ public class MDCCCommunicationService {
         args.setTransaction(transaction);
         args.setObject(object);
         args.setOldVersion(oldVersion);
-        args.setProcessId(processId);
+        args.setBallot(ballot);
         args.setNewValue(newValue);
         args.write(prot);
         prot.writeMessageEnd();
@@ -447,7 +447,7 @@ public class MDCCCommunicationService {
 
       public prepare_result getResult(I iface, prepare_args args) throws org.apache.thrift.TException {
         prepare_result result = new prepare_result();
-        result.success = iface.prepare(args.object, args.version);
+        result.success = iface.prepare(args.object, args.ballot);
         result.setSuccessIsSet(true);
         return result;
       }
@@ -468,7 +468,7 @@ public class MDCCCommunicationService {
 
       public accept_result getResult(I iface, accept_args args) throws org.apache.thrift.TException {
         accept_result result = new accept_result();
-        result.success = iface.accept(args.transaction, args.object, args.oldVersion, args.processId, args.newValue);
+        result.success = iface.accept(args.transaction, args.object, args.oldVersion, args.ballot, args.newValue);
         result.setSuccessIsSet(true);
         return result;
       }
@@ -1120,7 +1120,7 @@ public class MDCCCommunicationService {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("prepare_args");
 
     private static final org.apache.thrift.protocol.TField OBJECT_FIELD_DESC = new org.apache.thrift.protocol.TField("object", org.apache.thrift.protocol.TType.STRING, (short)1);
-    private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+    private static final org.apache.thrift.protocol.TField BALLOT_FIELD_DESC = new org.apache.thrift.protocol.TField("ballot", org.apache.thrift.protocol.TType.STRUCT, (short)2);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -1129,12 +1129,12 @@ public class MDCCCommunicationService {
     }
 
     public String object; // required
-    public RecordVersion version; // required
+    public BallotNumber ballot; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       OBJECT((short)1, "object"),
-      VERSION((short)2, "version");
+      BALLOT((short)2, "ballot");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -1151,8 +1151,8 @@ public class MDCCCommunicationService {
         switch(fieldId) {
           case 1: // OBJECT
             return OBJECT;
-          case 2: // VERSION
-            return VERSION;
+          case 2: // BALLOT
+            return BALLOT;
           default:
             return null;
         }
@@ -1198,8 +1198,8 @@ public class MDCCCommunicationService {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.OBJECT, new org.apache.thrift.meta_data.FieldMetaData("object", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-      tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, RecordVersion.class)));
+      tmpMap.put(_Fields.BALLOT, new org.apache.thrift.meta_data.FieldMetaData("ballot", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, BallotNumber.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(prepare_args.class, metaDataMap);
     }
@@ -1209,11 +1209,11 @@ public class MDCCCommunicationService {
 
     public prepare_args(
       String object,
-      RecordVersion version)
+      BallotNumber ballot)
     {
       this();
       this.object = object;
-      this.version = version;
+      this.ballot = ballot;
     }
 
     /**
@@ -1223,8 +1223,8 @@ public class MDCCCommunicationService {
       if (other.isSetObject()) {
         this.object = other.object;
       }
-      if (other.isSetVersion()) {
-        this.version = new RecordVersion(other.version);
+      if (other.isSetBallot()) {
+        this.ballot = new BallotNumber(other.ballot);
       }
     }
 
@@ -1235,7 +1235,7 @@ public class MDCCCommunicationService {
     @Override
     public void clear() {
       this.object = null;
-      this.version = null;
+      this.ballot = null;
     }
 
     public String getObject() {
@@ -1262,27 +1262,27 @@ public class MDCCCommunicationService {
       }
     }
 
-    public RecordVersion getVersion() {
-      return this.version;
+    public BallotNumber getBallot() {
+      return this.ballot;
     }
 
-    public prepare_args setVersion(RecordVersion version) {
-      this.version = version;
+    public prepare_args setBallot(BallotNumber ballot) {
+      this.ballot = ballot;
       return this;
     }
 
-    public void unsetVersion() {
-      this.version = null;
+    public void unsetBallot() {
+      this.ballot = null;
     }
 
-    /** Returns true if field version is set (has been assigned a value) and false otherwise */
-    public boolean isSetVersion() {
-      return this.version != null;
+    /** Returns true if field ballot is set (has been assigned a value) and false otherwise */
+    public boolean isSetBallot() {
+      return this.ballot != null;
     }
 
-    public void setVersionIsSet(boolean value) {
+    public void setBallotIsSet(boolean value) {
       if (!value) {
-        this.version = null;
+        this.ballot = null;
       }
     }
 
@@ -1296,11 +1296,11 @@ public class MDCCCommunicationService {
         }
         break;
 
-      case VERSION:
+      case BALLOT:
         if (value == null) {
-          unsetVersion();
+          unsetBallot();
         } else {
-          setVersion((RecordVersion)value);
+          setBallot((BallotNumber)value);
         }
         break;
 
@@ -1312,8 +1312,8 @@ public class MDCCCommunicationService {
       case OBJECT:
         return getObject();
 
-      case VERSION:
-        return getVersion();
+      case BALLOT:
+        return getBallot();
 
       }
       throw new IllegalStateException();
@@ -1328,8 +1328,8 @@ public class MDCCCommunicationService {
       switch (field) {
       case OBJECT:
         return isSetObject();
-      case VERSION:
-        return isSetVersion();
+      case BALLOT:
+        return isSetBallot();
       }
       throw new IllegalStateException();
     }
@@ -1356,12 +1356,12 @@ public class MDCCCommunicationService {
           return false;
       }
 
-      boolean this_present_version = true && this.isSetVersion();
-      boolean that_present_version = true && that.isSetVersion();
-      if (this_present_version || that_present_version) {
-        if (!(this_present_version && that_present_version))
+      boolean this_present_ballot = true && this.isSetBallot();
+      boolean that_present_ballot = true && that.isSetBallot();
+      if (this_present_ballot || that_present_ballot) {
+        if (!(this_present_ballot && that_present_ballot))
           return false;
-        if (!this.version.equals(that.version))
+        if (!this.ballot.equals(that.ballot))
           return false;
       }
 
@@ -1391,12 +1391,12 @@ public class MDCCCommunicationService {
           return lastComparison;
         }
       }
-      lastComparison = Boolean.valueOf(isSetVersion()).compareTo(typedOther.isSetVersion());
+      lastComparison = Boolean.valueOf(isSetBallot()).compareTo(typedOther.isSetBallot());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetVersion()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.version, typedOther.version);
+      if (isSetBallot()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ballot, typedOther.ballot);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1429,11 +1429,11 @@ public class MDCCCommunicationService {
       }
       first = false;
       if (!first) sb.append(", ");
-      sb.append("version:");
-      if (this.version == null) {
+      sb.append("ballot:");
+      if (this.ballot == null) {
         sb.append("null");
       } else {
-        sb.append(this.version);
+        sb.append(this.ballot);
       }
       first = false;
       sb.append(")");
@@ -1443,8 +1443,8 @@ public class MDCCCommunicationService {
     public void validate() throws org.apache.thrift.TException {
       // check for required fields
       // check for sub-struct validity
-      if (version != null) {
-        version.validate();
+      if (ballot != null) {
+        ballot.validate();
       }
     }
 
@@ -1490,11 +1490,11 @@ public class MDCCCommunicationService {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
-            case 2: // VERSION
+            case 2: // BALLOT
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.version = new RecordVersion();
-                struct.version.read(iprot);
-                struct.setVersionIsSet(true);
+                struct.ballot = new BallotNumber();
+                struct.ballot.read(iprot);
+                struct.setBallotIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
@@ -1519,9 +1519,9 @@ public class MDCCCommunicationService {
           oprot.writeString(struct.object);
           oprot.writeFieldEnd();
         }
-        if (struct.version != null) {
-          oprot.writeFieldBegin(VERSION_FIELD_DESC);
-          struct.version.write(oprot);
+        if (struct.ballot != null) {
+          oprot.writeFieldBegin(BALLOT_FIELD_DESC);
+          struct.ballot.write(oprot);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -1545,15 +1545,15 @@ public class MDCCCommunicationService {
         if (struct.isSetObject()) {
           optionals.set(0);
         }
-        if (struct.isSetVersion()) {
+        if (struct.isSetBallot()) {
           optionals.set(1);
         }
         oprot.writeBitSet(optionals, 2);
         if (struct.isSetObject()) {
           oprot.writeString(struct.object);
         }
-        if (struct.isSetVersion()) {
-          struct.version.write(oprot);
+        if (struct.isSetBallot()) {
+          struct.ballot.write(oprot);
         }
       }
 
@@ -1566,9 +1566,9 @@ public class MDCCCommunicationService {
           struct.setObjectIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.version = new RecordVersion();
-          struct.version.read(iprot);
-          struct.setVersionIsSet(true);
+          struct.ballot = new BallotNumber();
+          struct.ballot.read(iprot);
+          struct.setBallotIsSet(true);
         }
       }
     }
@@ -1934,8 +1934,8 @@ public class MDCCCommunicationService {
 
     private static final org.apache.thrift.protocol.TField TRANSACTION_FIELD_DESC = new org.apache.thrift.protocol.TField("transaction", org.apache.thrift.protocol.TType.STRING, (short)1);
     private static final org.apache.thrift.protocol.TField OBJECT_FIELD_DESC = new org.apache.thrift.protocol.TField("object", org.apache.thrift.protocol.TType.STRING, (short)2);
-    private static final org.apache.thrift.protocol.TField OLD_VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("oldVersion", org.apache.thrift.protocol.TType.STRUCT, (short)3);
-    private static final org.apache.thrift.protocol.TField PROCESS_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("processId", org.apache.thrift.protocol.TType.STRING, (short)4);
+    private static final org.apache.thrift.protocol.TField OLD_VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("oldVersion", org.apache.thrift.protocol.TType.I64, (short)3);
+    private static final org.apache.thrift.protocol.TField BALLOT_FIELD_DESC = new org.apache.thrift.protocol.TField("ballot", org.apache.thrift.protocol.TType.STRUCT, (short)4);
     private static final org.apache.thrift.protocol.TField NEW_VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("newValue", org.apache.thrift.protocol.TType.STRING, (short)5);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
@@ -1946,8 +1946,8 @@ public class MDCCCommunicationService {
 
     public String transaction; // required
     public String object; // required
-    public RecordVersion oldVersion; // required
-    public String processId; // required
+    public long oldVersion; // required
+    public BallotNumber ballot; // required
     public String newValue; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -1955,7 +1955,7 @@ public class MDCCCommunicationService {
       TRANSACTION((short)1, "transaction"),
       OBJECT((short)2, "object"),
       OLD_VERSION((short)3, "oldVersion"),
-      PROCESS_ID((short)4, "processId"),
+      BALLOT((short)4, "ballot"),
       NEW_VALUE((short)5, "newValue");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -1977,8 +1977,8 @@ public class MDCCCommunicationService {
             return OBJECT;
           case 3: // OLD_VERSION
             return OLD_VERSION;
-          case 4: // PROCESS_ID
-            return PROCESS_ID;
+          case 4: // BALLOT
+            return BALLOT;
           case 5: // NEW_VALUE
             return NEW_VALUE;
           default:
@@ -2021,6 +2021,8 @@ public class MDCCCommunicationService {
     }
 
     // isset id assignments
+    private static final int __OLDVERSION_ISSET_ID = 0;
+    private byte __isset_bitfield = 0;
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -2029,9 +2031,9 @@ public class MDCCCommunicationService {
       tmpMap.put(_Fields.OBJECT, new org.apache.thrift.meta_data.FieldMetaData("object", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       tmpMap.put(_Fields.OLD_VERSION, new org.apache.thrift.meta_data.FieldMetaData("oldVersion", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, RecordVersion.class)));
-      tmpMap.put(_Fields.PROCESS_ID, new org.apache.thrift.meta_data.FieldMetaData("processId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+      tmpMap.put(_Fields.BALLOT, new org.apache.thrift.meta_data.FieldMetaData("ballot", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, BallotNumber.class)));
       tmpMap.put(_Fields.NEW_VALUE, new org.apache.thrift.meta_data.FieldMetaData("newValue", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -2044,15 +2046,16 @@ public class MDCCCommunicationService {
     public accept_args(
       String transaction,
       String object,
-      RecordVersion oldVersion,
-      String processId,
+      long oldVersion,
+      BallotNumber ballot,
       String newValue)
     {
       this();
       this.transaction = transaction;
       this.object = object;
       this.oldVersion = oldVersion;
-      this.processId = processId;
+      setOldVersionIsSet(true);
+      this.ballot = ballot;
       this.newValue = newValue;
     }
 
@@ -2060,17 +2063,16 @@ public class MDCCCommunicationService {
      * Performs a deep copy on <i>other</i>.
      */
     public accept_args(accept_args other) {
+      __isset_bitfield = other.__isset_bitfield;
       if (other.isSetTransaction()) {
         this.transaction = other.transaction;
       }
       if (other.isSetObject()) {
         this.object = other.object;
       }
-      if (other.isSetOldVersion()) {
-        this.oldVersion = new RecordVersion(other.oldVersion);
-      }
-      if (other.isSetProcessId()) {
-        this.processId = other.processId;
+      this.oldVersion = other.oldVersion;
+      if (other.isSetBallot()) {
+        this.ballot = new BallotNumber(other.ballot);
       }
       if (other.isSetNewValue()) {
         this.newValue = other.newValue;
@@ -2085,8 +2087,9 @@ public class MDCCCommunicationService {
     public void clear() {
       this.transaction = null;
       this.object = null;
-      this.oldVersion = null;
-      this.processId = null;
+      setOldVersionIsSet(false);
+      this.oldVersion = 0;
+      this.ballot = null;
       this.newValue = null;
     }
 
@@ -2138,51 +2141,50 @@ public class MDCCCommunicationService {
       }
     }
 
-    public RecordVersion getOldVersion() {
+    public long getOldVersion() {
       return this.oldVersion;
     }
 
-    public accept_args setOldVersion(RecordVersion oldVersion) {
+    public accept_args setOldVersion(long oldVersion) {
       this.oldVersion = oldVersion;
+      setOldVersionIsSet(true);
       return this;
     }
 
     public void unsetOldVersion() {
-      this.oldVersion = null;
+      __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __OLDVERSION_ISSET_ID);
     }
 
     /** Returns true if field oldVersion is set (has been assigned a value) and false otherwise */
     public boolean isSetOldVersion() {
-      return this.oldVersion != null;
+      return EncodingUtils.testBit(__isset_bitfield, __OLDVERSION_ISSET_ID);
     }
 
     public void setOldVersionIsSet(boolean value) {
-      if (!value) {
-        this.oldVersion = null;
-      }
+      __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __OLDVERSION_ISSET_ID, value);
     }
 
-    public String getProcessId() {
-      return this.processId;
+    public BallotNumber getBallot() {
+      return this.ballot;
     }
 
-    public accept_args setProcessId(String processId) {
-      this.processId = processId;
+    public accept_args setBallot(BallotNumber ballot) {
+      this.ballot = ballot;
       return this;
     }
 
-    public void unsetProcessId() {
-      this.processId = null;
+    public void unsetBallot() {
+      this.ballot = null;
     }
 
-    /** Returns true if field processId is set (has been assigned a value) and false otherwise */
-    public boolean isSetProcessId() {
-      return this.processId != null;
+    /** Returns true if field ballot is set (has been assigned a value) and false otherwise */
+    public boolean isSetBallot() {
+      return this.ballot != null;
     }
 
-    public void setProcessIdIsSet(boolean value) {
+    public void setBallotIsSet(boolean value) {
       if (!value) {
-        this.processId = null;
+        this.ballot = null;
       }
     }
 
@@ -2232,15 +2234,15 @@ public class MDCCCommunicationService {
         if (value == null) {
           unsetOldVersion();
         } else {
-          setOldVersion((RecordVersion)value);
+          setOldVersion((Long)value);
         }
         break;
 
-      case PROCESS_ID:
+      case BALLOT:
         if (value == null) {
-          unsetProcessId();
+          unsetBallot();
         } else {
-          setProcessId((String)value);
+          setBallot((BallotNumber)value);
         }
         break;
 
@@ -2264,10 +2266,10 @@ public class MDCCCommunicationService {
         return getObject();
 
       case OLD_VERSION:
-        return getOldVersion();
+        return Long.valueOf(getOldVersion());
 
-      case PROCESS_ID:
-        return getProcessId();
+      case BALLOT:
+        return getBallot();
 
       case NEW_VALUE:
         return getNewValue();
@@ -2289,8 +2291,8 @@ public class MDCCCommunicationService {
         return isSetObject();
       case OLD_VERSION:
         return isSetOldVersion();
-      case PROCESS_ID:
-        return isSetProcessId();
+      case BALLOT:
+        return isSetBallot();
       case NEW_VALUE:
         return isSetNewValue();
       }
@@ -2328,21 +2330,21 @@ public class MDCCCommunicationService {
           return false;
       }
 
-      boolean this_present_oldVersion = true && this.isSetOldVersion();
-      boolean that_present_oldVersion = true && that.isSetOldVersion();
+      boolean this_present_oldVersion = true;
+      boolean that_present_oldVersion = true;
       if (this_present_oldVersion || that_present_oldVersion) {
         if (!(this_present_oldVersion && that_present_oldVersion))
           return false;
-        if (!this.oldVersion.equals(that.oldVersion))
+        if (this.oldVersion != that.oldVersion)
           return false;
       }
 
-      boolean this_present_processId = true && this.isSetProcessId();
-      boolean that_present_processId = true && that.isSetProcessId();
-      if (this_present_processId || that_present_processId) {
-        if (!(this_present_processId && that_present_processId))
+      boolean this_present_ballot = true && this.isSetBallot();
+      boolean that_present_ballot = true && that.isSetBallot();
+      if (this_present_ballot || that_present_ballot) {
+        if (!(this_present_ballot && that_present_ballot))
           return false;
-        if (!this.processId.equals(that.processId))
+        if (!this.ballot.equals(that.ballot))
           return false;
       }
 
@@ -2401,12 +2403,12 @@ public class MDCCCommunicationService {
           return lastComparison;
         }
       }
-      lastComparison = Boolean.valueOf(isSetProcessId()).compareTo(typedOther.isSetProcessId());
+      lastComparison = Boolean.valueOf(isSetBallot()).compareTo(typedOther.isSetBallot());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetProcessId()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.processId, typedOther.processId);
+      if (isSetBallot()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ballot, typedOther.ballot);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -2458,18 +2460,14 @@ public class MDCCCommunicationService {
       first = false;
       if (!first) sb.append(", ");
       sb.append("oldVersion:");
-      if (this.oldVersion == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.oldVersion);
-      }
+      sb.append(this.oldVersion);
       first = false;
       if (!first) sb.append(", ");
-      sb.append("processId:");
-      if (this.processId == null) {
+      sb.append("ballot:");
+      if (this.ballot == null) {
         sb.append("null");
       } else {
-        sb.append(this.processId);
+        sb.append(this.ballot);
       }
       first = false;
       if (!first) sb.append(", ");
@@ -2487,8 +2485,8 @@ public class MDCCCommunicationService {
     public void validate() throws org.apache.thrift.TException {
       // check for required fields
       // check for sub-struct validity
-      if (oldVersion != null) {
-        oldVersion.validate();
+      if (ballot != null) {
+        ballot.validate();
       }
     }
 
@@ -2502,6 +2500,8 @@ public class MDCCCommunicationService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bitfield = 0;
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -2543,18 +2543,18 @@ public class MDCCCommunicationService {
               }
               break;
             case 3: // OLD_VERSION
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.oldVersion = new RecordVersion();
-                struct.oldVersion.read(iprot);
+              if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+                struct.oldVersion = iprot.readI64();
                 struct.setOldVersionIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
-            case 4: // PROCESS_ID
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.processId = iprot.readString();
-                struct.setProcessIdIsSet(true);
+            case 4: // BALLOT
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.ballot = new BallotNumber();
+                struct.ballot.read(iprot);
+                struct.setBallotIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
@@ -2592,14 +2592,12 @@ public class MDCCCommunicationService {
           oprot.writeString(struct.object);
           oprot.writeFieldEnd();
         }
-        if (struct.oldVersion != null) {
-          oprot.writeFieldBegin(OLD_VERSION_FIELD_DESC);
-          struct.oldVersion.write(oprot);
-          oprot.writeFieldEnd();
-        }
-        if (struct.processId != null) {
-          oprot.writeFieldBegin(PROCESS_ID_FIELD_DESC);
-          oprot.writeString(struct.processId);
+        oprot.writeFieldBegin(OLD_VERSION_FIELD_DESC);
+        oprot.writeI64(struct.oldVersion);
+        oprot.writeFieldEnd();
+        if (struct.ballot != null) {
+          oprot.writeFieldBegin(BALLOT_FIELD_DESC);
+          struct.ballot.write(oprot);
           oprot.writeFieldEnd();
         }
         if (struct.newValue != null) {
@@ -2634,7 +2632,7 @@ public class MDCCCommunicationService {
         if (struct.isSetOldVersion()) {
           optionals.set(2);
         }
-        if (struct.isSetProcessId()) {
+        if (struct.isSetBallot()) {
           optionals.set(3);
         }
         if (struct.isSetNewValue()) {
@@ -2648,10 +2646,10 @@ public class MDCCCommunicationService {
           oprot.writeString(struct.object);
         }
         if (struct.isSetOldVersion()) {
-          struct.oldVersion.write(oprot);
+          oprot.writeI64(struct.oldVersion);
         }
-        if (struct.isSetProcessId()) {
-          oprot.writeString(struct.processId);
+        if (struct.isSetBallot()) {
+          struct.ballot.write(oprot);
         }
         if (struct.isSetNewValue()) {
           oprot.writeString(struct.newValue);
@@ -2671,13 +2669,13 @@ public class MDCCCommunicationService {
           struct.setObjectIsSet(true);
         }
         if (incoming.get(2)) {
-          struct.oldVersion = new RecordVersion();
-          struct.oldVersion.read(iprot);
+          struct.oldVersion = iprot.readI64();
           struct.setOldVersionIsSet(true);
         }
         if (incoming.get(3)) {
-          struct.processId = iprot.readString();
-          struct.setProcessIdIsSet(true);
+          struct.ballot = new BallotNumber();
+          struct.ballot.read(iprot);
+          struct.setBallotIsSet(true);
         }
         if (incoming.get(4)) {
           struct.newValue = iprot.readString();
