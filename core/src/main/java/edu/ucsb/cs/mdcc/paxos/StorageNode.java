@@ -8,39 +8,21 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import edu.ucsb.cs.mdcc.messaging.BallotNumber;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicator;
-import edu.ucsb.cs.mdcc.messaging.RecordVersion;
 
-public class FPAgent extends Agent {
+public class StorageNode extends Agent {
 	Object objectLock = new Object();
 	Map<String, Object> objectLocks = new HashMap<String, Object>();
-	Map<String, boolean[]> outstandingOptions = new HashMap<String, boolean[]>();
+	Map<String, Boolean> outstandingOptions = new HashMap<String, Boolean>();
 	Map<String,String> db = new HashMap<String, String>();
 	Map<String, List<String>> txns = new HashMap<String, List<String>>();
 	
 	public List<String> peers;
-	
-	@Override
-	public void onElection() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void onVictory(String hostName, int port) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public boolean onLeaderQuery() {
-		// TODO Auto-generated method stub
-		return false;
-	}
 
 	@Override
 	public boolean onAccept(String transaction, String object,
-			RecordVersion oldVersion, String processId, String value) {
+			long oldVersion, BallotNumber ballot, String value) {
 		System.out.println("received accept message for: txn=" + transaction + "; obj=" + object);
 		// TODO Auto-generated method stub
 		boolean success = false;
@@ -52,40 +34,38 @@ public class FPAgent extends Agent {
 		
 		synchronized (objectLocks.get(object))
 		{
-			if (outstandingOptions.containsKey(object) && outstandingOptions.get(object)[0])
+			if (outstandingOptions.containsKey(object) && outstandingOptions.get(object))
 				return false;
-			try {
+			/*try {*/
 			
 				// TODO Auto-generated method stub
 				String currentEntry;
 				if (!db.containsKey(object))
 				{
-					db.put(object, "|");
-					currentEntry = "|";
+					db.put(object, "0|0:|");
+					currentEntry = "0|0:|";
 				}
 				else
 					currentEntry = db.get(object);
-				String currentBallot = currentEntry.substring(0,currentEntry.indexOf('|'));
+				long version = Long.parseLong(currentEntry.substring(0, currentEntry.indexOf('|')));
+				currentEntry = currentEntry.substring(currentEntry.indexOf('|') + 1);
+				BallotNumber oldBallot = new BallotNumber(Long.parseLong(currentEntry.substring(0, currentEntry.indexOf(':'))), 
+						currentEntry.substring(currentEntry.indexOf(':') + 1, currentEntry.indexOf('|')));
 				//if it is a new insert
-				success = currentBallot.length() == 0 && oldVersion.getBallot() == 0 && oldVersion.getProcessId().length() == 0;
-				if (!success) //else if they specified the correct current ballot
-					success = currentBallot.compareTo(oldVersion.getBallot() + ":" + 
-							oldVersion.getProcessId()) == 0;
+				success = (version == oldVersion) && (ballot.getBallot() == -1 || 
+						((ballot.getBallot() + ":" + ballot.getProcessId()).compareTo(
+								oldBallot.getBallot() + ":" + oldBallot.getProcessId()) >= 0));
+				
 				if (success)
 				{
-					outstandingOptions.put(object, new boolean[] { true });
-					if (currentBallot.length() == 0)
-						currentBallot = "1" + ":" + processId;
-					else
-						currentBallot = (Integer.parseInt(currentBallot.substring(0,currentBallot.indexOf(':')) + 1) +
-							":" + processId);
+					outstandingOptions.put(object, true);
 					if (!txns.containsKey(transaction))
 						txns.put(transaction, new LinkedList<String>());
-					txns.get(transaction).add(object + "|" + currentBallot + "|" + value);
+					txns.get(transaction).add(object + "|" + (oldVersion + 1) + "|" + oldBallot.getBallot() + ":" + oldBallot.getProcessId() + "|" + value);
 				}
-			} catch(Exception ex) {
+			/*} catch(Exception ex) {
 				System.out.println(ex.toString());
-			}
+			}*/
 			if (success)
 				System.out.println("option accepted");
 			else
@@ -122,11 +102,11 @@ public class FPAgent extends Agent {
 	}
 
 	@Override
-	public String onGet(String object) {
+	public String onRead(String object) {
 		if (db.containsKey(object))
 			return db.get(object);
 		else
-			return "|";
+			return "||";
 	}
 
 	/**
@@ -141,7 +121,7 @@ public class FPAgent extends Agent {
 			public void run() {
 				// TODO Auto-generated method stub
 				MDCCCommunicator comms = new MDCCCommunicator();
-		    	comms.StartListener(new FPAgent(), 7911);
+		    	comms.StartListener(new StorageNode(), 7911);
 			}
 			
 		});
@@ -152,7 +132,7 @@ public class FPAgent extends Agent {
 			public void run() {
 				// TODO Auto-generated method stub
 				MDCCCommunicator comms = new MDCCCommunicator();
-		    	comms.StartListener(new FPAgent(), 7912);
+		    	comms.StartListener(new StorageNode(), 7912);
 			}
 			
 		});
@@ -163,7 +143,7 @@ public class FPAgent extends Agent {
 			public void run() {
 				// TODO Auto-generated method stub
 				MDCCCommunicator comms = new MDCCCommunicator();
-		    	comms.StartListener(new FPAgent(), 7913);
+		    	comms.StartListener(new StorageNode(), 7913);
 			}
 			
 		});
@@ -174,7 +154,7 @@ public class FPAgent extends Agent {
 			public void run() {
 				// TODO Auto-generated method stub
 				MDCCCommunicator comms = new MDCCCommunicator();
-		    	comms.StartListener(new FPAgent(), 7914);
+		    	comms.StartListener(new StorageNode(), 7914);
 			}
 			
 		});
@@ -185,7 +165,7 @@ public class FPAgent extends Agent {
 			public void run() {
 				// TODO Auto-generated method stub
 				MDCCCommunicator comms = new MDCCCommunicator();
-		    	comms.StartListener(new FPAgent(), 7915);
+		    	comms.StartListener(new StorageNode(), 7915);
 			}
 			
 		});
@@ -198,6 +178,12 @@ public class FPAgent extends Agent {
 			e.printStackTrace();
 		}
 		
+	}
+
+	@Override
+	public boolean onPrepare(String object, BallotNumber ballot) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 }

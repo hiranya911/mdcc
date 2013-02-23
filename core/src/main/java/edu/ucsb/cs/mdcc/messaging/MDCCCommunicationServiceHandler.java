@@ -21,17 +21,10 @@ public class MDCCCommunicationServiceHandler implements Iface {
 	}
 
 	@Override
-	public boolean prepare(String object, RecordVersion version)
+	public boolean prepare(String object, BallotNumber version)
 			throws TException {
 		// TODO Auto-generated method stub
 		return false;
-	}
-
-	@Override
-	public boolean accept(String transaction, String object,
-			RecordVersion oldVersion, String processId, String newValue) throws TException {
-		// TODO Auto-generated method stub
-		return agent.onAccept(transaction, object, oldVersion, processId, newValue);
 	}
 
 	@Override
@@ -43,7 +36,13 @@ public class MDCCCommunicationServiceHandler implements Iface {
 	@Override
 	public String get(String object) throws TException {
 		// TODO Auto-generated method stub
-		return agent.onGet(object);
+		return agent.onRead(object);
+	}
+
+	@Override
+	public boolean accept(String transaction, String object, long oldVersion,
+			BallotNumber ballot, String newValue) throws TException {
+		return agent.onAccept(transaction, object, oldVersion, ballot, newValue);
 	}
 
 }
