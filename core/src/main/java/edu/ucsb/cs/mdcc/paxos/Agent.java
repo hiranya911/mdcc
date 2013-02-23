@@ -1,6 +1,7 @@
 package edu.ucsb.cs.mdcc.paxos;
 
 import edu.ucsb.cs.mdcc.MDCCException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.*;
@@ -16,7 +17,7 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public abstract class Agent implements Watcher, AsyncCallback.ChildrenCallback {
+public abstract class Agent implements Watcher, AsyncCallback.ChildrenCallback, AgentService {
 
     protected final Log log = LogFactory.getLog(this.getClass());
 
