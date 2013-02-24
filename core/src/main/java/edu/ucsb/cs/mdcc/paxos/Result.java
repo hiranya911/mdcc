@@ -1,15 +1,15 @@
-package edu.ucsb.cs.mdcc.txn;
+package edu.ucsb.cs.mdcc.paxos;
 
-class Result {
+public class Result {
 
     private String key;
     private Object value;
-    private int version;
+    private long version;
 
-    Result(String key, Object value, int version) {
+    public Result(String key, Object value, long version2) {
         this.key = key;
         this.value = value;
-        this.version = version;
+        this.version = version2;
     }
 
     public String getKey() {
@@ -20,7 +20,7 @@ class Result {
         return value;
     }
 
-    public int getVersion() {
+    public long getVersion() {
         return version;
     }
 

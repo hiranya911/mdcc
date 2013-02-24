@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import edu.ucsb.cs.mdcc.paxos.Result;
+
 public abstract class Transaction {
 
     protected String transactionId;
@@ -49,7 +51,7 @@ public abstract class Transaction {
             result = doRead(key);
             if (result == null) {
                 // Object doesn't exist in the DB - Insert (version = 0)
-                result = new Result(key, value, 0);
+                result = new Result(key, value, (long)0);
             } else {
                 // Object exists in the DB.
                 // Update the value and add to the read-set so future reads can

@@ -4,12 +4,12 @@ public class Option {
 
     private String key;
     private Object value;
-    private int oldVersion;
+    private long oldVersion;
 
-    public Option(String key, Object value, int oldVersion) {
+    public Option(String key, Object value, long l) {
         this.key = key;
         this.value = value;
-        this.oldVersion = oldVersion;
+        this.oldVersion = l;
     }
 
     public String getKey() {
@@ -20,7 +20,7 @@ public class Option {
         return value;
     }
 
-    public int getOldVersion() {
+    public long getOldVersion() {
         return oldVersion;
     }
 }

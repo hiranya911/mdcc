@@ -23,14 +23,18 @@ public class AppServer {
         this.communicator = new MDCCCommunicator();
 	}
 	
-	public String read(String key) {
+	public Result read(String key) {
 		String readString = communicator.get(hosts[0], ports[0], key);
 		if (readString == null) {
 			return null;
         } else {
+        	long version = 0;
+        	if (!readString.startsWith("|"))
+        		version = Long.parseLong(readString.substring(0, readString.indexOf('|')));
 			readString = readString.substring(readString.indexOf('|') + 1);
 			readString = readString.substring(readString.indexOf('|') + 1);
-			return readString;
+			Result res = new Result(key, readString, version);
+			return res;
 		}
 	}
 	
