@@ -1,7 +1,6 @@
 package edu.ucsb.cs.mdcc.txn;
 
-import edu.ucsb.cs.mdcc.paxos.AppServer;
-import edu.ucsb.cs.mdcc.paxos.Result;
+import edu.ucsb.cs.mdcc.paxos.*;
 
 import java.util.Collection;
 
@@ -20,11 +19,15 @@ public class LocalTransaction extends Transaction {
 
     @Override
     protected Result doRead(String key) {
-        return null;
+        return appServer.read(key);
     }
 
     @Override
-    protected void doCommit(String transactionId, Collection<Option> options) throws TransactionException {
-        //To change body of implemented methods use File | Settings | File Templates.
+    protected void doCommit(String transactionId,
+                            Collection<Option> options) throws TransactionException {
+        boolean success = appServer.commit(transactionId, options);
+        if (!success) {
+            throw new TransactionException("Failed to commit txn: " + transactionId);
+        }
     }
 }

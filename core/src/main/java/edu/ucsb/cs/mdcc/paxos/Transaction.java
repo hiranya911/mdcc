@@ -1,11 +1,9 @@
-package edu.ucsb.cs.mdcc.txn;
+package edu.ucsb.cs.mdcc.paxos;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
-import edu.ucsb.cs.mdcc.paxos.Result;
 
 public abstract class Transaction {
 

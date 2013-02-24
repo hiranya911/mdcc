@@ -4,7 +4,6 @@ import java.util.Collection;
 
 import edu.ucsb.cs.mdcc.messaging.BallotNumber;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicator;
-import edu.ucsb.cs.mdcc.txn.Option;
 
 public class AppServer {
 
@@ -18,7 +17,7 @@ public class AppServer {
 		this.hosts = hosts;
 		this.ports = ports;
 		int n = hosts.length;
-		fastQuorum = n + 1 + (int)Math.ceil((double)n / 4.0) + ((n + 1) % 2);
+		fastQuorum = n + 1 - (int)Math.ceil((double)n / 4.0) + ((n + 1) % 2);
 		this.procId = procId;
         this.communicator = new MDCCCommunicator();
 	}
@@ -29,8 +28,9 @@ public class AppServer {
 			return null;
         } else {
         	long version = 0;
-        	if (!readString.startsWith("|"))
+        	if (!readString.startsWith("|")) {
         		version = Long.parseLong(readString.substring(0, readString.indexOf('|')));
+            }
 			readString = readString.substring(readString.indexOf('|') + 1);
 			readString = readString.substring(readString.indexOf('|') + 1);
 			Result res = new Result(key, readString, version);

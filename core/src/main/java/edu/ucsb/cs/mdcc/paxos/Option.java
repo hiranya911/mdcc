@@ -1,4 +1,4 @@
-package edu.ucsb.cs.mdcc.txn;
+package edu.ucsb.cs.mdcc.paxos;
 
 public class Option {
 
