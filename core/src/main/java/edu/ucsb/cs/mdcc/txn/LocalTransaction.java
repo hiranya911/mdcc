@@ -1,6 +1,7 @@
 package edu.ucsb.cs.mdcc.txn;
 
 import edu.ucsb.cs.mdcc.paxos.AppServer;
+import edu.ucsb.cs.mdcc.paxos.Result;
 
 import java.util.Collection;
 
