@@ -12,41 +12,32 @@ import edu.ucsb.cs.mdcc.messaging.BallotNumber;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicator;
 
 public class StorageNode extends Agent {
-	Object objectLock = new Object();
-	Map<String, Object> objectLocks = new HashMap<String, Object>();
-	Map<String, Boolean> outstandingOptions = new HashMap<String, Boolean>();
-	Map<String,String> db = new HashMap<String, String>();
-	Map<String, List<String>> txns = new HashMap<String, List<String>>();
-	
-	public List<String> peers;
 
-	@Override
-	public boolean onAccept(String transaction, String object,
+	private Map<String, Boolean> outstandingOptions = new HashMap<String, Boolean>();
+    private Map<String,String> db = new HashMap<String, String>();
+    private  Map<String, List<String>> txns = new HashMap<String, List<String>>();
+
+    private List<String> peers;
+
+	public boolean onAccept(String transaction, String key,
 			long oldVersion, BallotNumber ballot, String value) {
-		System.out.println("received accept message for: txn=" + transaction + "; obj=" + object);
-		// TODO Auto-generated method stub
+		System.out.println("received accept message for: txn=" + transaction + "; obj=" + key);
 		boolean success = false;
-		synchronized (objectLock)
-		{
-			if (!objectLocks.containsKey(object))
-				objectLocks.put(object, new Object());
-		}
 		
-		synchronized (objectLocks.get(object))
-		{
-			if (outstandingOptions.containsKey(object) && outstandingOptions.get(object))
+		synchronized (key.intern()) {
+			if (outstandingOptions.containsKey(key) && outstandingOptions.get(key)) {
 				return false;
-			/*try {*/
-			
-				// TODO Auto-generated method stub
-				String currentEntry;
-				if (!db.containsKey(object))
-				{
-					db.put(object, "0|0:|");
+            }
+
+			try {
+			    String currentEntry;
+				if (!db.containsKey(key)) {
+					db.put(key, "0|0:|");
 					currentEntry = "0|0:|";
-				}
-				else
-					currentEntry = db.get(object);
+				} else {
+					currentEntry = db.get(key);
+                }
+
 				long version = Long.parseLong(currentEntry.substring(0, currentEntry.indexOf('|')));
 				currentEntry = currentEntry.substring(currentEntry.indexOf('|') + 1);
 				BallotNumber oldBallot = new BallotNumber(Long.parseLong(currentEntry.substring(0, currentEntry.indexOf(':'))), 
@@ -56,34 +47,33 @@ public class StorageNode extends Agent {
 						((ballot.getBallot() + ":" + ballot.getProcessId()).compareTo(
 								oldBallot.getBallot() + ":" + oldBallot.getProcessId()) >= 0));
 				
-				if (success)
-				{
-					outstandingOptions.put(object, true);
-					if (!txns.containsKey(transaction))
+				if (success) {
+					outstandingOptions.put(key, true);
+					if (!txns.containsKey(transaction)) {
 						txns.put(transaction, new LinkedList<String>());
-					txns.get(transaction).add(object + "|" + (oldVersion + 1) + "|" + oldBallot.getBallot() + ":" + oldBallot.getProcessId() + "|" + value);
+                    }
+					txns.get(transaction).add(key + "|" + (oldVersion + 1) + "|" + oldBallot.getBallot() + ":" + oldBallot.getProcessId() + "|" + value);
 				}
-			/*} catch(Exception ex) {
+			} catch(Exception ex) {
 				System.out.println(ex.toString());
-			}*/
-			if (success)
+			}
+			if (success) {
 				System.out.println("option accepted");
-			else
+            } else {
 				System.out.println("option denied");
+            }
 			return success;
 		}
 	}
 
-	@Override
 	public void onDecide(String transaction, boolean commit) {
-		// TODO Auto-generated method stub
-		if (commit)
+		if (commit) {
 			System.out.println("Recevied Commit decision on transaction id: " + transaction);
-		else
+        } else {
 			System.out.println("Recevied Abort on transaction id: " + transaction);
-		
-		if (commit)
-		{
+        }
+
+		if (commit) {
 			try {
 				for (String option : txns.get(transaction))
 				{
@@ -96,17 +86,17 @@ public class StorageNode extends Agent {
 			} catch(Exception ex) {
 				System.out.println(ex.toString());
 			}
-		}
-		else if (txns.containsKey(transaction))
+		} else {
 			txns.remove(transaction);
+        }
 	}
 
-	@Override
 	public String onRead(String object) {
-		if (db.containsKey(object))
+		if (db.containsKey(object)) {
 			return db.get(object);
-		else
+        } else {
 			return "||";
+        }
 	}
 
 	/**
@@ -116,10 +106,7 @@ public class StorageNode extends Agent {
 		ExecutorService exec = Executors.newCachedThreadPool();
 		
 		exec.submit(new Runnable() {
-
-			@Override
 			public void run() {
-				// TODO Auto-generated method stub
 				MDCCCommunicator comms = new MDCCCommunicator();
 		    	comms.StartListener(new StorageNode(), 7911);
 			}
@@ -127,10 +114,7 @@ public class StorageNode extends Agent {
 		});
 		
 		exec.submit(new Runnable() {
-
-			@Override
 			public void run() {
-				// TODO Auto-generated method stub
 				MDCCCommunicator comms = new MDCCCommunicator();
 		    	comms.StartListener(new StorageNode(), 7912);
 			}
@@ -138,10 +122,7 @@ public class StorageNode extends Agent {
 		});
 		
 		exec.submit(new Runnable() {
-
-			@Override
 			public void run() {
-				// TODO Auto-generated method stub
 				MDCCCommunicator comms = new MDCCCommunicator();
 		    	comms.StartListener(new StorageNode(), 7913);
 			}
@@ -149,10 +130,7 @@ public class StorageNode extends Agent {
 		});
 		
 		exec.submit(new Runnable() {
-
-			@Override
 			public void run() {
-				// TODO Auto-generated method stub
 				MDCCCommunicator comms = new MDCCCommunicator();
 		    	comms.StartListener(new StorageNode(), 7914);
 			}
@@ -160,10 +138,7 @@ public class StorageNode extends Agent {
 		});
 		
 		exec.submit(new Runnable() {
-
-			@Override
 			public void run() {
-				// TODO Auto-generated method stub
 				MDCCCommunicator comms = new MDCCCommunicator();
 		    	comms.StartListener(new StorageNode(), 7915);
 			}
@@ -180,7 +155,6 @@ public class StorageNode extends Agent {
 		
 	}
 
-	@Override
 	public boolean onPrepare(String object, BallotNumber ballot) {
 		// TODO Auto-generated method stub
 		return false;

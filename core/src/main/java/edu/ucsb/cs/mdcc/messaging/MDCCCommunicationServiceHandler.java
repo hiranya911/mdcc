@@ -12,34 +12,29 @@ public class MDCCCommunicationServiceHandler implements Iface {
     public MDCCCommunicationServiceHandler(AgentService agent) {
         this.agent = agent;
     }
-    
-    @Override
+
 	public boolean ping() throws TException {
 		// TODO Auto-generated method stub
 		System.out.println("received ping");
 		return true;
 	}
 
-	@Override
 	public boolean prepare(String object, BallotNumber version)
 			throws TException {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
-	@Override
 	public void decide(String transaction, boolean commit) throws TException {
 		// TODO Auto-generated method stub
 		agent.onDecide(transaction, commit);
 	}
 
-	@Override
 	public String get(String object) throws TException {
 		// TODO Auto-generated method stub
 		return agent.onRead(object);
 	}
 
-	@Override
 	public boolean accept(String transaction, String object, long oldVersion,
 			BallotNumber ballot, String newValue) throws TException {
 		return agent.onAccept(transaction, object, oldVersion, ballot, newValue);

@@ -1,10 +1,6 @@
 package edu.ucsb.cs.mdcc.messaging;
 
-import org.apache.thrift.TException;
-import org.apache.thrift.async.AsyncMethodCallback;
-
-import edu.ucsb.cs.mdcc.MDCCTransaction;
-import edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService.AsyncClient.accept_call;
+import edu.ucsb.cs.mdcc.paxos.AppServer;
 
 public class PaxosTester {
 
@@ -35,7 +31,7 @@ public class PaxosTester {
 		String procId = "proc0";
 		
 		System.out.println("begin transaction");
-		MDCCTransaction txn = new MDCCTransaction(hosts, ports, procId);
+		AppServer txn = new AppServer(hosts, ports, procId);
 		System.out.println("read(a): " + txn.read("a"));
 		System.out.println("read(b): " + txn.read("b"));
 		System.out.println("write(a,hello): " + txn.write("a", "hello"));
@@ -43,7 +39,7 @@ public class PaxosTester {
 		System.out.println("commit: " + txn.commit());
 		
 		System.out.println("begin transaction");
-		txn = new MDCCTransaction(hosts, ports, procId);
+		txn = new AppServer(hosts, ports, procId);
 		System.out.println("read(a): " + txn.read("a"));
 		System.out.println("read(b): " + txn.read("b"));
 		System.out.println("write(a,goodbye): " + txn.write("a", "goodbye"));

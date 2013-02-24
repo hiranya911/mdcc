@@ -148,7 +148,6 @@ public class BallotNumber implements org.apache.thrift.TBase<BallotNumber, Ballo
     return new BallotNumber(this);
   }
 
-  @Override
   public void clear() {
     setBallotIsSet(false);
     this.ballot = 0;
@@ -446,7 +445,6 @@ public class BallotNumber implements org.apache.thrift.TBase<BallotNumber, Ballo
 
   private static class BallotNumberTupleScheme extends TupleScheme<BallotNumber> {
 
-    @Override
     public void write(org.apache.thrift.protocol.TProtocol prot, BallotNumber struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       BitSet optionals = new BitSet();
@@ -465,7 +463,6 @@ public class BallotNumber implements org.apache.thrift.TBase<BallotNumber, Ballo
       }
     }
 
-    @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, BallotNumber struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
       BitSet incoming = iprot.readBitSet(2);
