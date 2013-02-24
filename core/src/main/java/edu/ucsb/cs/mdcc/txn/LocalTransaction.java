@@ -1,5 +1,7 @@
 package edu.ucsb.cs.mdcc.txn;
 
+import edu.ucsb.cs.mdcc.Option;
+import edu.ucsb.cs.mdcc.Result;
 import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import edu.ucsb.cs.mdcc.paxos.*;
 

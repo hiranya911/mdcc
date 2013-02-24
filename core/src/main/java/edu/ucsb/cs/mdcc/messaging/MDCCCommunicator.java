@@ -1,62 +1,68 @@
 package edu.ucsb.cs.mdcc.messaging;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
+import edu.ucsb.cs.mdcc.Option;
+import edu.ucsb.cs.mdcc.config.Member;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.TException;
-import org.apache.thrift.async.AsyncMethodCallback;
-import org.apache.thrift.async.TAsyncClientManager;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.server.TServer;
-import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TNonblockingServerTransport;
-import org.apache.thrift.transport.TNonblockingSocket;
-import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.server.TNonblockingServer;
 
-import edu.ucsb.cs.mdcc.paxos.Agent;
 import edu.ucsb.cs.mdcc.paxos.AgentService;
-import edu.ucsb.cs.mdcc.paxos.StorageNode;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MDCCCommunicator {
-	//protected final Log log = LogFactory.getLog(this.getClass());
+
+    private static final Log log = LogFactory.getLog(MDCCCommunicator.class);
+
+    private ExecutorService exec;
+    private TServer server;
 	
 	//start listener to handle incoming calls
-    public void StartListener(AgentService agent, int port) {
-        try {
-            TNonblockingServerTransport serverTransport = new TNonblockingServerSocket(port);
-            MDCCCommunicationService.Processor processor = new MDCCCommunicationService.Processor(
-            		new MDCCCommunicationServiceHandler(agent));
+    public void startListener(final AgentService agent, final int port) {
+        exec = Executors.newSingleThreadExecutor();
+        exec.submit(new Runnable() {
+            public void run() {
+                try {
+                    TNonblockingServerTransport serverTransport = new TNonblockingServerSocket(port);
+                    MDCCCommunicationService.Processor processor = new MDCCCommunicationService.Processor(
+                            new MDCCCommunicationServiceHandler(agent));
+                    server = new TNonblockingServer(new TNonblockingServer.Args(serverTransport).
+                            processor(processor));
+                    log.info("Starting server on port: " + port);
+                    server.serve();
+                } catch (TTransportException e) {
+                    log.error("Error while initializing the Thrift service", e);
+                }
+            }
+        });
+    }
 
-            TServer server = new TNonblockingServer(new TNonblockingServer.Args(serverTransport).
-                    processor(processor));
-            System.out.println("Starting server on port " + port + " ...");
-            server.serve();
-        } catch (TTransportException e) {
-            //e.printStackTrace();
-        	System.out.println(e.toString());
-
-        }
+    public void stopListener() {
+        server.stop();
+        exec.shutdownNow();
     }
 
     //check whether a node is up and reachable
-	public boolean ping(String hostName, int port) {
-        //TTransport transport = new TSocket(hostName, port);
-		TTransport transport = new TFramedTransport(new TSocket(hostName, port));
+	public boolean ping(Member member) {
+        String host = member.getHostName();
+        int port = member.getPort();
+        TTransport transport = new TFramedTransport(new TSocket(host, port));
         try {
-            edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService.Client client = getClient(transport);
+            MDCCCommunicationService.Client client = getClient(transport);
             return client.ping();
         } catch (TException e) {
-            handleException(hostName, e);
+            handleException(host, e);
             return false;
         } finally {
             close(transport);
@@ -64,67 +70,55 @@ public class MDCCCommunicator {
     }
 	
 	//send an accept message to another node, returns true if node accepts the proposal
-	public boolean sendAccept(String hostName, int port, String transaction, String object, long oldVersion, BallotNumber ballot, String value) {
-		TTransport transport = new TFramedTransport(new TSocket(hostName, port));
+	public boolean sendAccept(Member member, String transaction, BallotNumber ballot, Option option) {
+        String host = member.getHostName();
+        int port = member.getPort();
+        TTransport transport = new TFramedTransport(new TSocket(host, port));
         try {
-            edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService.Client client = getClient(transport);
-            return client.accept(transaction, object, oldVersion, ballot, value);
+            MDCCCommunicationService.Client client = getClient(transport);
+            return client.accept(transaction, option.getKey(),
+                    option.getOldVersion(), ballot, option.getValue().toString());
         } catch (TException e) {
-            handleException(hostName, e);
+            handleException(host, e);
             return false;
         } finally {
             close(transport);
         }
 	}
 	
-	public boolean sendDecide(String hostName, int port, String transaction, boolean commit) {
-		TTransport transport = new TFramedTransport(new TSocket(hostName, port));
+	public boolean sendDecide(Member member, String transaction, boolean commit) {
+        String host = member.getHostName();
+        int port = member.getPort();
+        TTransport transport = new TFramedTransport(new TSocket(host, port));
         try {
-            edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService.Client client = getClient(transport);
+            MDCCCommunicationService.Client client = getClient(transport);
             client.decide(transaction, commit);
             return true;
         } catch (TException e) {
-            handleException(hostName, e);
+            handleException(host, e);
             return false;
         } finally {
             close(transport);
         }
 	}
 	
-	public String get(String hostName, int port, String object)
-	{
-		TTransport transport = new TFramedTransport(new TSocket(hostName, port));
+	public String get(Member member, String object) {
+        String host = member.getHostName();
+        int port = member.getPort();
+        TTransport transport = new TFramedTransport(new TSocket(host, port));
         try {
-            edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService.Client client = getClient(transport);
+            MDCCCommunicationService.Client client = getClient(transport);
             return client.get(object);
         } catch (TException e) {
-            handleException(hostName, e);
+            handleException(host, e);
             return null;
         } finally {
             close(transport);
         }
 	}
 	
-	public void sendAcceptAsync(String hostName, int port, String transaction, String object, int oldVersion, BallotNumber ballot, String value,
-			AsyncMethodCallback<MDCCCommunicationService.AsyncClient.accept_call> callback) {
-
-        try {
-        	MDCCCommunicationService.AsyncClient client = new MDCCCommunicationService.
-                    AsyncClient(new TBinaryProtocol.Factory(), new TAsyncClientManager(),
-                                new TNonblockingSocket(hostName, port));
-
-            client.accept(transaction, object, oldVersion, ballot, value, callback);
-
-        } catch (TTransportException e) {
-            e.printStackTrace();
-        } catch (TException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-	}
-	
-	private MDCCCommunicationService.Client getClient(TTransport transport) throws TTransportException {
+	private MDCCCommunicationService.Client getClient(
+            TTransport transport) throws TTransportException {
         transport.open();
         TProtocol protocol = new TBinaryProtocol(transport);
         return new MDCCCommunicationService.Client(protocol);
@@ -138,26 +132,7 @@ public class MDCCCommunicator {
 
     private void handleException(String target, TException e) {
         String msg = "Error contacting the remote member: " + target;
-        //log.debug(msg, e);
-        System.out.println(msg + e.toString());
+        log.debug(msg, e);
     }
-    
-    //Main function for testing Communicator
-    public static void main(String args[])
-    {
-        /*try {
-            TServerSocket serverTransport = new TServerSocket(7911);
 
-            MDCCCommunicationService.Processor processor = new MDCCCommunicationService.Processor(new MDCCCommunicationServiceHandler());
-
-            TServer server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport).
-                    processor(processor));
-            System.out.println("Starting server on port 7911 ...");
-            server.serve();
-        } catch (TTransportException e) {
-            e.printStackTrace();
-        }*/
-    	MDCCCommunicator comms = new MDCCCommunicator();
-    	comms.StartListener(new StorageNode(), 7911);
-    }
 }

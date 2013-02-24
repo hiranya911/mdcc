@@ -1,5 +1,8 @@
 package edu.ucsb.cs.mdcc.paxos;
 
+import edu.ucsb.cs.mdcc.Option;
+import edu.ucsb.cs.mdcc.Result;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;

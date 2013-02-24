@@ -2,6 +2,8 @@ package edu.ucsb.cs.mdcc.paxos;
 
 import java.util.Collection;
 
+import edu.ucsb.cs.mdcc.Option;
+import edu.ucsb.cs.mdcc.Result;
 import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import edu.ucsb.cs.mdcc.config.Member;
 import edu.ucsb.cs.mdcc.messaging.BallotNumber;
@@ -9,19 +11,14 @@ import edu.ucsb.cs.mdcc.messaging.MDCCCommunicator;
 
 public class AppServer {
 
-	private int fastQuorum;
-	MDCCConfiguration configuration;
-    private String procId;
+	private int quorumSize;
+	private MDCCConfiguration configuration;
     private MDCCCommunicator communicator;
-    private Member[] members;
 
-	
     public AppServer(MDCCConfiguration configuration) {
-		this.configuration = configuration;
-		members = configuration.getMembers();
-		procId = configuration.getMyProcId();
-		int n = members.length;
-		fastQuorum = n - (n / 4) + ((n + 1) % 2);
+        int n = configuration.getMembers().length;
+        this.configuration = configuration;
+		this.quorumSize = n - (n / 4) + ((n + 1) % 2);
         this.communicator = new MDCCCommunicator();
 	}
     
@@ -30,7 +27,8 @@ public class AppServer {
 	}
 	
 	public Result read(String key) {
-		String readString = communicator.get(members[0].getHostName(), members[0].getPort(), key);
+        Member[] members = configuration.getMembers();
+		String readString = communicator.get(members[0], key);
 		if (readString == null) {
 			return null;
         } else {
@@ -39,38 +37,38 @@ public class AppServer {
         		version = Long.parseLong(readString.substring(0, readString.indexOf('|')));
 			readString = readString.substring(readString.indexOf('|') + 1);
 			readString = readString.substring(readString.indexOf('|') + 1);
-			Result res = new Result(key, readString, version);
-			return res;
+			return new Result(key, readString, version);
 		}
 	}
 	
 	public boolean commit(String txnId, Collection<Option> options) {
 		boolean success = true;
+        Member[] members = configuration.getMembers();
+        String serverId = configuration.getServerId();
         for (Option option : options) {
             int accepts = 0;
             int rejects = 0;
-            for(Member m : members) {
-                BallotNumber ballot = new BallotNumber(-1, procId);
-                if (communicator.sendAccept(m.getHostName(), m.getPort(), txnId, option.getKey(),
-                        option.getOldVersion(), ballot, option.getValue().toString())) {
+            for(Member member : members) {
+                BallotNumber ballot = new BallotNumber(-1, serverId);
+                if (communicator.sendAccept(member, txnId, ballot, option)) {
                     accepts++;
                 } else {
                     rejects++;
                 }
 
-                if (members.length - rejects < fastQuorum)
+                if (members.length - rejects < quorumSize) {
                     break;
+                }
             }
 
-            if (accepts < fastQuorum) {
+            if (accepts < quorumSize) {
                 success = false;
                 break;
             }
         }
 
-        for (int i = 0; i < members.length; i++) {
-            communicator.sendDecide(members[i].getHostName(),
-                    members[i].getPort(), txnId, success);
+        for (Member member : members) {
+            communicator.sendDecide(member, txnId, success);
         }
         return success;
 	}
