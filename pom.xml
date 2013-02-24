@@ -64,6 +64,12 @@
                 <artifactId>hbase</artifactId>
                 <version>0.94.5</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-core</artifactId>
+                <version>1.0.4</version>
+            </dependency>
+
 
             <dependency>
                 <groupId>edu.ucsb.cs.mdcc</groupId>
