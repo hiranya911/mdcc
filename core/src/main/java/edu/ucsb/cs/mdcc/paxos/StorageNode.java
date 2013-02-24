@@ -73,7 +73,7 @@ public class StorageNode extends Agent {
 			System.out.println("Recevied Abort on transaction id: " + transaction);
         }
 
-		if (commit) {
+		if (commit && txns.containsKey(transaction)) {
 			try {
 				for (String option : txns.get(transaction))
 				{
@@ -86,9 +86,8 @@ public class StorageNode extends Agent {
 			} catch(Exception ex) {
 				System.out.println(ex.toString());
 			}
-		} else {
-			txns.remove(transaction);
-        }
+		}
+		txns.remove(transaction);
 	}
 
 	public String onRead(String object) {
