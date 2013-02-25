@@ -10,7 +10,7 @@
     <version>1.0</version>
     <modules>
         <module>core</module>
-        <!--module>distribution</module-->
+        <module>distribution</module>
     </modules>
 
     <dependencyManagement>
