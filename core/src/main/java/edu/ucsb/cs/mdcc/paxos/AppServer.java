@@ -48,7 +48,7 @@ public class AppServer {
         for (Option option : options) {
             int accepts = 0;
             int rejects = 0;
-            for(Member member : members) {
+            for (Member member : members) {
                 BallotNumber ballot = new BallotNumber(-1, serverId);
                 if (communicator.sendAccept(member, txnId, ballot, option)) {
                     accepts++;

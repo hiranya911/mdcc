@@ -4,12 +4,12 @@
     <formats>
         <format>zip</format>
     </formats>
-    <!--fileSets>
+    <fileSets>
         <fileSet>
             <directory>src/main/assembly/db</directory>
-            <outputDirectory>wrench-${project.version}/db</outputDirectory>
+            <outputDirectory>mdcc-${project.version}/db</outputDirectory>
         </fileSet>
-    </fileSets-->
+    </fileSets>
     <files>
         <file>
             <source>src/main/assembly/storage-server.sh</source>
