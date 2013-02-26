@@ -1,13 +1,17 @@
 package edu.ucsb.cs.mdcc.paxos;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import edu.ucsb.cs.mdcc.messaging.BallotNumber;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicator;
+import edu.ucsb.cs.mdcc.messaging.ReadValue;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -16,8 +20,9 @@ public class StorageNode extends Agent {
     private static final Log log = LogFactory.getLog(StorageNode.class);
 
 	private Map<String, Boolean> outstandingOptions = new HashMap<String, Boolean>();
-    private Map<String,String> db = new HashMap<String, String>();
-    private  Map<String, List<String>> transactions = new HashMap<String, List<String>>();
+    private Map<String,BallotNumber> ballots = new HashMap<String, BallotNumber>();
+    private Map<String, ReadValue> db = new HashMap<String, ReadValue>();
+    private  Map<String, List<Option>> transactions = new HashMap<String, List<Option>>();
     private MDCCConfiguration config;
 
     private MDCCCommunicator communicator;
@@ -41,7 +46,7 @@ public class StorageNode extends Agent {
     }
 
     public boolean onAccept(String transaction, String key,
-			long oldVersion, BallotNumber ballot, String value) {
+			long oldVersion, BallotNumber ballot, ByteBuffer value) {
 		log.info("received accept message for: txn=" + transaction + "; obj=" + key);
 		
 		synchronized (key.intern()) {
@@ -52,33 +57,30 @@ public class StorageNode extends Agent {
 				return false;
             }
 
-            String currentEntry;
+            ReadValue entryValue;
+            BallotNumber entryBallot;
             if (!db.containsKey(key)) {
-                db.put(key, "0|0:|");
-                currentEntry = "0|0:|";
+            	entryValue = new ReadValue(0, ByteBuffer.allocate(0));
+            	entryBallot = new BallotNumber(0,"");
+                db.put(key, entryValue);
+                ballots.put(key, entryBallot);
             } else {
-                currentEntry = db.get(key);
+                entryValue = db.get(key);
+                entryBallot = ballots.get(key);
             }
 
-            long version = Long.parseLong(currentEntry.substring(0,
-                    currentEntry.indexOf('|')));
-            currentEntry = currentEntry.substring(currentEntry.indexOf('|') + 1);
-            BallotNumber oldBallot = new BallotNumber(Long.parseLong(
-                    currentEntry.substring(0, currentEntry.indexOf(':'))),
-                    currentEntry.substring(currentEntry.indexOf(':') + 1,
-                            currentEntry.indexOf('|')));
+            long version = entryValue.getVersion();
             //if it is a new insert
-            boolean success = (version == oldVersion) && (ballot.getBallot() == -1 ||
-                    ((ballot.getBallot() + ":" + ballot.getProcessId()).compareTo(
-                            oldBallot.getBallot() + ":" + oldBallot.getProcessId()) >= 0));
+            boolean success = (version == oldVersion) && (ballot.getNumber() == -1 ||
+                    ((ballot.getNumber() + ":" + ballot.getProcessId()).compareTo(
+                            entryBallot.getNumber() + ":" + entryBallot.getProcessId()) >= 0));
 
             if (success) {
                 outstandingOptions.put(key, true);
                 if (!transactions.containsKey(transaction)) {
-                    transactions.put(transaction, new LinkedList<String>());
+                    transactions.put(transaction, new LinkedList<Option>());
                 }
-                transactions.get(transaction).add(key + "|" + (oldVersion + 1) + "|" +
-                        oldBallot.getBallot() + ":" + oldBallot.getProcessId() + "|" + value);
+                transactions.get(transaction).add(new Option(key,ByteBuffer.wrap(entryValue.getValue()), entryValue.getVersion()));
 				log.info("option accepted");
             } else {
 				log.warn("option denied");
@@ -96,11 +98,9 @@ public class StorageNode extends Agent {
 
 		if (commit && transactions.containsKey(transaction)) {
 			try {
-				for (String option : transactions.get(transaction)) {
-					String object = option.substring(0, option.indexOf('|'));
-					String newVersion = option.substring(option.indexOf('|') + 1);
-					db.put(object, newVersion);
-					outstandingOptions.remove(object);
+				for (Option option : transactions.get(transaction)) {
+					db.put(option.getKey(), new ReadValue(option.getOldVersion() + 1, option.getValue()));
+					outstandingOptions.remove(option.getKey());
 				}
 			} catch(Exception ex) {
 				System.out.println(ex.toString());
@@ -109,11 +109,11 @@ public class StorageNode extends Agent {
 		transactions.remove(transaction);
 	}
 
-	public String onRead(String object) {
+	public ReadValue onRead(String object) {
 		if (db.containsKey(object)) {
 			return db.get(object);
         } else {
-			return "||";
+			return new ReadValue(0, ByteBuffer.allocate(0));
         }
 	}
 

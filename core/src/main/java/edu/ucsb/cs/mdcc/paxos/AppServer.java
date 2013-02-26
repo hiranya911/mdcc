@@ -1,5 +1,6 @@
 package edu.ucsb.cs.mdcc.paxos;
 
+import java.nio.ByteBuffer;
 import java.util.Collection;
 
 import edu.ucsb.cs.mdcc.Option;
@@ -8,6 +9,7 @@ import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import edu.ucsb.cs.mdcc.config.Member;
 import edu.ucsb.cs.mdcc.messaging.BallotNumber;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicator;
+import edu.ucsb.cs.mdcc.messaging.ReadValue;
 
 public class AppServer {
 
@@ -26,16 +28,11 @@ public class AppServer {
     
 	public Result read(String key) {
         Member[] members = configuration.getMembers();
-		String readString = communicator.get(members[0], key);
-		if (readString == null) {
+		ReadValue readValue = communicator.get(members[0], key);
+		if (readValue == null) {
 			return null;
         } else {
-        	long version = 0;
-        	if (!readString.startsWith("|"))
-        		version = Long.parseLong(readString.substring(0, readString.indexOf('|')));
-			readString = readString.substring(readString.indexOf('|') + 1);
-			readString = readString.substring(readString.indexOf('|') + 1);
-			return new Result(key, readString, version);
+			return new Result(key, ByteBuffer.wrap(readValue.getValue()), readValue.getVersion());
 		}
 	}
 	

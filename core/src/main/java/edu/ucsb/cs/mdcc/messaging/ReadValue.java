@@ -30,25 +30,25 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BallotNumber implements org.apache.thrift.TBase<BallotNumber, BallotNumber._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("BallotNumber");
+public class ReadValue implements org.apache.thrift.TBase<ReadValue, ReadValue._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("ReadValue");
 
-  private static final org.apache.thrift.protocol.TField NUMBER_FIELD_DESC = new org.apache.thrift.protocol.TField("number", org.apache.thrift.protocol.TType.I64, (short)1);
-  private static final org.apache.thrift.protocol.TField PROCESS_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("processId", org.apache.thrift.protocol.TType.STRING, (short)2);
+  private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.I64, (short)1);
+  private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.STRING, (short)2);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
-    schemes.put(StandardScheme.class, new BallotNumberStandardSchemeFactory());
-    schemes.put(TupleScheme.class, new BallotNumberTupleSchemeFactory());
+    schemes.put(StandardScheme.class, new ReadValueStandardSchemeFactory());
+    schemes.put(TupleScheme.class, new ReadValueTupleSchemeFactory());
   }
 
-  public long number; // required
-  public String processId; // required
+  public long version; // required
+  public ByteBuffer value; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    NUMBER((short)1, "number"),
-    PROCESS_ID((short)2, "processId");
+    VERSION((short)1, "version"),
+    VALUE((short)2, "value");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -63,10 +63,10 @@ public class BallotNumber implements org.apache.thrift.TBase<BallotNumber, Ballo
      */
     public static _Fields findByThriftId(int fieldId) {
       switch(fieldId) {
-        case 1: // NUMBER
-          return NUMBER;
-        case 2: // PROCESS_ID
-          return PROCESS_ID;
+        case 1: // VERSION
+          return VERSION;
+        case 2: // VALUE
+          return VALUE;
         default:
           return null;
       }
@@ -107,116 +107,127 @@ public class BallotNumber implements org.apache.thrift.TBase<BallotNumber, Ballo
   }
 
   // isset id assignments
-  private static final int __NUMBER_ISSET_ID = 0;
+  private static final int __VERSION_ISSET_ID = 0;
   private byte __isset_bitfield = 0;
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.NUMBER, new org.apache.thrift.meta_data.FieldMetaData("number", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
-    tmpMap.put(_Fields.PROCESS_ID, new org.apache.thrift.meta_data.FieldMetaData("processId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(BallotNumber.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ReadValue.class, metaDataMap);
   }
 
-  public BallotNumber() {
+  public ReadValue() {
   }
 
-  public BallotNumber(
-    long number,
-    String processId)
+  public ReadValue(
+    long version,
+    ByteBuffer value)
   {
     this();
-    this.number = number;
-    setNumberIsSet(true);
-    this.processId = processId;
+    this.version = version;
+    setVersionIsSet(true);
+    this.value = value;
   }
 
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public BallotNumber(BallotNumber other) {
+  public ReadValue(ReadValue other) {
     __isset_bitfield = other.__isset_bitfield;
-    this.number = other.number;
-    if (other.isSetProcessId()) {
-      this.processId = other.processId;
+    this.version = other.version;
+    if (other.isSetValue()) {
+      this.value = org.apache.thrift.TBaseHelper.copyBinary(other.value);
+;
     }
   }
 
-  public BallotNumber deepCopy() {
-    return new BallotNumber(this);
+  public ReadValue deepCopy() {
+    return new ReadValue(this);
   }
 
   @Override
   public void clear() {
-    setNumberIsSet(false);
-    this.number = 0;
-    this.processId = null;
+    setVersionIsSet(false);
+    this.version = 0;
+    this.value = null;
   }
 
-  public long getNumber() {
-    return this.number;
+  public long getVersion() {
+    return this.version;
   }
 
-  public BallotNumber setNumber(long number) {
-    this.number = number;
-    setNumberIsSet(true);
+  public ReadValue setVersion(long version) {
+    this.version = version;
+    setVersionIsSet(true);
     return this;
   }
 
-  public void unsetNumber() {
-    __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __NUMBER_ISSET_ID);
+  public void unsetVersion() {
+    __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __VERSION_ISSET_ID);
   }
 
-  /** Returns true if field number is set (has been assigned a value) and false otherwise */
-  public boolean isSetNumber() {
-    return EncodingUtils.testBit(__isset_bitfield, __NUMBER_ISSET_ID);
+  /** Returns true if field version is set (has been assigned a value) and false otherwise */
+  public boolean isSetVersion() {
+    return EncodingUtils.testBit(__isset_bitfield, __VERSION_ISSET_ID);
   }
 
-  public void setNumberIsSet(boolean value) {
-    __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __NUMBER_ISSET_ID, value);
+  public void setVersionIsSet(boolean value) {
+    __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __VERSION_ISSET_ID, value);
   }
 
-  public String getProcessId() {
-    return this.processId;
+  public byte[] getValue() {
+    setValue(org.apache.thrift.TBaseHelper.rightSize(value));
+    return value == null ? null : value.array();
   }
 
-  public BallotNumber setProcessId(String processId) {
-    this.processId = processId;
+  public ByteBuffer bufferForValue() {
+    return value;
+  }
+
+  public ReadValue setValue(byte[] value) {
+    setValue(value == null ? (ByteBuffer)null : ByteBuffer.wrap(value));
     return this;
   }
 
-  public void unsetProcessId() {
-    this.processId = null;
+  public ReadValue setValue(ByteBuffer value) {
+    this.value = value;
+    return this;
   }
 
-  /** Returns true if field processId is set (has been assigned a value) and false otherwise */
-  public boolean isSetProcessId() {
-    return this.processId != null;
+  public void unsetValue() {
+    this.value = null;
   }
 
-  public void setProcessIdIsSet(boolean value) {
+  /** Returns true if field value is set (has been assigned a value) and false otherwise */
+  public boolean isSetValue() {
+    return this.value != null;
+  }
+
+  public void setValueIsSet(boolean value) {
     if (!value) {
-      this.processId = null;
+      this.value = null;
     }
   }
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-    case NUMBER:
+    case VERSION:
       if (value == null) {
-        unsetNumber();
+        unsetVersion();
       } else {
-        setNumber((Long)value);
+        setVersion((Long)value);
       }
       break;
 
-    case PROCESS_ID:
+    case VALUE:
       if (value == null) {
-        unsetProcessId();
+        unsetValue();
       } else {
-        setProcessId((String)value);
+        setValue((ByteBuffer)value);
       }
       break;
 
@@ -225,11 +236,11 @@ public class BallotNumber implements org.apache.thrift.TBase<BallotNumber, Ballo
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-    case NUMBER:
-      return Long.valueOf(getNumber());
+    case VERSION:
+      return Long.valueOf(getVersion());
 
-    case PROCESS_ID:
-      return getProcessId();
+    case VALUE:
+      return getValue();
 
     }
     throw new IllegalStateException();
@@ -242,10 +253,10 @@ public class BallotNumber implements org.apache.thrift.TBase<BallotNumber, Ballo
     }
 
     switch (field) {
-    case NUMBER:
-      return isSetNumber();
-    case PROCESS_ID:
-      return isSetProcessId();
+    case VERSION:
+      return isSetVersion();
+    case VALUE:
+      return isSetValue();
     }
     throw new IllegalStateException();
   }
@@ -254,30 +265,30 @@ public class BallotNumber implements org.apache.thrift.TBase<BallotNumber, Ballo
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof BallotNumber)
-      return this.equals((BallotNumber)that);
+    if (that instanceof ReadValue)
+      return this.equals((ReadValue)that);
     return false;
   }
 
-  public boolean equals(BallotNumber that) {
+  public boolean equals(ReadValue that) {
     if (that == null)
       return false;
 
-    boolean this_present_number = true;
-    boolean that_present_number = true;
-    if (this_present_number || that_present_number) {
-      if (!(this_present_number && that_present_number))
+    boolean this_present_version = true;
+    boolean that_present_version = true;
+    if (this_present_version || that_present_version) {
+      if (!(this_present_version && that_present_version))
         return false;
-      if (this.number != that.number)
+      if (this.version != that.version)
         return false;
     }
 
-    boolean this_present_processId = true && this.isSetProcessId();
-    boolean that_present_processId = true && that.isSetProcessId();
-    if (this_present_processId || that_present_processId) {
-      if (!(this_present_processId && that_present_processId))
+    boolean this_present_value = true && this.isSetValue();
+    boolean that_present_value = true && that.isSetValue();
+    if (this_present_value || that_present_value) {
+      if (!(this_present_value && that_present_value))
         return false;
-      if (!this.processId.equals(that.processId))
+      if (!this.value.equals(that.value))
         return false;
     }
 
@@ -289,30 +300,30 @@ public class BallotNumber implements org.apache.thrift.TBase<BallotNumber, Ballo
     return 0;
   }
 
-  public int compareTo(BallotNumber other) {
+  public int compareTo(ReadValue other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    BallotNumber typedOther = (BallotNumber)other;
+    ReadValue typedOther = (ReadValue)other;
 
-    lastComparison = Boolean.valueOf(isSetNumber()).compareTo(typedOther.isSetNumber());
+    lastComparison = Boolean.valueOf(isSetVersion()).compareTo(typedOther.isSetVersion());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetNumber()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.number, typedOther.number);
+    if (isSetVersion()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.version, typedOther.version);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetProcessId()).compareTo(typedOther.isSetProcessId());
+    lastComparison = Boolean.valueOf(isSetValue()).compareTo(typedOther.isSetValue());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetProcessId()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.processId, typedOther.processId);
+    if (isSetValue()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.value, typedOther.value);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -334,18 +345,18 @@ public class BallotNumber implements org.apache.thrift.TBase<BallotNumber, Ballo
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("BallotNumber(");
+    StringBuilder sb = new StringBuilder("ReadValue(");
     boolean first = true;
 
-    sb.append("number:");
-    sb.append(this.number);
+    sb.append("version:");
+    sb.append(this.version);
     first = false;
     if (!first) sb.append(", ");
-    sb.append("processId:");
-    if (this.processId == null) {
+    sb.append("value:");
+    if (this.value == null) {
       sb.append("null");
     } else {
-      sb.append(this.processId);
+      org.apache.thrift.TBaseHelper.toString(this.value, sb);
     }
     first = false;
     sb.append(")");
@@ -375,15 +386,15 @@ public class BallotNumber implements org.apache.thrift.TBase<BallotNumber, Ballo
     }
   }
 
-  private static class BallotNumberStandardSchemeFactory implements SchemeFactory {
-    public BallotNumberStandardScheme getScheme() {
-      return new BallotNumberStandardScheme();
+  private static class ReadValueStandardSchemeFactory implements SchemeFactory {
+    public ReadValueStandardScheme getScheme() {
+      return new ReadValueStandardScheme();
     }
   }
 
-  private static class BallotNumberStandardScheme extends StandardScheme<BallotNumber> {
+  private static class ReadValueStandardScheme extends StandardScheme<ReadValue> {
 
-    public void read(org.apache.thrift.protocol.TProtocol iprot, BallotNumber struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol iprot, ReadValue struct) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField schemeField;
       iprot.readStructBegin();
       while (true)
@@ -393,18 +404,18 @@ public class BallotNumber implements org.apache.thrift.TBase<BallotNumber, Ballo
           break;
         }
         switch (schemeField.id) {
-          case 1: // NUMBER
+          case 1: // VERSION
             if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
-              struct.number = iprot.readI64();
-              struct.setNumberIsSet(true);
+              struct.version = iprot.readI64();
+              struct.setVersionIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 2: // PROCESS_ID
+          case 2: // VALUE
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-              struct.processId = iprot.readString();
-              struct.setProcessIdIsSet(true);
+              struct.value = iprot.readBinary();
+              struct.setValueIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -420,16 +431,16 @@ public class BallotNumber implements org.apache.thrift.TBase<BallotNumber, Ballo
       struct.validate();
     }
 
-    public void write(org.apache.thrift.protocol.TProtocol oprot, BallotNumber struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot, ReadValue struct) throws org.apache.thrift.TException {
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      oprot.writeFieldBegin(NUMBER_FIELD_DESC);
-      oprot.writeI64(struct.number);
+      oprot.writeFieldBegin(VERSION_FIELD_DESC);
+      oprot.writeI64(struct.version);
       oprot.writeFieldEnd();
-      if (struct.processId != null) {
-        oprot.writeFieldBegin(PROCESS_ID_FIELD_DESC);
-        oprot.writeString(struct.processId);
+      if (struct.value != null) {
+        oprot.writeFieldBegin(VALUE_FIELD_DESC);
+        oprot.writeBinary(struct.value);
         oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
@@ -438,44 +449,44 @@ public class BallotNumber implements org.apache.thrift.TBase<BallotNumber, Ballo
 
   }
 
-  private static class BallotNumberTupleSchemeFactory implements SchemeFactory {
-    public BallotNumberTupleScheme getScheme() {
-      return new BallotNumberTupleScheme();
+  private static class ReadValueTupleSchemeFactory implements SchemeFactory {
+    public ReadValueTupleScheme getScheme() {
+      return new ReadValueTupleScheme();
     }
   }
 
-  private static class BallotNumberTupleScheme extends TupleScheme<BallotNumber> {
+  private static class ReadValueTupleScheme extends TupleScheme<ReadValue> {
 
     @Override
-    public void write(org.apache.thrift.protocol.TProtocol prot, BallotNumber struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol prot, ReadValue struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       BitSet optionals = new BitSet();
-      if (struct.isSetNumber()) {
+      if (struct.isSetVersion()) {
         optionals.set(0);
       }
-      if (struct.isSetProcessId()) {
+      if (struct.isSetValue()) {
         optionals.set(1);
       }
       oprot.writeBitSet(optionals, 2);
-      if (struct.isSetNumber()) {
-        oprot.writeI64(struct.number);
+      if (struct.isSetVersion()) {
+        oprot.writeI64(struct.version);
       }
-      if (struct.isSetProcessId()) {
-        oprot.writeString(struct.processId);
+      if (struct.isSetValue()) {
+        oprot.writeBinary(struct.value);
       }
     }
 
     @Override
-    public void read(org.apache.thrift.protocol.TProtocol prot, BallotNumber struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol prot, ReadValue struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
       BitSet incoming = iprot.readBitSet(2);
       if (incoming.get(0)) {
-        struct.number = iprot.readI64();
-        struct.setNumberIsSet(true);
+        struct.version = iprot.readI64();
+        struct.setVersionIsSet(true);
       }
       if (incoming.get(1)) {
-        struct.processId = iprot.readString();
-        struct.setProcessIdIsSet(true);
+        struct.value = iprot.readBinary();
+        struct.setValueIsSet(true);
       }
     }
   }
