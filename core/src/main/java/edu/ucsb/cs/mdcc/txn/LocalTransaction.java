@@ -14,10 +14,7 @@ public class LocalTransaction extends Transaction {
 
     public LocalTransaction() {
         super();
-        Properties prop = new Properties();
-        prop.setProperty("mdcc.myid", "local");
-        prop.setProperty("mdcc.server.node1", "localhost:7911");
-        this.appServer = new AppServer(new MDCCConfiguration(prop));
+        this.appServer = new AppServer();
     }
 
     protected Result doRead(String key) {

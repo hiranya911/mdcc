@@ -1,5 +1,6 @@
 package edu.ucsb.cs.mdcc.paxos;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.thrift.TException;
@@ -13,46 +14,46 @@ public class VoteCounter implements  AsyncMethodCallback<MDCCCommunicationServic
 
 	private AtomicInteger accepts = new AtomicInteger(0);
 	private AtomicInteger rejects = new AtomicInteger(0);
+    private AtomicBoolean outcomeReached = new AtomicBoolean(false);
 	private VoteResult callback;
-	int acceptQuorum;
-	int numVoters;
-	Option myOption;
+    private int acceptQuorum;
+    private int numVoters;
+    private Option myOption;
 	
-	public VoteCounter(Option option, int acceptQuroum, int numVoters, VoteResult callback) {
+	public VoteCounter(Option option, int acceptQuorum, int numVoters, VoteResult callback) {
 		this.callback = callback;
-		this.acceptQuorum = acceptQuroum;
+		this.acceptQuorum = acceptQuorum;
 		this.numVoters = numVoters;
 		this.myOption = option;
 	}
 	
-	public int getAccepts() {
-		return accepts.get();
-	}
-	
-	public int getRejects() {
-		return rejects.get();
-	}
-	
-	@Override
 	public void onComplete(accept_call response) {
-		try {
-			if (response.getResult()) {
-				if (accepts.incrementAndGet() >= acceptQuorum)
-					callback.Outcome(myOption, true);
-			}
-			else {
-				if (rejects.incrementAndGet() > (numVoters - acceptQuorum))
-					callback.Outcome(myOption, false);
-			}
-		} catch (TException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+        try {
+            if (response.getResult()) {
+                onAccept();
+            } else {
+                onReject();
+            }
+        } catch (TException e) {
+			onReject();
 		}
 	}
 
-	@Override
 	public void onError(Exception exception) {
-		if (rejects.incrementAndGet() > (numVoters - acceptQuorum))
-			callback.Outcome(myOption, false);
+		onReject();
 	}
+
+    private void onAccept() {
+        if (accepts.incrementAndGet() >= acceptQuorum &&
+                outcomeReached.compareAndSet(false, true)) {
+            callback.notifyOutcome(myOption, true);
+        }
+    }
+
+    private void onReject() {
+        if (rejects.incrementAndGet() > (numVoters - acceptQuorum) &&
+                outcomeReached.compareAndSet(false, true)) {
+            callback.notifyOutcome(myOption, false);
+        }
+    }
 }

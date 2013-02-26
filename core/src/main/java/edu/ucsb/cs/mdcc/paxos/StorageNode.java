@@ -5,42 +5,50 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import edu.ucsb.cs.mdcc.messaging.BallotNumber;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicator;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class StorageNode extends Agent {
 
+    private static final Log log = LogFactory.getLog(StorageNode.class);
+
 	private Map<String, Boolean> outstandingOptions = new HashMap<String, Boolean>();
     private Map<String,String> db = new HashMap<String, String>();
-    private  Map<String, List<String>> txns = new HashMap<String, List<String>>();
+    private  Map<String, List<String>> transactions = new HashMap<String, List<String>>();
+    private MDCCConfiguration config;
 
     private MDCCCommunicator communicator;
-    private int port;
 
-    public StorageNode(int port) {
-        this.port = port;
+    public StorageNode() {
+        this.config = MDCCConfiguration.getConfiguration();
         this.communicator = new MDCCCommunicator();
     }
 
     @Override
     public void start() {
-        //super.start();
+        super.start();
+        int port = config.getLocalMember().getPort();
         communicator.startListener(this, port);
     }
 
     @Override
     public void stop() {
-        //super.stop();
+        super.stop();
         communicator.stopListener();
     }
 
     public boolean onAccept(String transaction, String key,
 			long oldVersion, BallotNumber ballot, String value) {
-		System.out.println("received accept message for: txn=" + transaction + "; obj=" + key);
+		log.info("received accept message for: txn=" + transaction + "; obj=" + key);
 		
 		synchronized (key.intern()) {
             Boolean outstanding = outstandingOptions.get(key);
 			if (Boolean.TRUE.equals(outstanding)) {
+                log.warn("Outstanding option detected on " + key +
+                        " - Denying the new option");
 				return false;
             }
 
@@ -66,14 +74,14 @@ public class StorageNode extends Agent {
 
             if (success) {
                 outstandingOptions.put(key, true);
-                if (!txns.containsKey(transaction)) {
-                    txns.put(transaction, new LinkedList<String>());
+                if (!transactions.containsKey(transaction)) {
+                    transactions.put(transaction, new LinkedList<String>());
                 }
-                txns.get(transaction).add(key + "|" + (oldVersion + 1) + "|" +
+                transactions.get(transaction).add(key + "|" + (oldVersion + 1) + "|" +
                         oldBallot.getBallot() + ":" + oldBallot.getProcessId() + "|" + value);
-				System.out.println("option accepted");
+				log.info("option accepted");
             } else {
-				System.out.println("option denied");
+				log.warn("option denied");
             }
 			return success;
 		}
@@ -81,14 +89,14 @@ public class StorageNode extends Agent {
 
 	public void onDecide(String transaction, boolean commit) {
 		if (commit) {
-			System.out.println("Received Commit decision on transaction id: " + transaction);
+			log.info("Received Commit decision on transaction id: " + transaction);
         } else {
-			System.out.println("Received Abort on transaction id: " + transaction);
+			log.info("Received Abort on transaction id: " + transaction);
         }
 
-		if (commit && txns.containsKey(transaction)) {
+		if (commit && transactions.containsKey(transaction)) {
 			try {
-				for (String option : txns.get(transaction)) {
+				for (String option : transactions.get(transaction)) {
 					String object = option.substring(0, option.indexOf('|'));
 					String newVersion = option.substring(option.indexOf('|') + 1);
 					db.put(object, newVersion);
@@ -98,7 +106,7 @@ public class StorageNode extends Agent {
 				System.out.println(ex.toString());
 			}
 		}
-		txns.remove(transaction);
+		transactions.remove(transaction);
 	}
 
 	public String onRead(String object) {
@@ -110,20 +118,14 @@ public class StorageNode extends Agent {
 	}
 
 	public static void main(String[] args) {
-        StorageNode node1 = new StorageNode(7911);
-        node1.start();
-
-        StorageNode node2 = new StorageNode(7912);
-        node2.start();
-
-        StorageNode node3 = new StorageNode(7913);
-        node3.start();
-
-        StorageNode node4 = new StorageNode(7914);
-        node4.start();
-
-        StorageNode node5 = new StorageNode(7915);
-        node5.start();
+        final StorageNode storageNode = new StorageNode();
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                storageNode.stop();
+            }
+        });
+        storageNode.start();
 	}
 
 	public boolean onPrepare(String object, BallotNumber ballot) {

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -18,24 +19,17 @@ public class MDCCConfiguration {
 
 	private static volatile MDCCConfiguration config = null;
 	
-	private String serverId;
-	private Member[] members = {
-        new Member("DefaultNode", 7911, "localhost", true)
-    };
+	private Member[] members;
 	
-	public MDCCConfiguration(Properties properties) {
-		serverId = properties.getProperty("mdcc.myid");
-
-		// eventually we will probably want to read myid from zookeeper to
-		// have one less configuration variable to set
-		/*File zkDir = new File(System.getProperty("mdcc.zk.dir"));
+	private MDCCConfiguration(Properties properties) {
+		File zkDir = new File(System.getProperty("mdcc.zk.dir"));
         File myIdFile = new File(zkDir, "myid");
-        String myId = null;
+        String myId;
         try {
             myId = FileUtils.readFileToString(myIdFile).trim();
         } catch (IOException e) {
-            throw new WrenchException("Unable to read the ZK myid file", e);
-        }*/
+            throw new MDCCException("Unable to read the ZK myid file", e);
+        }
 		
 		List<Member> allMembers = new ArrayList<Member>();
 		for (String property : properties.stringPropertyNames()) {
@@ -43,7 +37,7 @@ public class MDCCConfiguration {
                 String value = properties.getProperty(property);
                 String processId = property.substring(property.lastIndexOf('.') + 1);
                 String[] connection = value.split(":");
-                boolean local = processId.equals(serverId);
+                boolean local = processId.equals(myId);
                 Member member = new Member(connection[0],
                         Integer.parseInt(connection[1]), processId, local);
                 allMembers.add(member);
@@ -77,8 +71,13 @@ public class MDCCConfiguration {
         return members;
     }
     
-    public String getServerId() {
-    	return serverId;
+    public Member getLocalMember() {
+        for (Member member : members) {
+            if (member.isLocal()) {
+                return member;
+            }
+        }
+        throw new MDCCException("Unable to locate the local member information");
     }
 
 }

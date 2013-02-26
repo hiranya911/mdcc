@@ -1,48 +1,36 @@
 package edu.ucsb.cs.mdcc.paxos;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import edu.ucsb.cs.mdcc.Option;
 
 public class VoteCollator implements VoteResult {
-	private AtomicInteger accepts = new AtomicInteger(0);
-	private AtomicInteger rejects = new AtomicInteger(0);
-	private List<Option> acceptedOptions = new LinkedList<Option>();
-	private List<Option> rejectedOptions = new LinkedList<Option>();
-	
-	public VoteCollator() {
-		
-	}
+
+    private Queue<Option> acceptedOptions = new ConcurrentLinkedQueue<Option>();
+	private Queue<Option> rejectedOptions = new ConcurrentLinkedQueue<Option>();
 	
 	public int getAccepts() {
-		return accepts.get();
+		return acceptedOptions.size();
 	}
 	
 	public int getRejects() {
-		return rejects.get();
+		return rejectedOptions.size();
 	}
 
-	@Override
-	public void Outcome(Option option, boolean accepted) {
-		if (accepted)
-		{
-			synchronized(acceptedOptions) {
-				acceptedOptions.add(option);
-			}
-			accepts.incrementAndGet();
-			synchronized(this) {
-				this.notifyAll();
-			}
+    public int getTotal() {
+        return acceptedOptions.size() + rejectedOptions.size();
+    }
+
+	public void notifyOutcome(Option option, boolean accepted) {
+		if (accepted) {
+            acceptedOptions.add(option);
 		} else {
-			synchronized(acceptedOptions) {
-				rejectedOptions.add(option);
-			}
-			rejects.incrementAndGet();
-			synchronized(this) {
-				this.notifyAll();
-			}
+            rejectedOptions.add(option);
 		}
-	}
+
+        synchronized(this) {
+            this.notifyAll();
+        }
+    }
 }
