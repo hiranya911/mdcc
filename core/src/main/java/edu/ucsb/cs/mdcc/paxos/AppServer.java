@@ -1,5 +1,6 @@
 package edu.ucsb.cs.mdcc.paxos;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 import edu.ucsb.cs.mdcc.Option;
@@ -42,10 +43,11 @@ public class AppServer {
 	}
 	
 	public boolean commit(String txnId, Collection<Option> options) {
-		boolean success = true;
+		boolean success;
         Member[] members = configuration.getMembers();
         String serverId = configuration.getServerId();
-        for (Option option : options) {
+        
+        /*for (Option option : options) {
             int accepts = 0;
             int rejects = 0;
             for (Member member : members) {
@@ -65,7 +67,29 @@ public class AppServer {
                 success = false;
                 break;
             }
+        }*/
+        VoteCollator collator = new VoteCollator();
+        for(Option option : options) {
+        	BallotNumber ballot = new BallotNumber(-1, serverId);
+        	VoteCounter optionVoteCounter = new VoteCounter(option, quorumSize, members.length, collator);
+        	for (Member member : members) {
+        		communicator.sendAcceptAsync(member, txnId, ballot, option, optionVoteCounter);
+        	}
         }
+        int loopCount = 0;
+        synchronized (collator) {
+        	while ((collator.getAccepts() + collator.getRejects()) < members.length && loopCount < 10) {
+        		try {
+					collator.wait(3000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+        		loopCount++;
+        	}
+        }
+        
+        success = collator.getAccepts() == options.size();
 
         for (Member member : members) {
             communicator.sendDecide(member, txnId, success);
