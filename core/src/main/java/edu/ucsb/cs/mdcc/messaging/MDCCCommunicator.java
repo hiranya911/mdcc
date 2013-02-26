@@ -81,7 +81,7 @@ public class MDCCCommunicator {
         try {
             MDCCCommunicationService.Client client = getClient(transport);
             return client.accept(transaction, option.getKey(),
-                    option.getOldVersion(), ballot, option.getValue().toString());
+                    option.getOldVersion(), ballot, option.getValue());
         } catch (TException e) {
             handleException(host, e);
             return false;
@@ -97,7 +97,7 @@ public class MDCCCommunicator {
                                 new TNonblockingSocket(member.getHostName(), member.getPort()));
 
             client.accept(transaction, option.getKey(),
-                    option.getOldVersion(), ballot, option.getValue().toString(), voting);
+                    option.getOldVersion(), ballot, option.getValue(), voting);
 
         } catch (TTransportException e) {
             e.printStackTrace();
@@ -125,13 +125,13 @@ public class MDCCCommunicator {
         }
 	}
 	
-	public String get(Member member, String object) {
+	public ReadValue get(Member member, String key) {
         String host = member.getHostName();
         int port = member.getPort();
         TTransport transport = new TFramedTransport(new TSocket(host, port));
         try {
             MDCCCommunicationService.Client client = getClient(transport);
-            return client.get(object);
+            return client.read(key);
         } catch (TException e) {
             handleException(host, e);
             return null;

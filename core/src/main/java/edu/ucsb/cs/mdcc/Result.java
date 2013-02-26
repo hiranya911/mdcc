@@ -1,12 +1,14 @@
 package edu.ucsb.cs.mdcc;
 
+import java.nio.ByteBuffer;
+
 public class Result {
 
     private String key;
-    private Object value;
+    private ByteBuffer value;
     private long version;
 
-    public Result(String key, Object value, long version2) {
+    public Result(String key, ByteBuffer value, long version2) {
         this.key = key;
         this.value = value;
         this.version = version2;
@@ -16,7 +18,7 @@ public class Result {
         return key;
     }
 
-    public Object getValue() {
+    public ByteBuffer getValue() {
         return value;
     }
 
@@ -24,7 +26,7 @@ public class Result {
         return version;
     }
 
-    public void setValue(Object value) {
+    public void setValue(ByteBuffer value) {
         this.value = value;
     }
 
