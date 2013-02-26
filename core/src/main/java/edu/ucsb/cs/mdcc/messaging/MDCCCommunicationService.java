@@ -38,11 +38,11 @@ public class MDCCCommunicationService {
 
     public boolean prepare(String object, BallotNumber ballot) throws org.apache.thrift.TException;
 
-    public boolean accept(String transaction, String object, long oldVersion, BallotNumber ballot, String newValue) throws org.apache.thrift.TException;
+    public boolean accept(String transaction, String key, long oldVersion, BallotNumber ballot, ByteBuffer newValue) throws org.apache.thrift.TException;
 
     public void decide(String transaction, boolean commit) throws org.apache.thrift.TException;
 
-    public String get(String object) throws org.apache.thrift.TException;
+    public ReadValue read(String key) throws org.apache.thrift.TException;
 
   }
 
@@ -52,11 +52,11 @@ public class MDCCCommunicationService {
 
     public void prepare(String object, BallotNumber ballot, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.prepare_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void accept(String transaction, String object, long oldVersion, BallotNumber ballot, String newValue, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.accept_call> resultHandler) throws org.apache.thrift.TException;
+    public void accept(String transaction, String key, long oldVersion, BallotNumber ballot, ByteBuffer newValue, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.accept_call> resultHandler) throws org.apache.thrift.TException;
 
     public void decide(String transaction, boolean commit, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.decide_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void get(String object, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.get_call> resultHandler) throws org.apache.thrift.TException;
+    public void read(String key, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.read_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -126,17 +126,17 @@ public class MDCCCommunicationService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "prepare failed: unknown result");
     }
 
-    public boolean accept(String transaction, String object, long oldVersion, BallotNumber ballot, String newValue) throws org.apache.thrift.TException
+    public boolean accept(String transaction, String key, long oldVersion, BallotNumber ballot, ByteBuffer newValue) throws org.apache.thrift.TException
     {
-      send_accept(transaction, object, oldVersion, ballot, newValue);
+      send_accept(transaction, key, oldVersion, ballot, newValue);
       return recv_accept();
     }
 
-    public void send_accept(String transaction, String object, long oldVersion, BallotNumber ballot, String newValue) throws org.apache.thrift.TException
+    public void send_accept(String transaction, String key, long oldVersion, BallotNumber ballot, ByteBuffer newValue) throws org.apache.thrift.TException
     {
       accept_args args = new accept_args();
       args.setTransaction(transaction);
-      args.setObject(object);
+      args.setKey(key);
       args.setOldVersion(oldVersion);
       args.setBallot(ballot);
       args.setNewValue(newValue);
@@ -174,27 +174,27 @@ public class MDCCCommunicationService {
       return;
     }
 
-    public String get(String object) throws org.apache.thrift.TException
+    public ReadValue read(String key) throws org.apache.thrift.TException
     {
-      send_get(object);
-      return recv_get();
+      send_read(key);
+      return recv_read();
     }
 
-    public void send_get(String object) throws org.apache.thrift.TException
+    public void send_read(String key) throws org.apache.thrift.TException
     {
-      get_args args = new get_args();
-      args.setObject(object);
-      sendBase("get", args);
+      read_args args = new read_args();
+      args.setKey(key);
+      sendBase("read", args);
     }
 
-    public String recv_get() throws org.apache.thrift.TException
+    public ReadValue recv_read() throws org.apache.thrift.TException
     {
-      get_result result = new get_result();
-      receiveBase(result, "get");
+      read_result result = new read_result();
+      receiveBase(result, "read");
       if (result.isSetSuccess()) {
         return result.success;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "get failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "read failed: unknown result");
     }
 
   }
@@ -279,23 +279,23 @@ public class MDCCCommunicationService {
       }
     }
 
-    public void accept(String transaction, String object, long oldVersion, BallotNumber ballot, String newValue, org.apache.thrift.async.AsyncMethodCallback<accept_call> resultHandler) throws org.apache.thrift.TException {
+    public void accept(String transaction, String key, long oldVersion, BallotNumber ballot, ByteBuffer newValue, org.apache.thrift.async.AsyncMethodCallback<accept_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      accept_call method_call = new accept_call(transaction, object, oldVersion, ballot, newValue, resultHandler, this, ___protocolFactory, ___transport);
+      accept_call method_call = new accept_call(transaction, key, oldVersion, ballot, newValue, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
     public static class accept_call extends org.apache.thrift.async.TAsyncMethodCall {
       private String transaction;
-      private String object;
+      private String key;
       private long oldVersion;
       private BallotNumber ballot;
-      private String newValue;
-      public accept_call(String transaction, String object, long oldVersion, BallotNumber ballot, String newValue, org.apache.thrift.async.AsyncMethodCallback<accept_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private ByteBuffer newValue;
+      public accept_call(String transaction, String key, long oldVersion, BallotNumber ballot, ByteBuffer newValue, org.apache.thrift.async.AsyncMethodCallback<accept_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.transaction = transaction;
-        this.object = object;
+        this.key = key;
         this.oldVersion = oldVersion;
         this.ballot = ballot;
         this.newValue = newValue;
@@ -305,7 +305,7 @@ public class MDCCCommunicationService {
         prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("accept", org.apache.thrift.protocol.TMessageType.CALL, 0));
         accept_args args = new accept_args();
         args.setTransaction(transaction);
-        args.setObject(object);
+        args.setKey(key);
         args.setOldVersion(oldVersion);
         args.setBallot(ballot);
         args.setNewValue(newValue);
@@ -358,35 +358,35 @@ public class MDCCCommunicationService {
       }
     }
 
-    public void get(String object, org.apache.thrift.async.AsyncMethodCallback<get_call> resultHandler) throws org.apache.thrift.TException {
+    public void read(String key, org.apache.thrift.async.AsyncMethodCallback<read_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      get_call method_call = new get_call(object, resultHandler, this, ___protocolFactory, ___transport);
+      read_call method_call = new read_call(key, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
-    public static class get_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private String object;
-      public get_call(String object, org.apache.thrift.async.AsyncMethodCallback<get_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+    public static class read_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private String key;
+      public read_call(String key, org.apache.thrift.async.AsyncMethodCallback<read_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
-        this.object = object;
+        this.key = key;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("get", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        get_args args = new get_args();
-        args.setObject(object);
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("read", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        read_args args = new read_args();
+        args.setKey(key);
         args.write(prot);
         prot.writeMessageEnd();
       }
 
-      public String getResult() throws org.apache.thrift.TException {
+      public ReadValue getResult() throws org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_get();
+        return (new Client(prot)).recv_read();
       }
     }
 
@@ -407,7 +407,7 @@ public class MDCCCommunicationService {
       processMap.put("prepare", new prepare());
       processMap.put("accept", new accept());
       processMap.put("decide", new decide());
-      processMap.put("get", new get());
+      processMap.put("read", new read());
       return processMap;
     }
 
@@ -468,7 +468,7 @@ public class MDCCCommunicationService {
 
       public accept_result getResult(I iface, accept_args args) throws org.apache.thrift.TException {
         accept_result result = new accept_result();
-        result.success = iface.accept(args.transaction, args.object, args.oldVersion, args.ballot, args.newValue);
+        result.success = iface.accept(args.transaction, args.key, args.oldVersion, args.ballot, args.newValue);
         result.setSuccessIsSet(true);
         return result;
       }
@@ -494,22 +494,22 @@ public class MDCCCommunicationService {
       }
     }
 
-    public static class get<I extends Iface> extends org.apache.thrift.ProcessFunction<I, get_args> {
-      public get() {
-        super("get");
+    public static class read<I extends Iface> extends org.apache.thrift.ProcessFunction<I, read_args> {
+      public read() {
+        super("read");
       }
 
-      public get_args getEmptyArgsInstance() {
-        return new get_args();
+      public read_args getEmptyArgsInstance() {
+        return new read_args();
       }
 
       protected boolean isOneway() {
         return false;
       }
 
-      public get_result getResult(I iface, get_args args) throws org.apache.thrift.TException {
-        get_result result = new get_result();
-        result.success = iface.get(args.object);
+      public read_result getResult(I iface, read_args args) throws org.apache.thrift.TException {
+        read_result result = new read_result();
+        result.success = iface.read(args.key);
         return result;
       }
     }
@@ -1933,7 +1933,7 @@ public class MDCCCommunicationService {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("accept_args");
 
     private static final org.apache.thrift.protocol.TField TRANSACTION_FIELD_DESC = new org.apache.thrift.protocol.TField("transaction", org.apache.thrift.protocol.TType.STRING, (short)1);
-    private static final org.apache.thrift.protocol.TField OBJECT_FIELD_DESC = new org.apache.thrift.protocol.TField("object", org.apache.thrift.protocol.TType.STRING, (short)2);
+    private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)2);
     private static final org.apache.thrift.protocol.TField OLD_VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("oldVersion", org.apache.thrift.protocol.TType.I64, (short)3);
     private static final org.apache.thrift.protocol.TField BALLOT_FIELD_DESC = new org.apache.thrift.protocol.TField("ballot", org.apache.thrift.protocol.TType.STRUCT, (short)4);
     private static final org.apache.thrift.protocol.TField NEW_VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("newValue", org.apache.thrift.protocol.TType.STRING, (short)5);
@@ -1945,15 +1945,15 @@ public class MDCCCommunicationService {
     }
 
     public String transaction; // required
-    public String object; // required
+    public String key; // required
     public long oldVersion; // required
     public BallotNumber ballot; // required
-    public String newValue; // required
+    public ByteBuffer newValue; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       TRANSACTION((short)1, "transaction"),
-      OBJECT((short)2, "object"),
+      KEY((short)2, "key"),
       OLD_VERSION((short)3, "oldVersion"),
       BALLOT((short)4, "ballot"),
       NEW_VALUE((short)5, "newValue");
@@ -1973,8 +1973,8 @@ public class MDCCCommunicationService {
         switch(fieldId) {
           case 1: // TRANSACTION
             return TRANSACTION;
-          case 2: // OBJECT
-            return OBJECT;
+          case 2: // KEY
+            return KEY;
           case 3: // OLD_VERSION
             return OLD_VERSION;
           case 4: // BALLOT
@@ -2028,14 +2028,14 @@ public class MDCCCommunicationService {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.TRANSACTION, new org.apache.thrift.meta_data.FieldMetaData("transaction", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-      tmpMap.put(_Fields.OBJECT, new org.apache.thrift.meta_data.FieldMetaData("object", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       tmpMap.put(_Fields.OLD_VERSION, new org.apache.thrift.meta_data.FieldMetaData("oldVersion", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
       tmpMap.put(_Fields.BALLOT, new org.apache.thrift.meta_data.FieldMetaData("ballot", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, BallotNumber.class)));
       tmpMap.put(_Fields.NEW_VALUE, new org.apache.thrift.meta_data.FieldMetaData("newValue", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING          , true)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(accept_args.class, metaDataMap);
     }
@@ -2045,14 +2045,14 @@ public class MDCCCommunicationService {
 
     public accept_args(
       String transaction,
-      String object,
+      String key,
       long oldVersion,
       BallotNumber ballot,
-      String newValue)
+      ByteBuffer newValue)
     {
       this();
       this.transaction = transaction;
-      this.object = object;
+      this.key = key;
       this.oldVersion = oldVersion;
       setOldVersionIsSet(true);
       this.ballot = ballot;
@@ -2067,15 +2067,16 @@ public class MDCCCommunicationService {
       if (other.isSetTransaction()) {
         this.transaction = other.transaction;
       }
-      if (other.isSetObject()) {
-        this.object = other.object;
+      if (other.isSetKey()) {
+        this.key = other.key;
       }
       this.oldVersion = other.oldVersion;
       if (other.isSetBallot()) {
         this.ballot = new BallotNumber(other.ballot);
       }
       if (other.isSetNewValue()) {
-        this.newValue = other.newValue;
+        this.newValue = org.apache.thrift.TBaseHelper.copyBinary(other.newValue);
+;
       }
     }
 
@@ -2086,7 +2087,7 @@ public class MDCCCommunicationService {
     @Override
     public void clear() {
       this.transaction = null;
-      this.object = null;
+      this.key = null;
       setOldVersionIsSet(false);
       this.oldVersion = 0;
       this.ballot = null;
@@ -2117,27 +2118,27 @@ public class MDCCCommunicationService {
       }
     }
 
-    public String getObject() {
-      return this.object;
+    public String getKey() {
+      return this.key;
     }
 
-    public accept_args setObject(String object) {
-      this.object = object;
+    public accept_args setKey(String key) {
+      this.key = key;
       return this;
     }
 
-    public void unsetObject() {
-      this.object = null;
+    public void unsetKey() {
+      this.key = null;
     }
 
-    /** Returns true if field object is set (has been assigned a value) and false otherwise */
-    public boolean isSetObject() {
-      return this.object != null;
+    /** Returns true if field key is set (has been assigned a value) and false otherwise */
+    public boolean isSetKey() {
+      return this.key != null;
     }
 
-    public void setObjectIsSet(boolean value) {
+    public void setKeyIsSet(boolean value) {
       if (!value) {
-        this.object = null;
+        this.key = null;
       }
     }
 
@@ -2188,11 +2189,21 @@ public class MDCCCommunicationService {
       }
     }
 
-    public String getNewValue() {
-      return this.newValue;
+    public byte[] getNewValue() {
+      setNewValue(org.apache.thrift.TBaseHelper.rightSize(newValue));
+      return newValue == null ? null : newValue.array();
     }
 
-    public accept_args setNewValue(String newValue) {
+    public ByteBuffer bufferForNewValue() {
+      return newValue;
+    }
+
+    public accept_args setNewValue(byte[] newValue) {
+      setNewValue(newValue == null ? (ByteBuffer)null : ByteBuffer.wrap(newValue));
+      return this;
+    }
+
+    public accept_args setNewValue(ByteBuffer newValue) {
       this.newValue = newValue;
       return this;
     }
@@ -2222,11 +2233,11 @@ public class MDCCCommunicationService {
         }
         break;
 
-      case OBJECT:
+      case KEY:
         if (value == null) {
-          unsetObject();
+          unsetKey();
         } else {
-          setObject((String)value);
+          setKey((String)value);
         }
         break;
 
@@ -2250,7 +2261,7 @@ public class MDCCCommunicationService {
         if (value == null) {
           unsetNewValue();
         } else {
-          setNewValue((String)value);
+          setNewValue((ByteBuffer)value);
         }
         break;
 
@@ -2262,8 +2273,8 @@ public class MDCCCommunicationService {
       case TRANSACTION:
         return getTransaction();
 
-      case OBJECT:
-        return getObject();
+      case KEY:
+        return getKey();
 
       case OLD_VERSION:
         return Long.valueOf(getOldVersion());
@@ -2287,8 +2298,8 @@ public class MDCCCommunicationService {
       switch (field) {
       case TRANSACTION:
         return isSetTransaction();
-      case OBJECT:
-        return isSetObject();
+      case KEY:
+        return isSetKey();
       case OLD_VERSION:
         return isSetOldVersion();
       case BALLOT:
@@ -2321,12 +2332,12 @@ public class MDCCCommunicationService {
           return false;
       }
 
-      boolean this_present_object = true && this.isSetObject();
-      boolean that_present_object = true && that.isSetObject();
-      if (this_present_object || that_present_object) {
-        if (!(this_present_object && that_present_object))
+      boolean this_present_key = true && this.isSetKey();
+      boolean that_present_key = true && that.isSetKey();
+      if (this_present_key || that_present_key) {
+        if (!(this_present_key && that_present_key))
           return false;
-        if (!this.object.equals(that.object))
+        if (!this.key.equals(that.key))
           return false;
       }
 
@@ -2383,12 +2394,12 @@ public class MDCCCommunicationService {
           return lastComparison;
         }
       }
-      lastComparison = Boolean.valueOf(isSetObject()).compareTo(typedOther.isSetObject());
+      lastComparison = Boolean.valueOf(isSetKey()).compareTo(typedOther.isSetKey());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetObject()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.object, typedOther.object);
+      if (isSetKey()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.key, typedOther.key);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -2451,11 +2462,11 @@ public class MDCCCommunicationService {
       }
       first = false;
       if (!first) sb.append(", ");
-      sb.append("object:");
-      if (this.object == null) {
+      sb.append("key:");
+      if (this.key == null) {
         sb.append("null");
       } else {
-        sb.append(this.object);
+        sb.append(this.key);
       }
       first = false;
       if (!first) sb.append(", ");
@@ -2475,7 +2486,7 @@ public class MDCCCommunicationService {
       if (this.newValue == null) {
         sb.append("null");
       } else {
-        sb.append(this.newValue);
+        org.apache.thrift.TBaseHelper.toString(this.newValue, sb);
       }
       first = false;
       sb.append(")");
@@ -2534,10 +2545,10 @@ public class MDCCCommunicationService {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
-            case 2: // OBJECT
+            case 2: // KEY
               if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.object = iprot.readString();
-                struct.setObjectIsSet(true);
+                struct.key = iprot.readString();
+                struct.setKeyIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
@@ -2561,7 +2572,7 @@ public class MDCCCommunicationService {
               break;
             case 5: // NEW_VALUE
               if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.newValue = iprot.readString();
+                struct.newValue = iprot.readBinary();
                 struct.setNewValueIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
@@ -2587,9 +2598,9 @@ public class MDCCCommunicationService {
           oprot.writeString(struct.transaction);
           oprot.writeFieldEnd();
         }
-        if (struct.object != null) {
-          oprot.writeFieldBegin(OBJECT_FIELD_DESC);
-          oprot.writeString(struct.object);
+        if (struct.key != null) {
+          oprot.writeFieldBegin(KEY_FIELD_DESC);
+          oprot.writeString(struct.key);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldBegin(OLD_VERSION_FIELD_DESC);
@@ -2602,7 +2613,7 @@ public class MDCCCommunicationService {
         }
         if (struct.newValue != null) {
           oprot.writeFieldBegin(NEW_VALUE_FIELD_DESC);
-          oprot.writeString(struct.newValue);
+          oprot.writeBinary(struct.newValue);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -2626,7 +2637,7 @@ public class MDCCCommunicationService {
         if (struct.isSetTransaction()) {
           optionals.set(0);
         }
-        if (struct.isSetObject()) {
+        if (struct.isSetKey()) {
           optionals.set(1);
         }
         if (struct.isSetOldVersion()) {
@@ -2642,8 +2653,8 @@ public class MDCCCommunicationService {
         if (struct.isSetTransaction()) {
           oprot.writeString(struct.transaction);
         }
-        if (struct.isSetObject()) {
-          oprot.writeString(struct.object);
+        if (struct.isSetKey()) {
+          oprot.writeString(struct.key);
         }
         if (struct.isSetOldVersion()) {
           oprot.writeI64(struct.oldVersion);
@@ -2652,7 +2663,7 @@ public class MDCCCommunicationService {
           struct.ballot.write(oprot);
         }
         if (struct.isSetNewValue()) {
-          oprot.writeString(struct.newValue);
+          oprot.writeBinary(struct.newValue);
         }
       }
 
@@ -2665,8 +2676,8 @@ public class MDCCCommunicationService {
           struct.setTransactionIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.object = iprot.readString();
-          struct.setObjectIsSet(true);
+          struct.key = iprot.readString();
+          struct.setKeyIsSet(true);
         }
         if (incoming.get(2)) {
           struct.oldVersion = iprot.readI64();
@@ -2678,7 +2689,7 @@ public class MDCCCommunicationService {
           struct.setBallotIsSet(true);
         }
         if (incoming.get(4)) {
-          struct.newValue = iprot.readString();
+          struct.newValue = iprot.readBinary();
           struct.setNewValueIsSet(true);
         }
       }
@@ -3738,22 +3749,22 @@ public class MDCCCommunicationService {
 
   }
 
-  public static class get_args implements org.apache.thrift.TBase<get_args, get_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("get_args");
+  public static class read_args implements org.apache.thrift.TBase<read_args, read_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("read_args");
 
-    private static final org.apache.thrift.protocol.TField OBJECT_FIELD_DESC = new org.apache.thrift.protocol.TField("object", org.apache.thrift.protocol.TType.STRING, (short)1);
+    private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new get_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new get_argsTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new read_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new read_argsTupleSchemeFactory());
     }
 
-    public String object; // required
+    public String key; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      OBJECT((short)1, "object");
+      KEY((short)1, "key");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -3768,8 +3779,8 @@ public class MDCCCommunicationService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // OBJECT
-            return OBJECT;
+          case 1: // KEY
+            return KEY;
           default:
             return null;
         }
@@ -3813,71 +3824,71 @@ public class MDCCCommunicationService {
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.OBJECT, new org.apache.thrift.meta_data.FieldMetaData("object", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(get_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(read_args.class, metaDataMap);
     }
 
-    public get_args() {
+    public read_args() {
     }
 
-    public get_args(
-      String object)
+    public read_args(
+      String key)
     {
       this();
-      this.object = object;
+      this.key = key;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public get_args(get_args other) {
-      if (other.isSetObject()) {
-        this.object = other.object;
+    public read_args(read_args other) {
+      if (other.isSetKey()) {
+        this.key = other.key;
       }
     }
 
-    public get_args deepCopy() {
-      return new get_args(this);
+    public read_args deepCopy() {
+      return new read_args(this);
     }
 
     @Override
     public void clear() {
-      this.object = null;
+      this.key = null;
     }
 
-    public String getObject() {
-      return this.object;
+    public String getKey() {
+      return this.key;
     }
 
-    public get_args setObject(String object) {
-      this.object = object;
+    public read_args setKey(String key) {
+      this.key = key;
       return this;
     }
 
-    public void unsetObject() {
-      this.object = null;
+    public void unsetKey() {
+      this.key = null;
     }
 
-    /** Returns true if field object is set (has been assigned a value) and false otherwise */
-    public boolean isSetObject() {
-      return this.object != null;
+    /** Returns true if field key is set (has been assigned a value) and false otherwise */
+    public boolean isSetKey() {
+      return this.key != null;
     }
 
-    public void setObjectIsSet(boolean value) {
+    public void setKeyIsSet(boolean value) {
       if (!value) {
-        this.object = null;
+        this.key = null;
       }
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case OBJECT:
+      case KEY:
         if (value == null) {
-          unsetObject();
+          unsetKey();
         } else {
-          setObject((String)value);
+          setKey((String)value);
         }
         break;
 
@@ -3886,8 +3897,8 @@ public class MDCCCommunicationService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case OBJECT:
-        return getObject();
+      case KEY:
+        return getKey();
 
       }
       throw new IllegalStateException();
@@ -3900,8 +3911,8 @@ public class MDCCCommunicationService {
       }
 
       switch (field) {
-      case OBJECT:
-        return isSetObject();
+      case KEY:
+        return isSetKey();
       }
       throw new IllegalStateException();
     }
@@ -3910,21 +3921,21 @@ public class MDCCCommunicationService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof get_args)
-        return this.equals((get_args)that);
+      if (that instanceof read_args)
+        return this.equals((read_args)that);
       return false;
     }
 
-    public boolean equals(get_args that) {
+    public boolean equals(read_args that) {
       if (that == null)
         return false;
 
-      boolean this_present_object = true && this.isSetObject();
-      boolean that_present_object = true && that.isSetObject();
-      if (this_present_object || that_present_object) {
-        if (!(this_present_object && that_present_object))
+      boolean this_present_key = true && this.isSetKey();
+      boolean that_present_key = true && that.isSetKey();
+      if (this_present_key || that_present_key) {
+        if (!(this_present_key && that_present_key))
           return false;
-        if (!this.object.equals(that.object))
+        if (!this.key.equals(that.key))
           return false;
       }
 
@@ -3936,20 +3947,20 @@ public class MDCCCommunicationService {
       return 0;
     }
 
-    public int compareTo(get_args other) {
+    public int compareTo(read_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      get_args typedOther = (get_args)other;
+      read_args typedOther = (read_args)other;
 
-      lastComparison = Boolean.valueOf(isSetObject()).compareTo(typedOther.isSetObject());
+      lastComparison = Boolean.valueOf(isSetKey()).compareTo(typedOther.isSetKey());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetObject()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.object, typedOther.object);
+      if (isSetKey()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.key, typedOther.key);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -3971,14 +3982,14 @@ public class MDCCCommunicationService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("get_args(");
+      StringBuilder sb = new StringBuilder("read_args(");
       boolean first = true;
 
-      sb.append("object:");
-      if (this.object == null) {
+      sb.append("key:");
+      if (this.key == null) {
         sb.append("null");
       } else {
-        sb.append(this.object);
+        sb.append(this.key);
       }
       first = false;
       sb.append(")");
@@ -4006,15 +4017,15 @@ public class MDCCCommunicationService {
       }
     }
 
-    private static class get_argsStandardSchemeFactory implements SchemeFactory {
-      public get_argsStandardScheme getScheme() {
-        return new get_argsStandardScheme();
+    private static class read_argsStandardSchemeFactory implements SchemeFactory {
+      public read_argsStandardScheme getScheme() {
+        return new read_argsStandardScheme();
       }
     }
 
-    private static class get_argsStandardScheme extends StandardScheme<get_args> {
+    private static class read_argsStandardScheme extends StandardScheme<read_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, get_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, read_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -4024,10 +4035,10 @@ public class MDCCCommunicationService {
             break;
           }
           switch (schemeField.id) {
-            case 1: // OBJECT
+            case 1: // KEY
               if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.object = iprot.readString();
-                struct.setObjectIsSet(true);
+                struct.key = iprot.readString();
+                struct.setKeyIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
@@ -4043,13 +4054,13 @@ public class MDCCCommunicationService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, get_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, read_args struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.object != null) {
-          oprot.writeFieldBegin(OBJECT_FIELD_DESC);
-          oprot.writeString(struct.object);
+        if (struct.key != null) {
+          oprot.writeFieldBegin(KEY_FIELD_DESC);
+          oprot.writeString(struct.key);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -4058,52 +4069,52 @@ public class MDCCCommunicationService {
 
     }
 
-    private static class get_argsTupleSchemeFactory implements SchemeFactory {
-      public get_argsTupleScheme getScheme() {
-        return new get_argsTupleScheme();
+    private static class read_argsTupleSchemeFactory implements SchemeFactory {
+      public read_argsTupleScheme getScheme() {
+        return new read_argsTupleScheme();
       }
     }
 
-    private static class get_argsTupleScheme extends TupleScheme<get_args> {
+    private static class read_argsTupleScheme extends TupleScheme<read_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, get_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, read_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
-        if (struct.isSetObject()) {
+        if (struct.isSetKey()) {
           optionals.set(0);
         }
         oprot.writeBitSet(optionals, 1);
-        if (struct.isSetObject()) {
-          oprot.writeString(struct.object);
+        if (struct.isSetKey()) {
+          oprot.writeString(struct.key);
         }
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, get_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, read_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.object = iprot.readString();
-          struct.setObjectIsSet(true);
+          struct.key = iprot.readString();
+          struct.setKeyIsSet(true);
         }
       }
     }
 
   }
 
-  public static class get_result implements org.apache.thrift.TBase<get_result, get_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("get_result");
+  public static class read_result implements org.apache.thrift.TBase<read_result, read_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("read_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short)0);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new get_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new get_resultTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new read_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new read_resultTupleSchemeFactory());
     }
 
-    public String success; // required
+    public ReadValue success; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -4168,16 +4179,16 @@ public class MDCCCommunicationService {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ReadValue.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(get_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(read_result.class, metaDataMap);
     }
 
-    public get_result() {
+    public read_result() {
     }
 
-    public get_result(
-      String success)
+    public read_result(
+      ReadValue success)
     {
       this();
       this.success = success;
@@ -4186,14 +4197,14 @@ public class MDCCCommunicationService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public get_result(get_result other) {
+    public read_result(read_result other) {
       if (other.isSetSuccess()) {
-        this.success = other.success;
+        this.success = new ReadValue(other.success);
       }
     }
 
-    public get_result deepCopy() {
-      return new get_result(this);
+    public read_result deepCopy() {
+      return new read_result(this);
     }
 
     @Override
@@ -4201,11 +4212,11 @@ public class MDCCCommunicationService {
       this.success = null;
     }
 
-    public String getSuccess() {
+    public ReadValue getSuccess() {
       return this.success;
     }
 
-    public get_result setSuccess(String success) {
+    public read_result setSuccess(ReadValue success) {
       this.success = success;
       return this;
     }
@@ -4231,7 +4242,7 @@ public class MDCCCommunicationService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((String)value);
+          setSuccess((ReadValue)value);
         }
         break;
 
@@ -4264,12 +4275,12 @@ public class MDCCCommunicationService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof get_result)
-        return this.equals((get_result)that);
+      if (that instanceof read_result)
+        return this.equals((read_result)that);
       return false;
     }
 
-    public boolean equals(get_result that) {
+    public boolean equals(read_result that) {
       if (that == null)
         return false;
 
@@ -4290,13 +4301,13 @@ public class MDCCCommunicationService {
       return 0;
     }
 
-    public int compareTo(get_result other) {
+    public int compareTo(read_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      get_result typedOther = (get_result)other;
+      read_result typedOther = (read_result)other;
 
       lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
@@ -4325,7 +4336,7 @@ public class MDCCCommunicationService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("get_result(");
+      StringBuilder sb = new StringBuilder("read_result(");
       boolean first = true;
 
       sb.append("success:");
@@ -4342,6 +4353,9 @@ public class MDCCCommunicationService {
     public void validate() throws org.apache.thrift.TException {
       // check for required fields
       // check for sub-struct validity
+      if (success != null) {
+        success.validate();
+      }
     }
 
     private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
@@ -4360,15 +4374,15 @@ public class MDCCCommunicationService {
       }
     }
 
-    private static class get_resultStandardSchemeFactory implements SchemeFactory {
-      public get_resultStandardScheme getScheme() {
-        return new get_resultStandardScheme();
+    private static class read_resultStandardSchemeFactory implements SchemeFactory {
+      public read_resultStandardScheme getScheme() {
+        return new read_resultStandardScheme();
       }
     }
 
-    private static class get_resultStandardScheme extends StandardScheme<get_result> {
+    private static class read_resultStandardScheme extends StandardScheme<read_result> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, get_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, read_result struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -4379,8 +4393,9 @@ public class MDCCCommunicationService {
           }
           switch (schemeField.id) {
             case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.success = iprot.readString();
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.success = new ReadValue();
+                struct.success.read(iprot);
                 struct.setSuccessIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
@@ -4397,13 +4412,13 @@ public class MDCCCommunicationService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, get_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, read_result struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
         if (struct.success != null) {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-          oprot.writeString(struct.success);
+          struct.success.write(oprot);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -4412,16 +4427,16 @@ public class MDCCCommunicationService {
 
     }
 
-    private static class get_resultTupleSchemeFactory implements SchemeFactory {
-      public get_resultTupleScheme getScheme() {
-        return new get_resultTupleScheme();
+    private static class read_resultTupleSchemeFactory implements SchemeFactory {
+      public read_resultTupleScheme getScheme() {
+        return new read_resultTupleScheme();
       }
     }
 
-    private static class get_resultTupleScheme extends TupleScheme<get_result> {
+    private static class read_resultTupleScheme extends TupleScheme<read_result> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, get_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, read_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetSuccess()) {
@@ -4429,16 +4444,17 @@ public class MDCCCommunicationService {
         }
         oprot.writeBitSet(optionals, 1);
         if (struct.isSetSuccess()) {
-          oprot.writeString(struct.success);
+          struct.success.write(oprot);
         }
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, get_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, read_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.success = iprot.readString();
+          struct.success = new ReadValue();
+          struct.success.read(iprot);
           struct.setSuccessIsSet(true);
         }
       }

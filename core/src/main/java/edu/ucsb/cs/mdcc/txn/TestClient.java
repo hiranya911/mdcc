@@ -1,5 +1,7 @@
 package edu.ucsb.cs.mdcc.txn;
 
+import java.nio.ByteBuffer;
+
 import edu.ucsb.cs.mdcc.paxos.TransactionException;
 
 public class TestClient {
@@ -8,8 +10,8 @@ public class TestClient {
         LocalTransaction txn1 = new LocalTransaction();
         try {
             txn1.begin();
-            txn1.write("foo", "Foo Value");
-            txn1.write("bar", "Bar Value");
+            txn1.write("foo", ByteBuffer.wrap("Foo Value".getBytes()));
+            txn1.write("bar", ByteBuffer.wrap("Bar Value".getBytes()));
             txn1.commit();
             System.out.println("Txn 1 committed");
         } catch (TransactionException e) {
@@ -24,7 +26,7 @@ public class TestClient {
             Object object2 = txn2.read("bar");
             System.out.println("Foo = " + object1);
             System.out.println("Bar = " + object2);
-            txn2.write("bar", "Bar Value 2");
+            txn2.write("bar", ByteBuffer.wrap("Bar Value 2".getBytes()));
             txn2.commit();
             System.out.println("Txn 2 committed");
         } catch (TransactionException e) {

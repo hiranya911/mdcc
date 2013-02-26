@@ -3,6 +3,7 @@ package edu.ucsb.cs.mdcc.paxos;
 import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.Result;
 
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +21,7 @@ public abstract class Transaction {
         this.transactionId = UUID.randomUUID().toString();
     }
 
-    public synchronized Object read(String key) throws TransactionException {
+    public synchronized ByteBuffer read(String key) throws TransactionException {
         assertState();
 
         if (readSet.containsKey(key)) {
@@ -36,7 +37,7 @@ public abstract class Transaction {
         }
     }
 
-    public synchronized void write(String key, Object value) throws TransactionException {
+    public synchronized void write(String key, ByteBuffer value) throws TransactionException {
         assertState();
 
         Option option;
