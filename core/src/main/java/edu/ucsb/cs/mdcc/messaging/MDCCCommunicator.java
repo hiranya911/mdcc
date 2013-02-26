@@ -21,7 +21,6 @@ import org.apache.thrift.server.TNonblockingServer;
 import edu.ucsb.cs.mdcc.paxos.AgentService;
 import edu.ucsb.cs.mdcc.paxos.VoteCounter;
 
-import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -53,6 +52,7 @@ public class MDCCCommunicator {
     }
 
     public void stopListener() {
+        log.info("Stopping Thrift server");
         server.stop();
         exec.shutdownNow();
     }
@@ -73,40 +73,22 @@ public class MDCCCommunicator {
         }
     }
 	
-	//send an accept message to another node, returns true if node accepts the proposal
-	public boolean sendAccept(Member member, String transaction, BallotNumber ballot, Option option) {
-        String host = member.getHostName();
-        int port = member.getPort();
-        TTransport transport = new TFramedTransport(new TSocket(host, port));
-        try {
-            MDCCCommunicationService.Client client = getClient(transport);
-            return client.accept(transaction, option.getKey(),
-                    option.getOldVersion(), ballot, option.getValue());
-        } catch (TException e) {
-            handleException(host, e);
-            return false;
-        } finally {
-            close(transport);
-        }
-	}
-	
-	public void sendAcceptAsync(Member member, String transaction, BallotNumber ballot, Option option, VoteCounter voting) {
+	public void sendAcceptAsync(Member member, String transaction,
+                                BallotNumber ballot, Option option, VoteCounter voting) {
 		try {
-			MDCCCommunicationService.AsyncClient client = new MDCCCommunicationService.
-                    AsyncClient(new TBinaryProtocol.Factory(), new TAsyncClientManager(),
-                                new TNonblockingSocket(member.getHostName(), member.getPort()));
-
+            TNonblockingSocket socket = new TNonblockingSocket(member.getHostName(),
+                    member.getPort());
+            TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
+            TAsyncClientManager clientManager = new TAsyncClientManager();
+            MDCCCommunicationService.AsyncClient client =
+                    new MDCCCommunicationService.AsyncClient(protocolFactory,
+                            clientManager, socket);
             client.accept(transaction, option.getKey(),
                     option.getOldVersion(), ballot, option.getValue(), voting);
-
-        } catch (TTransportException e) {
-            e.printStackTrace();
-        } catch (TException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+        } catch (Exception e) {
+            voting.onError(e);
+            handleException(member.getHostName(), e);
+        }
 	}
 	
 	public boolean sendDecide(Member member, String transaction, boolean commit) {
@@ -153,7 +135,7 @@ public class MDCCCommunicator {
         }
     }
 
-    private void handleException(String target, TException e) {
+    private void handleException(String target, Exception e) {
         String msg = "Error contacting the remote member: " + target;
         log.debug(msg, e);
     }

@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import edu.ucsb.cs.mdcc.Option;
 
-public class VoteCollator implements VoteResult {
+public class VoteCollator implements VoteResultListener {
 
     private Queue<Option> acceptedOptions = new ConcurrentLinkedQueue<Option>();
 	private Queue<Option> rejectedOptions = new ConcurrentLinkedQueue<Option>();

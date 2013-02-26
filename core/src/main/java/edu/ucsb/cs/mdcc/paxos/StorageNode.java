@@ -62,7 +62,6 @@ public class StorageNode extends Agent {
             if (!db.containsKey(key)) {
             	entryValue = new ReadValue(0, ByteBuffer.allocate(0));
             	entryBallot = new BallotNumber(0,"");
-                db.put(key, entryValue);
                 ballots.put(key, entryBallot);
             } else {
                 entryValue = db.get(key);
@@ -80,7 +79,8 @@ public class StorageNode extends Agent {
                 if (!transactions.containsKey(transaction)) {
                     transactions.put(transaction, new LinkedList<Option>());
                 }
-                transactions.get(transaction).add(new Option(key,ByteBuffer.wrap(entryValue.getValue()), entryValue.getVersion()));
+                transactions.get(transaction).add(
+                        new Option(key, value, entryValue.getVersion()));
 				log.info("option accepted");
             } else {
 				log.warn("option denied");
@@ -97,14 +97,11 @@ public class StorageNode extends Agent {
         }
 
 		if (commit && transactions.containsKey(transaction)) {
-			try {
-				for (Option option : transactions.get(transaction)) {
-					db.put(option.getKey(), new ReadValue(option.getOldVersion() + 1, option.getValue()));
-					outstandingOptions.remove(option.getKey());
-				}
-			} catch(Exception ex) {
-				System.out.println(ex.toString());
-			}
+            for (Option option : transactions.get(transaction)) {
+                db.put(option.getKey(), new ReadValue(option.getOldVersion() + 1,
+                        option.getValue()));
+                outstandingOptions.remove(option.getKey());
+            }
 		}
 		transactions.remove(transaction);
 	}

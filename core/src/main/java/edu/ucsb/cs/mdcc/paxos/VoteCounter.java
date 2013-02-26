@@ -15,12 +15,13 @@ public class VoteCounter implements  AsyncMethodCallback<MDCCCommunicationServic
 	private AtomicInteger accepts = new AtomicInteger(0);
 	private AtomicInteger rejects = new AtomicInteger(0);
     private AtomicBoolean outcomeReached = new AtomicBoolean(false);
-	private VoteResult callback;
+	private VoteResultListener callback;
     private int acceptQuorum;
     private int numVoters;
     private Option myOption;
 	
-	public VoteCounter(Option option, int acceptQuorum, int numVoters, VoteResult callback) {
+	public VoteCounter(Option option, int acceptQuorum,
+                       int numVoters, VoteResultListener callback) {
 		this.callback = callback;
 		this.acceptQuorum = acceptQuorum;
 		this.numVoters = numVoters;
