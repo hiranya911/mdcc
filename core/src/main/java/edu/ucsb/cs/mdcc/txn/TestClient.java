@@ -7,19 +7,19 @@ import edu.ucsb.cs.mdcc.paxos.TransactionException;
 public class TestClient {
 
     public static void main(String[] args) {
-        /*LocalTransaction txn1 = new LocalTransaction();
+        LocalTransaction txn1 = new LocalTransaction();
         try {
             txn1.begin();
-            txn1.write("foo", ByteBuffer.wrap("2".getBytes()));
-            txn1.write("bar", ByteBuffer.wrap("2".getBytes()));
+            txn1.write("foo", ByteBuffer.wrap("Foo 1".getBytes()));
+            txn1.write("bar", ByteBuffer.wrap("Bar 1".getBytes()));
             txn1.commit();
             System.out.println("Txn 1 committed");
         } catch (TransactionException e) {
             e.printStackTrace();
             System.exit(1);
-        }*/
+        }
 
-        /*LocalTransaction txn2 = new LocalTransaction();
+        LocalTransaction txn2 = new LocalTransaction();
         try {
             txn2.begin();
             ByteBuffer object1 = txn2.read("foo");
@@ -32,7 +32,7 @@ public class TestClient {
         } catch (TransactionException e) {
             e.printStackTrace();
             System.exit(1);
-        }*/
+        }
 
         LocalTransaction txn3 = new LocalTransaction();
         try {

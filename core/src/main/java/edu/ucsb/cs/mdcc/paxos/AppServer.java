@@ -7,22 +7,16 @@ import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.Result;
 import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import edu.ucsb.cs.mdcc.config.Member;
-import edu.ucsb.cs.mdcc.messaging.BallotNumber;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicator;
 import edu.ucsb.cs.mdcc.messaging.ReadValue;
 
 public class AppServer {
 
-    public static final String DEFAULT_SERVER_ID = "AppServer";
-
-	private int quorumSize;
 	private MDCCConfiguration configuration;
     private MDCCCommunicator communicator;
 
     public AppServer() {
         this.configuration = MDCCConfiguration.getConfiguration();
-        int n = configuration.getMembers().length;
-		this.quorumSize = n - (n / 4) + ((n + 1) % 2);
         this.communicator = new MDCCCommunicator();
 	}
     
@@ -37,7 +31,8 @@ public class AppServer {
 		if (r == null) {
 			return null;
         } else {
-			return new Result(key, ByteBuffer.wrap(r.getValue()), r.getVersion());
+            boolean classic = r.getClassicEndVersion() >= r.getVersion();
+			return new Result(key, ByteBuffer.wrap(r.getValue()), r.getVersion(), classic);
 		}
 	}
 	
@@ -45,16 +40,8 @@ public class AppServer {
 		boolean success;
         Member[] members = configuration.getMembers();
         
-        VoteCollator collator = new VoteCollator();
-        for (Option option : options) {
-        	BallotNumber ballot = new BallotNumber(-1, DEFAULT_SERVER_ID);
-        	VoteCounter optionVoteCounter = new VoteCounter(option, quorumSize,
-                    members.length, collator);
-        	for (Member member : members) {
-        		communicator.sendAcceptAsync(member, txnId, ballot,
-                        option, optionVoteCounter);
-        	}
-        }
+        VoteCollator collator = new VoteCollator(options, communicator, txnId);
+        collator.start();
 
         int loopCount = 0;
         synchronized (collator) {

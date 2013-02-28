@@ -111,7 +111,7 @@ public class StorageNode extends Agent {
                     transactions.put(transaction, new LinkedList<Option>());
                 }
                 transactions.get(transaction).add(
-                        new Option(key, value, entryValue.getVersion()));
+                        new Option(key, value, entryValue.getVersion(), false));
 				log.info("option accepted");
             } else {
 				log.warn("option denied");

@@ -3,14 +3,15 @@ package edu.ucsb.cs.mdcc.paxos;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import org.apache.thrift.TException;
 import org.apache.thrift.async.AsyncMethodCallback;
 
 import edu.ucsb.cs.mdcc.Option;
-import edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService.AsyncClient.accept_call;
+import edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService.AsyncClient.runClassic_call;
 
-public class VoteCounter implements  AsyncMethodCallback<MDCCCommunicationService.AsyncClient.accept_call> {
+public class VoteCounter implements  AsyncMethodCallback {
 
 	private AtomicInteger accepts = new AtomicInteger(0);
 	private AtomicInteger rejects = new AtomicInteger(0);
@@ -20,24 +21,39 @@ public class VoteCounter implements  AsyncMethodCallback<MDCCCommunicationServic
     private int numVoters;
     private Option myOption;
 	
-	public VoteCounter(Option option, int acceptQuorum,
-                       int numVoters, VoteResultListener callback) {
+	public VoteCounter(Option option, VoteResultListener callback) {
+        MDCCConfiguration config = MDCCConfiguration.getConfiguration();
+        this.numVoters = config.getMembers().length;
 		this.callback = callback;
-		this.acceptQuorum = acceptQuorum;
-		this.numVoters = numVoters;
+        if (option.isClassic()) {
+            this.acceptQuorum = (numVoters / 2) + 1;
+        } else {
+		    this.acceptQuorum = numVoters - (numVoters / 4) + ((numVoters + 1) % 2);
+        }
 		this.myOption = option;
 	}
 	
-	public void onComplete(accept_call response) {
-        try {
-            if (response.getResult()) {
-                onAccept();
-            } else {
+	public void onComplete(Object response) {
+        boolean result = false;
+        if (response instanceof accept_call) {
+            try {
+                result = ((accept_call) response).getResult();
+            } catch (TException e) {
                 onReject();
             }
-        } catch (TException e) {
-			onReject();
-		}
+        } else if (response instanceof runClassic_call) {
+            try {
+                result = ((runClassic_call) response).getResult();
+            } catch (TException e) {
+                onReject();
+            }
+        }
+
+        if (result) {
+            onAccept();
+        } else {
+            onReject();
+        }
 	}
 
 	public void onError(Exception exception) {

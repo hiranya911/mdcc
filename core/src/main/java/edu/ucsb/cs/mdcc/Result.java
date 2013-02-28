@@ -7,11 +7,13 @@ public class Result {
     private String key;
     private ByteBuffer value;
     private long version;
+    private boolean classic;
 
-    public Result(String key, ByteBuffer value, long version2) {
+    public Result(String key, ByteBuffer value, long version, boolean classic) {
         this.key = key;
         this.value = value;
-        this.version = version2;
+        this.version = version;
+        this.classic = classic;
     }
 
     public String getKey() {
@@ -30,4 +32,7 @@ public class Result {
         this.value = value;
     }
 
+    public boolean isClassic() {
+        return classic;
+    }
 }

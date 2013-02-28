@@ -7,11 +7,13 @@ public class Option {
     private String key;
     private ByteBuffer value;
     private long oldVersion;
+    private boolean classic;
 
-    public Option(String key, ByteBuffer value, long l) {
+    public Option(String key, ByteBuffer value, long oldVersion, boolean classic) {
         this.key = key;
         this.value = value;
-        this.oldVersion = l;
+        this.oldVersion = oldVersion;
+        this.classic = classic;
     }
 
     public String getKey() {
@@ -24,5 +26,13 @@ public class Option {
 
     public long getOldVersion() {
         return oldVersion;
+    }
+
+    public boolean isClassic() {
+        return classic;
+    }
+
+    public void setClassic() {
+        classic = true;
     }
 }

@@ -74,6 +74,25 @@ public class MDCCCommunicator {
             close(transport);
         }
     }
+
+    public boolean runClassicPaxos(Member member, String transaction,
+                                Option option, VoteCounter voting) {
+        try {
+            TNonblockingSocket socket = new TNonblockingSocket(member.getHostName(),
+                    member.getPort());
+            TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
+            TAsyncClientManager clientManager = new TAsyncClientManager();
+            MDCCCommunicationService.AsyncClient client =
+                    new MDCCCommunicationService.AsyncClient(protocolFactory,
+                            clientManager, socket);
+            client.runClassic(transaction, option.getKey(), option.getOldVersion(),
+                    option.getValue(), voting);
+            return true;
+        } catch (Exception e) {
+            handleException(member.getHostName(), e);
+            return false;
+        }
+    }
 	
 	public void sendAcceptAsync(Member member, String transaction,
                                 BallotNumber ballot, Option option, VoteCounter voting) {

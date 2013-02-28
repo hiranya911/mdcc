@@ -45,7 +45,7 @@ public abstract class Transaction {
         if (result != null) {
             // We have already read this object.
             // Update the value in the read-set so future reads can see this write.
-            option = new Option(key, value, result.getVersion());
+            option = new Option(key, value, result.getVersion(), result.isClassic());
             result.setValue(value);
         } else {
             // We haven't read this object before (blind write).
@@ -53,14 +53,14 @@ public abstract class Transaction {
             result = doRead(key);
             if (result == null) {
                 // Object doesn't exist in the DB - Insert (version = 0)
-                result = new Result(key, value, (long)0);
+                result = new Result(key, value, (long) 0, false);
             } else {
                 // Object exists in the DB.
                 // Update the value and add to the read-set so future reads can
                 // see this write.
                 result.setValue(value);
             }
-            option = new Option(key, value, result.getVersion());
+            option = new Option(key, value, result.getVersion(), result.isClassic());
             readSet.put(result.getKey(), result);
         }
         writeSet.put(key, option);
