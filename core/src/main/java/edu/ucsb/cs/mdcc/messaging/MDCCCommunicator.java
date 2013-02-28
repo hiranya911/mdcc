@@ -19,8 +19,10 @@ import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.server.TNonblockingServer;
 
 import edu.ucsb.cs.mdcc.paxos.AgentService;
+import edu.ucsb.cs.mdcc.paxos.RecoverySet;
 import edu.ucsb.cs.mdcc.paxos.VoteCounter;
 
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -89,6 +91,23 @@ public class MDCCCommunicator {
             voting.onError(e);
             handleException(member.getHostName(), e);
         }
+	}
+	
+	public void sendRecoverAsync(Member member, Map<String,Long> versions, RecoverySet callback) {
+		try {
+			TNonblockingSocket socket = new TNonblockingSocket(member.getHostName(),
+			member.getPort());
+			TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
+			TAsyncClientManager clientManager = new TAsyncClientManager();
+			MDCCCommunicationService.AsyncClient client =
+			new MDCCCommunicationService.AsyncClient(protocolFactory,
+			        clientManager, socket);
+			client.recover(versions, callback);
+		} catch (Exception e) {
+			callback.onError(e);
+			//maybe we should handle the error here as well, but right now the callback already handles it
+			//handleException(member.getHostName(), e);
+		}
 	}
 	
 	public boolean sendDecide(Member member, String transaction, boolean commit) {

@@ -28,11 +28,15 @@ public class AppServer {
     
 	public Result read(String key) {
         Member[] members = configuration.getMembers();
-		ReadValue readValue = communicator.get(members[0], key);
-		if (readValue == null) {
+        ReadValue r = null;
+        int member = 0;
+        while((r == null || r.getVersion() == 0) && member < members.length) {
+        	r = communicator.get(members[0], key);
+        }
+		if (r == null) {
 			return null;
         } else {
-			return new Result(key, ByteBuffer.wrap(readValue.getValue()), readValue.getVersion());
+			return new Result(key, ByteBuffer.wrap(r.getValue()), r.getVersion());
 		}
 	}
 	

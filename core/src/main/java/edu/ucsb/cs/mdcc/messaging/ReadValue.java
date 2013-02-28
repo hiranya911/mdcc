@@ -34,7 +34,8 @@ public class ReadValue implements org.apache.thrift.TBase<ReadValue, ReadValue._
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("ReadValue");
 
   private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.I64, (short)1);
-  private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.STRING, (short)2);
+  private static final org.apache.thrift.protocol.TField CLASSIC_END_VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("classicEndVersion", org.apache.thrift.protocol.TType.I64, (short)2);
+  private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.STRING, (short)3);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -43,12 +44,14 @@ public class ReadValue implements org.apache.thrift.TBase<ReadValue, ReadValue._
   }
 
   public long version; // required
+  public long classicEndVersion; // required
   public ByteBuffer value; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     VERSION((short)1, "version"),
-    VALUE((short)2, "value");
+    CLASSIC_END_VERSION((short)2, "classicEndVersion"),
+    VALUE((short)3, "value");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -65,7 +68,9 @@ public class ReadValue implements org.apache.thrift.TBase<ReadValue, ReadValue._
       switch(fieldId) {
         case 1: // VERSION
           return VERSION;
-        case 2: // VALUE
+        case 2: // CLASSIC_END_VERSION
+          return CLASSIC_END_VERSION;
+        case 3: // VALUE
           return VALUE;
         default:
           return null;
@@ -108,11 +113,14 @@ public class ReadValue implements org.apache.thrift.TBase<ReadValue, ReadValue._
 
   // isset id assignments
   private static final int __VERSION_ISSET_ID = 0;
+  private static final int __CLASSICENDVERSION_ISSET_ID = 1;
   private byte __isset_bitfield = 0;
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
     tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.CLASSIC_END_VERSION, new org.apache.thrift.meta_data.FieldMetaData("classicEndVersion", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
@@ -125,11 +133,14 @@ public class ReadValue implements org.apache.thrift.TBase<ReadValue, ReadValue._
 
   public ReadValue(
     long version,
+    long classicEndVersion,
     ByteBuffer value)
   {
     this();
     this.version = version;
     setVersionIsSet(true);
+    this.classicEndVersion = classicEndVersion;
+    setClassicEndVersionIsSet(true);
     this.value = value;
   }
 
@@ -139,6 +150,7 @@ public class ReadValue implements org.apache.thrift.TBase<ReadValue, ReadValue._
   public ReadValue(ReadValue other) {
     __isset_bitfield = other.__isset_bitfield;
     this.version = other.version;
+    this.classicEndVersion = other.classicEndVersion;
     if (other.isSetValue()) {
       this.value = org.apache.thrift.TBaseHelper.copyBinary(other.value);
 ;
@@ -153,6 +165,8 @@ public class ReadValue implements org.apache.thrift.TBase<ReadValue, ReadValue._
   public void clear() {
     setVersionIsSet(false);
     this.version = 0;
+    setClassicEndVersionIsSet(false);
+    this.classicEndVersion = 0;
     this.value = null;
   }
 
@@ -177,6 +191,29 @@ public class ReadValue implements org.apache.thrift.TBase<ReadValue, ReadValue._
 
   public void setVersionIsSet(boolean value) {
     __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __VERSION_ISSET_ID, value);
+  }
+
+  public long getClassicEndVersion() {
+    return this.classicEndVersion;
+  }
+
+  public ReadValue setClassicEndVersion(long classicEndVersion) {
+    this.classicEndVersion = classicEndVersion;
+    setClassicEndVersionIsSet(true);
+    return this;
+  }
+
+  public void unsetClassicEndVersion() {
+    __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __CLASSICENDVERSION_ISSET_ID);
+  }
+
+  /** Returns true if field classicEndVersion is set (has been assigned a value) and false otherwise */
+  public boolean isSetClassicEndVersion() {
+    return EncodingUtils.testBit(__isset_bitfield, __CLASSICENDVERSION_ISSET_ID);
+  }
+
+  public void setClassicEndVersionIsSet(boolean value) {
+    __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __CLASSICENDVERSION_ISSET_ID, value);
   }
 
   public byte[] getValue() {
@@ -223,6 +260,14 @@ public class ReadValue implements org.apache.thrift.TBase<ReadValue, ReadValue._
       }
       break;
 
+    case CLASSIC_END_VERSION:
+      if (value == null) {
+        unsetClassicEndVersion();
+      } else {
+        setClassicEndVersion((Long)value);
+      }
+      break;
+
     case VALUE:
       if (value == null) {
         unsetValue();
@@ -238,6 +283,9 @@ public class ReadValue implements org.apache.thrift.TBase<ReadValue, ReadValue._
     switch (field) {
     case VERSION:
       return Long.valueOf(getVersion());
+
+    case CLASSIC_END_VERSION:
+      return Long.valueOf(getClassicEndVersion());
 
     case VALUE:
       return getValue();
@@ -255,6 +303,8 @@ public class ReadValue implements org.apache.thrift.TBase<ReadValue, ReadValue._
     switch (field) {
     case VERSION:
       return isSetVersion();
+    case CLASSIC_END_VERSION:
+      return isSetClassicEndVersion();
     case VALUE:
       return isSetValue();
     }
@@ -280,6 +330,15 @@ public class ReadValue implements org.apache.thrift.TBase<ReadValue, ReadValue._
       if (!(this_present_version && that_present_version))
         return false;
       if (this.version != that.version)
+        return false;
+    }
+
+    boolean this_present_classicEndVersion = true;
+    boolean that_present_classicEndVersion = true;
+    if (this_present_classicEndVersion || that_present_classicEndVersion) {
+      if (!(this_present_classicEndVersion && that_present_classicEndVersion))
+        return false;
+      if (this.classicEndVersion != that.classicEndVersion)
         return false;
     }
 
@@ -318,6 +377,16 @@ public class ReadValue implements org.apache.thrift.TBase<ReadValue, ReadValue._
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetClassicEndVersion()).compareTo(typedOther.isSetClassicEndVersion());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetClassicEndVersion()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.classicEndVersion, typedOther.classicEndVersion);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     lastComparison = Boolean.valueOf(isSetValue()).compareTo(typedOther.isSetValue());
     if (lastComparison != 0) {
       return lastComparison;
@@ -350,6 +419,10 @@ public class ReadValue implements org.apache.thrift.TBase<ReadValue, ReadValue._
 
     sb.append("version:");
     sb.append(this.version);
+    first = false;
+    if (!first) sb.append(", ");
+    sb.append("classicEndVersion:");
+    sb.append(this.classicEndVersion);
     first = false;
     if (!first) sb.append(", ");
     sb.append("value:");
@@ -412,7 +485,15 @@ public class ReadValue implements org.apache.thrift.TBase<ReadValue, ReadValue._
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 2: // VALUE
+          case 2: // CLASSIC_END_VERSION
+            if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+              struct.classicEndVersion = iprot.readI64();
+              struct.setClassicEndVersionIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 3: // VALUE
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
               struct.value = iprot.readBinary();
               struct.setValueIsSet(true);
@@ -437,6 +518,9 @@ public class ReadValue implements org.apache.thrift.TBase<ReadValue, ReadValue._
       oprot.writeStructBegin(STRUCT_DESC);
       oprot.writeFieldBegin(VERSION_FIELD_DESC);
       oprot.writeI64(struct.version);
+      oprot.writeFieldEnd();
+      oprot.writeFieldBegin(CLASSIC_END_VERSION_FIELD_DESC);
+      oprot.writeI64(struct.classicEndVersion);
       oprot.writeFieldEnd();
       if (struct.value != null) {
         oprot.writeFieldBegin(VALUE_FIELD_DESC);
@@ -464,12 +548,18 @@ public class ReadValue implements org.apache.thrift.TBase<ReadValue, ReadValue._
       if (struct.isSetVersion()) {
         optionals.set(0);
       }
-      if (struct.isSetValue()) {
+      if (struct.isSetClassicEndVersion()) {
         optionals.set(1);
       }
-      oprot.writeBitSet(optionals, 2);
+      if (struct.isSetValue()) {
+        optionals.set(2);
+      }
+      oprot.writeBitSet(optionals, 3);
       if (struct.isSetVersion()) {
         oprot.writeI64(struct.version);
+      }
+      if (struct.isSetClassicEndVersion()) {
+        oprot.writeI64(struct.classicEndVersion);
       }
       if (struct.isSetValue()) {
         oprot.writeBinary(struct.value);
@@ -479,12 +569,16 @@ public class ReadValue implements org.apache.thrift.TBase<ReadValue, ReadValue._
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, ReadValue struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(2);
+      BitSet incoming = iprot.readBitSet(3);
       if (incoming.get(0)) {
         struct.version = iprot.readI64();
         struct.setVersionIsSet(true);
       }
       if (incoming.get(1)) {
+        struct.classicEndVersion = iprot.readI64();
+        struct.setClassicEndVersionIsSet(true);
+      }
+      if (incoming.get(2)) {
         struct.value = iprot.readBinary();
         struct.setValueIsSet(true);
       }
