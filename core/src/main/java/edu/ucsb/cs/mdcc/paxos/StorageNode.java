@@ -8,6 +8,7 @@ import java.util.Map;
 
 import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
+import edu.ucsb.cs.mdcc.config.Member;
 import edu.ucsb.cs.mdcc.messaging.BallotNumber;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicator;
 import edu.ucsb.cs.mdcc.messaging.ReadValue;
@@ -37,6 +38,42 @@ public class StorageNode extends Agent {
         super.start();
         int port = config.getLocalMember().getPort();
         communicator.startListener(this, port);
+        //now we talk to everyone else to do recovery
+        
+        Map<String, Long> myVersions = new HashMap<String, Long>();
+        for(Map.Entry<String, ReadValue> entry : db.entrySet()) {
+        	myVersions.put(entry.getKey(), entry.getValue().getVersion());
+        }
+        
+        RecoverySet recoveryVersions = new RecoverySet(config.getMembers().length - 1);
+        
+        for(Member member : config.getMembers()) {
+        	if (!member.isLocal()) {
+        		communicator.sendRecoverAsync(member, myVersions, recoveryVersions);
+        	}
+        }
+        
+        //foreach returned recovery set
+        for(int i = 0; i < config.getMembers().length - 1; i++) {
+        	Map<String, ReadValue> versions = recoveryVersions.dequeueRecoveryInfo();
+        	if (versions == null) {
+        		log.warn("failed to receive recovery set");
+        		break;
+        	} else {
+        		log.info("Received recovery set");
+        		//replace our entries with any newer entries
+        		for(Map.Entry<String, ReadValue> entry : versions.entrySet()) {
+        			if (!db.containsKey(entry.getKey())) {
+        				log.debug("recovered value for '" + entry.getKey() + "'");
+        				db.put(entry.getKey(), entry.getValue());
+        			} else if (entry.getValue().getVersion() > db.get(entry.getKey()).getVersion()) {
+        				log.debug("recovered value for '" + entry.getKey() + "'");
+        				db.put(entry.getKey(), entry.getValue());
+        			}
+        		}
+        	}
+        }
+        
     }
 
     @Override
@@ -60,7 +97,7 @@ public class StorageNode extends Agent {
             ReadValue entryValue;
             BallotNumber entryBallot;
             if (!db.containsKey(key)) {
-            	entryValue = new ReadValue(0, ByteBuffer.allocate(0));
+            	entryValue = new ReadValue(0, -1, ByteBuffer.allocate(0));
             	entryBallot = new BallotNumber(0,"");
                 ballots.put(key, entryBallot);
             } else {
@@ -98,7 +135,7 @@ public class StorageNode extends Agent {
 
 		if (commit && transactions.containsKey(transaction)) {
             for (Option option : transactions.get(transaction)) {
-                db.put(option.getKey(), new ReadValue(option.getOldVersion() + 1,
+                db.put(option.getKey(), new ReadValue(option.getOldVersion() + 1, 0,
                         option.getValue()));
                 outstandingOptions.remove(option.getKey());
             }
@@ -110,7 +147,7 @@ public class StorageNode extends Agent {
 		if (db.containsKey(object)) {
 			return db.get(object);
         } else {
-			return new ReadValue(0, ByteBuffer.allocate(0));
+			return new ReadValue(0, -1, ByteBuffer.allocate(0));
         }
 	}
 
@@ -126,6 +163,29 @@ public class StorageNode extends Agent {
 	}
 
 	public boolean onPrepare(String object, BallotNumber ballot) {
+		return false;
+	}
+
+	@Override
+	public Map<String, ReadValue> onRecover(Map<String, Long> versions) {
+		Map<String, ReadValue> newVersions = new HashMap<String, ReadValue>();
+		log.debug("preparing recovery set");
+		//add all the objects that the requester is outdated on
+		for(Map.Entry<String, ReadValue> entry : db.entrySet()) {
+			if (!versions.containsKey(entry.getKey())) {
+				newVersions.put(entry.getKey(), entry.getValue());
+			} else if (entry.getValue().getVersion() > versions.get(entry.getKey())) {
+				newVersions.put(entry.getKey(), entry.getValue());
+			}
+		}
+		
+		return newVersions;
+	}
+
+	@Override
+	public boolean runClassic(String transaction, String object,
+			long oldVersion, ByteBuffer value) {
+		// TODO Auto-generated method stub
 		return false;
 	}
 
