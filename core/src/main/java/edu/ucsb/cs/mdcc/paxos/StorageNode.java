@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
@@ -174,10 +175,40 @@ public class StorageNode extends Agent {
 		return newVersions;
 	}
 
-	public boolean runClassic(String transaction, String object,
+	public boolean runClassic(String transaction, String key,
 			long oldVersion, ByteBuffer value) {
-		// TODO Auto-generated method stub
-		return false;
+        log.info("Requested classic paxos on key: " + key);
+		Member leader = findLeader(key, false);
+        log.info("Found leader (for key = " + key + ") : " + leader.getProcessId());
+        if (leader.isLocal()) {
+            // TODO: Run classic paxos
+            return false;
+        } else {
+            Option option = new Option(key, value, oldVersion, true);
+            final AtomicBoolean result = new AtomicBoolean(false);
+            final AtomicBoolean done = new AtomicBoolean(false);
+            ClassicPaxosResultObserver observer = new ClassicPaxosResultObserver(option, new VoteResultListener() {
+                public void notifyOutcome(Option option, boolean accepted) {
+                    synchronized (done) {
+                        if (done.compareAndSet(false, true)) {
+                            result.set(accepted);
+                            done.notifyAll();
+                        }
+                    }
+                }
+            });
+
+            communicator.runClassicPaxos(leader, transaction, option, observer);
+            synchronized (done) {
+                while (!done.get()) {
+                    try {
+                        done.wait(5000);
+                    } catch (InterruptedException ignored) {
+                    }
+                }
+            }
+            return result.get();
+        }
 	}
 
 }

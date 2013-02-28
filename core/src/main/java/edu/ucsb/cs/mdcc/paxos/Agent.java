@@ -2,6 +2,8 @@ package edu.ucsb.cs.mdcc.paxos;
 
 import edu.ucsb.cs.mdcc.MDCCException;
 
+import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
+import edu.ucsb.cs.mdcc.config.Member;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.*;
@@ -13,7 +15,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -21,10 +25,11 @@ public abstract class Agent implements Watcher, AsyncCallback.ChildrenCallback, 
 
     protected final Log log = LogFactory.getLog(this.getClass());
 
-    private static final String ELECTION_NODE = "/ELECTION";
+    private static final String ELECTION_NODE = "/ELECTION_";
 
     private ExecutorService zkService = Executors.newSingleThreadExecutor();
     private ZooKeeper zkClient;
+    private Map<String,Member> leaders = new ConcurrentHashMap<String, Member>();
 
     public void start() {
         Properties properties = new Properties();
@@ -58,14 +63,84 @@ public abstract class Agent implements Watcher, AsyncCallback.ChildrenCallback, 
         System.out.println("Program terminated");
     }
 
+    public Member findLeader(String key, boolean force) {
+        if (!force && leaders.containsKey(key)) {
+            return leaders.get(key);
+        } else {
+            leaders.remove(key);
+        }
+
+        MDCCConfiguration config = MDCCConfiguration.getConfiguration();
+        String electionDir = ELECTION_NODE + key;
+        try {
+            Stat stat = zkClient.exists(electionDir, false);
+            if (stat == null) {
+                try {
+                    zkClient.create(electionDir, new byte[0],
+                            ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                    log.info("Created ZK node: " + electionDir);
+                } catch (KeeperException.NodeExistsException ignored) {
+                }
+            }
+        } catch (Exception e) {
+            handleFatalException("Error while creating the ELECTION root", e);
+        }
+
+        zkClient.getChildren(electionDir, true, this, null);
+        String zNode = electionDir + "/" + config.getLocalMember().getProcessId() + "_";
+        try {
+            zkClient.create(zNode, new byte[0],
+                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
+        } catch (Exception e) {
+            handleFatalException("Failed to create z_node", e);
+        }
+
+        synchronized (leaders) {
+            while (!leaders.containsKey(key)) {
+                try {
+                    log.info("Waiting for leader election to complete");
+                    leaders.wait(5000);
+                } catch (InterruptedException ignored) {
+                }
+            }
+        }
+        return leaders.get(key);
+    }
+
     public void process(WatchedEvent event) {
         if (event.getType() == Event.EventType.None) {
             handleNoneEvent(event);
+        } else if (event.getType() == Event.EventType.NodeChildrenChanged) {
+            log.info("Registering event for " + event.getPath());
+            zkClient.getChildren(event.getPath(), true, this, null);
         }
     }
 
-    public void processResult(int code, String s, Object o, List<String> children) {
+    public void processResult(int code, String path, Object o, List<String> children) {
+        if (code != KeeperException.Code.OK.intValue()) {
+            log.error("Unexpected response code from ZooKeeper server");
+            return;
+        }
 
+        long smallest = Long.MAX_VALUE;
+        String processId = null;
+        for (String child : children) {
+            int index = child.lastIndexOf('_');
+            long sequenceNumber = Long.parseLong(child.substring(index + 1));
+            if (sequenceNumber < smallest) {
+                smallest = sequenceNumber;
+                processId = child.substring(0, index);
+            }
+        }
+
+        if (processId != null) {
+            synchronized (leaders) {
+                String key = path.substring(ELECTION_NODE.length());
+                Member member = MDCCConfiguration.getConfiguration().getMember(processId);
+                leaders.put(key, member);
+                leaders.notifyAll();
+            }
+        }
     }
 
     private void handleNoneEvent(WatchedEvent event) {

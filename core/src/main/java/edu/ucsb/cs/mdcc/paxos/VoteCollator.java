@@ -9,8 +9,12 @@ import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import edu.ucsb.cs.mdcc.config.Member;
 import edu.ucsb.cs.mdcc.messaging.BallotNumber;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicator;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class VoteCollator implements VoteResultListener {
+
+    private static final Log log = LogFactory.getLog(VoteCollator.class);
 
     public static final String DEFAULT_SERVER_ID = "AppServer";
 
@@ -30,8 +34,8 @@ public class VoteCollator implements VoteResultListener {
     public void start() {
         Member[] members = MDCCConfiguration.getConfiguration().getMembers();
         for (Option option : options) {
-            VoteCounter optionVoteCounter = new VoteCounter(option, this);
             if (!option.isClassic()) {
+                PaxosVoteCounter optionVoteCounter = new PaxosVoteCounter(option, this);
                 BallotNumber ballot = new BallotNumber(-1, DEFAULT_SERVER_ID);
                 for (Member member : members) {
                     communicator.sendAcceptAsync(member, txnId, ballot,
@@ -39,9 +43,10 @@ public class VoteCollator implements VoteResultListener {
                 }
             } else {
                 boolean done = false;
+                ClassicPaxosResultObserver observer = new ClassicPaxosResultObserver(option, this);
                 for (Member member : members) {
                     if (communicator.runClassicPaxos(member, txnId,
-                            option, optionVoteCounter)) {
+                            option, observer)) {
                         done = true;
                         break;
                     }
@@ -70,12 +75,14 @@ public class VoteCollator implements VoteResultListener {
             acceptedOptions.add(option);
 		} else {
             if (!option.isClassic()) {
+                log.info("Possible conflict detected on key: " +
+                        option.getKey() + " - Switching to Classic Paxos mode");
                 option.setClassic();
                 Member[] members = MDCCConfiguration.getConfiguration().getMembers();
-                VoteCounter optionVoteCounter = new VoteCounter(option, this);
+                ClassicPaxosResultObserver observer = new ClassicPaxosResultObserver(option, this);
                 for (Member member : members) {
                     if (communicator.runClassicPaxos(member, txnId,
-                            option, optionVoteCounter)) {
+                            option, observer)) {
                         return;
                     }
                 }

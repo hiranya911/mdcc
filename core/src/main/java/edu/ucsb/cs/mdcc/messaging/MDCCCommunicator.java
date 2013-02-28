@@ -2,9 +2,11 @@ package edu.ucsb.cs.mdcc.messaging;
 
 import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.config.Member;
+import edu.ucsb.cs.mdcc.paxos.PaxosVoteCounter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.TException;
+import org.apache.thrift.async.AsyncMethodCallback;
 import org.apache.thrift.async.TAsyncClientManager;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -20,7 +22,6 @@ import org.apache.thrift.server.TNonblockingServer;
 
 import edu.ucsb.cs.mdcc.paxos.AgentService;
 import edu.ucsb.cs.mdcc.paxos.RecoverySet;
-import edu.ucsb.cs.mdcc.paxos.VoteCounter;
 
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -76,7 +77,7 @@ public class MDCCCommunicator {
     }
 
     public boolean runClassicPaxos(Member member, String transaction,
-                                Option option, VoteCounter voting) {
+                                Option option, AsyncMethodCallback voting) {
         try {
             TNonblockingSocket socket = new TNonblockingSocket(member.getHostName(),
                     member.getPort());
@@ -95,7 +96,7 @@ public class MDCCCommunicator {
     }
 	
 	public void sendAcceptAsync(Member member, String transaction,
-                                BallotNumber ballot, Option option, VoteCounter voting) {
+                                BallotNumber ballot, Option option, PaxosVoteCounter voting) {
 		try {
             TNonblockingSocket socket = new TNonblockingSocket(member.getHostName(),
                     member.getPort());

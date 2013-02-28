@@ -9,9 +9,8 @@ import org.apache.thrift.async.AsyncMethodCallback;
 
 import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService.AsyncClient.accept_call;
-import edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService.AsyncClient.runClassic_call;
 
-public class VoteCounter implements  AsyncMethodCallback {
+public class PaxosVoteCounter implements AsyncMethodCallback<accept_call> {
 
 	private AtomicInteger accepts = new AtomicInteger(0);
 	private AtomicInteger rejects = new AtomicInteger(0);
@@ -21,7 +20,7 @@ public class VoteCounter implements  AsyncMethodCallback {
     private int numVoters;
     private Option myOption;
 	
-	public VoteCounter(Option option, VoteResultListener callback) {
+	public PaxosVoteCounter(Option option, VoteResultListener callback) {
         MDCCConfiguration config = MDCCConfiguration.getConfiguration();
         this.numVoters = config.getMembers().length;
 		this.callback = callback;
@@ -33,25 +32,15 @@ public class VoteCounter implements  AsyncMethodCallback {
 		this.myOption = option;
 	}
 	
-	public void onComplete(Object response) {
-        boolean result = false;
-        if (response instanceof accept_call) {
-            try {
-                result = ((accept_call) response).getResult();
-            } catch (TException e) {
+	public void onComplete(accept_call response) {
+        try {
+            boolean result = response.getResult();
+            if (result) {
+                onAccept();
+            } else {
                 onReject();
             }
-        } else if (response instanceof runClassic_call) {
-            try {
-                result = ((runClassic_call) response).getResult();
-            } catch (TException e) {
-                onReject();
-            }
-        }
-
-        if (result) {
-            onAccept();
-        } else {
+        } catch (TException e) {
             onReject();
         }
 	}

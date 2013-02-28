@@ -1,13 +1,54 @@
 package edu.ucsb.cs.mdcc.txn;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import edu.ucsb.cs.mdcc.paxos.TransactionException;
 
 public class TestClient {
 
     public static void main(String[] args) {
-        LocalTransaction txn1 = new LocalTransaction();
+        ExecutorService exec = Executors.newFixedThreadPool(2);
+        Runnable r1 = new Runnable() {
+            public void run() {
+                while (true) {
+                    LocalTransaction txn1 = new LocalTransaction();
+                    try {
+                        txn1.begin();
+                        txn1.write("X", ByteBuffer.wrap("1".getBytes()));
+                        txn1.commit();
+                        System.out.println("Txn 1 committed");
+                    } catch (TransactionException e) {
+                        e.printStackTrace();
+                        System.exit(1);
+                    }
+                }
+            }
+        };
+
+        Runnable r2 = new Runnable() {
+            public void run() {
+                while (true) {
+                    LocalTransaction txn2 = new LocalTransaction();
+                    try {
+                        txn2.begin();
+                        txn2.write("X", ByteBuffer.wrap("2".getBytes()));
+                        txn2.commit();
+                        System.out.println("Txn 2 committed");
+                    } catch (TransactionException e) {
+                        e.printStackTrace();
+                        System.exit(1);
+                    }
+                }
+            }
+        };
+
+        exec.submit(r1);
+        exec.submit(r2);
+
+        /*LocalTransaction txn1 = new LocalTransaction();
         try {
             txn1.begin();
             txn1.write("foo", ByteBuffer.wrap("Foo 1".getBytes()));
@@ -45,6 +86,6 @@ public class TestClient {
             System.out.println("Txn 3 committed");
         } catch (TransactionException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 }

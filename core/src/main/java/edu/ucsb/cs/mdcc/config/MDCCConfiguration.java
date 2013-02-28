@@ -80,4 +80,13 @@ public class MDCCConfiguration {
         throw new MDCCException("Unable to locate the local member information");
     }
 
+    public Member getMember(String id) {
+        for (Member member : members) {
+            if (member.getProcessId().equals(id)) {
+                return member;
+            }
+        }
+        throw new MDCCException("Unable to locate a member by ID: " + id);
+    }
+
 }
