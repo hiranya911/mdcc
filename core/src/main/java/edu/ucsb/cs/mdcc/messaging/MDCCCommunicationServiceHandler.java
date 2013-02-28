@@ -1,6 +1,7 @@
 package edu.ucsb.cs.mdcc.messaging;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 import org.apache.thrift.TException;
 
@@ -40,6 +41,20 @@ public class MDCCCommunicationServiceHandler implements Iface {
 	public boolean accept(String transaction, String key, long oldVersion,
 			BallotNumber ballot, ByteBuffer newValue) throws TException {
 		return agent.onAccept(transaction, key, oldVersion, ballot, newValue);
+	}
+
+	@Override
+	public Map<String, ReadValue> recover(Map<String, Long> versions)
+			throws TException {
+		// TODO Auto-generated method stub
+		return agent.onRecover(versions);
+	}
+
+	@Override
+	public boolean runClassic(String transaction, String key, long oldVersion,
+			ByteBuffer newValue) throws TException {
+		// TODO Auto-generated method stub
+		return agent.runClassic(transaction, key, oldVersion, newValue);
 	}
 
 }
