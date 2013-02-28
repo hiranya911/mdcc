@@ -22,10 +22,10 @@ public class MDCCCommunicationServiceHandler implements Iface {
 		return true;
 	}
 
-	public boolean prepare(String object, BallotNumber version)
+	public boolean prepare(String object, BallotNumber ballot, long classicEndVersion)
 			throws TException {
 		// TODO Auto-generated method stub
-		return false;
+		return agent.onPrepare(object, ballot, classicEndVersion);
 	}
 
 	public void decide(String transaction, boolean commit) throws TException {
@@ -56,5 +56,4 @@ public class MDCCCommunicationServiceHandler implements Iface {
 		// TODO Auto-generated method stub
 		return agent.runClassic(transaction, key, oldVersion, newValue);
 	}
-
 }
