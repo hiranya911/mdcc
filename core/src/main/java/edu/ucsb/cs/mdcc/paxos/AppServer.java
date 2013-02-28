@@ -29,9 +29,10 @@ public class AppServer {
 	public Result read(String key) {
         Member[] members = configuration.getMembers();
         ReadValue r = null;
-        int member = 0;
-        while((r == null || r.getVersion() == 0) && member < members.length) {
-        	r = communicator.get(members[0], key);
+        int memberIndex = 0;
+        while (r == null && memberIndex < members.length) {
+        	r = communicator.get(members[memberIndex], key);
+            memberIndex++;
         }
 		if (r == null) {
 			return null;

@@ -23,7 +23,7 @@ public class StorageNode extends Agent {
 	private Map<String, Boolean> outstandingOptions = new HashMap<String, Boolean>();
     private Map<String,BallotNumber> ballots = new HashMap<String, BallotNumber>();
     private Map<String, ReadValue> db = new HashMap<String, ReadValue>();
-    private  Map<String, List<Option>> transactions = new HashMap<String, List<Option>>();
+    private Map<String, List<Option>> transactions = new HashMap<String, List<Option>>();
     private MDCCConfiguration config;
 
     private MDCCCommunicator communicator;
@@ -38,42 +38,36 @@ public class StorageNode extends Agent {
         super.start();
         int port = config.getLocalMember().getPort();
         communicator.startListener(this, port);
+
         //now we talk to everyone else to do recovery
-        
+        runRecoveryPhase();
+    }
+
+    private void runRecoveryPhase() {
         Map<String, Long> myVersions = new HashMap<String, Long>();
-        for(Map.Entry<String, ReadValue> entry : db.entrySet()) {
+        for (Map.Entry<String, ReadValue> entry : db.entrySet()) {
         	myVersions.put(entry.getKey(), entry.getValue().getVersion());
         }
-        
+
         RecoverySet recoveryVersions = new RecoverySet(config.getMembers().length - 1);
-        
-        for(Member member : config.getMembers()) {
+        for (Member member : config.getMembers()) {
         	if (!member.isLocal()) {
         		communicator.sendRecoverAsync(member, myVersions, recoveryVersions);
         	}
         }
-        
-        //foreach returned recovery set
-        for(int i = 0; i < config.getMembers().length - 1; i++) {
-        	Map<String, ReadValue> versions = recoveryVersions.dequeueRecoveryInfo();
-        	if (versions == null) {
-        		log.warn("failed to receive recovery set");
-        		break;
-        	} else {
-        		log.info("Received recovery set");
-        		//replace our entries with any newer entries
-        		for(Map.Entry<String, ReadValue> entry : versions.entrySet()) {
-        			if (!db.containsKey(entry.getKey())) {
-        				log.debug("recovered value for '" + entry.getKey() + "'");
-        				db.put(entry.getKey(), entry.getValue());
-        			} else if (entry.getValue().getVersion() > db.get(entry.getKey()).getVersion()) {
-        				log.debug("recovered value for '" + entry.getKey() + "'");
-        				db.put(entry.getKey(), entry.getValue());
-        			}
-        		}
-        	}
+
+        Map<String, ReadValue> versions;
+        while ((versions = recoveryVersions.dequeueRecoveryInfo()) != null) {
+            log.info("Received recovery set");
+            //replace our entries with any newer entries
+            for (Map.Entry<String, ReadValue> entry : versions.entrySet()) {
+                if (!db.containsKey(entry.getKey()) ||
+                        (entry.getValue().getVersion() > db.get(entry.getKey()).getVersion())) {
+                    log.debug("recovered value for '" + entry.getKey() + "'");
+                    db.put(entry.getKey(), entry.getValue());
+                }
+            }
         }
-        
     }
 
     @Override
@@ -166,15 +160,13 @@ public class StorageNode extends Agent {
 		return false;
 	}
 
-	@Override
 	public Map<String, ReadValue> onRecover(Map<String, Long> versions) {
 		Map<String, ReadValue> newVersions = new HashMap<String, ReadValue>();
 		log.debug("preparing recovery set");
 		//add all the objects that the requester is outdated on
-		for(Map.Entry<String, ReadValue> entry : db.entrySet()) {
-			if (!versions.containsKey(entry.getKey())) {
-				newVersions.put(entry.getKey(), entry.getValue());
-			} else if (entry.getValue().getVersion() > versions.get(entry.getKey())) {
+		for (Map.Entry<String, ReadValue> entry : db.entrySet()) {
+			if (!versions.containsKey(entry.getKey()) ||
+                    (entry.getValue().getVersion() > versions.get(entry.getKey()))) {
 				newVersions.put(entry.getKey(), entry.getValue());
 			}
 		}
@@ -182,7 +174,6 @@ public class StorageNode extends Agent {
 		return newVersions;
 	}
 
-	@Override
 	public boolean runClassic(String transaction, String object,
 			long oldVersion, ByteBuffer value) {
 		// TODO Auto-generated method stub

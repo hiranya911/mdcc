@@ -105,8 +105,6 @@ public class MDCCCommunicator {
 			client.recover(versions, callback);
 		} catch (Exception e) {
 			callback.onError(e);
-			//maybe we should handle the error here as well, but right now the callback already handles it
-			//handleException(member.getHostName(), e);
 		}
 	}
 	
