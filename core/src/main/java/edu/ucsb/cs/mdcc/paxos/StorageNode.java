@@ -1,11 +1,7 @@
 package edu.ucsb.cs.mdcc.paxos;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.*;
 
 import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
@@ -23,8 +19,10 @@ public class StorageNode extends Agent {
 
 	private Map<String, Boolean> outstandingOptions = new HashMap<String, Boolean>();
     private Map<String,BallotNumber> ballots = new HashMap<String, BallotNumber>();
+    private Map<String, Boolean> prepare = new HashMap<String, Boolean>();
     private Map<String, ReadValue> db = new HashMap<String, ReadValue>();
     private Map<String, List<Option>> transactions = new HashMap<String, List<Option>>();
+    private Set<String> outstandingClassicKeys = new HashSet<String>();
     private MDCCConfiguration config;
 
     private MDCCCommunicator communicator;
@@ -82,11 +80,13 @@ public class StorageNode extends Agent {
 		log.info("received accept message for: txn=" + transaction + "; obj=" + key);
 		
 		synchronized (key.intern()) {
-            Boolean outstanding = outstandingOptions.get(key);
-			if (Boolean.TRUE.equals(outstanding)) {
-                log.warn("Outstanding option detected on " + key +
-                        " - Denying the new option");
-				return false;
+            if (ballot.getNumber() < 0) {
+                Boolean outstanding = outstandingOptions.get(key);
+                if (Boolean.TRUE.equals(outstanding)) {
+                    log.warn("Outstanding option detected on " + key +
+                            " - Denying the new option");
+                    return false;
+                }
             }
 
             ReadValue entryValue;
@@ -180,35 +180,55 @@ public class StorageNode extends Agent {
         log.info("Requested classic paxos on key: " + key);
 		Member leader = findLeader(key, false);
         log.info("Found leader (for key = " + key + ") : " + leader.getProcessId());
+        Option option = new Option(key, value, oldVersion, true);
+        ClassicPaxosVoteListener listener = new ClassicPaxosVoteListener();
         if (leader.isLocal()) {
-            // TODO: Run classic paxos
-            return false;
-        } else {
-            Option option = new Option(key, value, oldVersion, true);
-            final AtomicBoolean result = new AtomicBoolean(false);
-            final AtomicBoolean done = new AtomicBoolean(false);
-            ClassicPaxosResultObserver observer = new ClassicPaxosResultObserver(option, new VoteResultListener() {
-                public void notifyOutcome(Option option, boolean accepted) {
-                    synchronized (done) {
-                        if (done.compareAndSet(false, true)) {
-                            result.set(accepted);
-                            done.notifyAll();
-                        }
-                    }
+            synchronized (outstandingClassicKeys) {
+                if (outstandingClassicKeys.contains(key)) {
+                    log.info("Outstanding classic key found for: " + key);
+                    return false;
                 }
-            });
+                outstandingClassicKeys.add(key);
+            }
 
-            communicator.runClassicPaxos(leader, transaction, option, observer);
-            synchronized (done) {
-                while (!done.get()) {
-                    try {
-                        done.wait(5000);
-                    } catch (InterruptedException ignored) {
-                    }
+            if (!prepare.containsKey(key)) {
+                // run prepare
+                log.info("Running prepare phase");
+                prepare.put(key, true);
+                ReadValue readValue = db.get(key);
+                if (readValue != null) {
+                    readValue.setClassicEndVersion(readValue.getVersion() + 4);
+                } else {
+                    readValue = new ReadValue(0, 4, ByteBuffer.wrap("".getBytes()));
+                    db.put(key, readValue);
                 }
             }
-            return result.get();
+
+            PaxosVoteCounter voteCounter = new PaxosVoteCounter(option, listener);
+            Member[] members = MDCCConfiguration.getConfiguration().getMembers();
+            BallotNumber ballot = new BallotNumber(1, leader.getProcessId());
+            log.info("Running accept phase");
+            for (Member member : members) {
+                if (!member.isLocal()) {
+                    communicator.sendAcceptAsync(member, transaction,
+                        ballot, option, voteCounter);
+                }
+            }
+
+            ReadValue readValue = db.get(key);
+            if (readValue.getVersion() == readValue.getClassicEndVersion()) {
+                log.info("Done with the classic rounds - Reverting back to fast mode");
+                prepare.remove(key);
+            }
+        } else {
+            ClassicPaxosResultObserver observer = new ClassicPaxosResultObserver(option, listener);
+            communicator.runClassicPaxos(leader, transaction, option, observer);
         }
-	}
+        boolean result = listener.getResult();
+        synchronized (outstandingClassicKeys) {
+            outstandingClassicKeys.remove(key);
+        }
+        return result;
+    }
 
 }
