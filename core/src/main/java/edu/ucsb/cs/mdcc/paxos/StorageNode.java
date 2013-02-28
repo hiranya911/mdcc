@@ -157,7 +157,7 @@ public class StorageNode extends Agent {
         storageNode.start();
 	}
 
-	public boolean onPrepare(String object, BallotNumber ballot) {
+	public boolean onPrepare(String object, BallotNumber ballot, long classicEndVersion) {
 		return false;
 	}
 

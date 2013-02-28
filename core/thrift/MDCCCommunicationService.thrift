@@ -15,7 +15,7 @@ service MDCCCommunicationService {
 
   bool ping(),
   
-  bool prepare(1:string key, 2:BallotNumber ballot),
+  bool prepare(1:string key, 2:BallotNumber ballot, 3:i64 classicEndVersion),
 
   bool accept(1:string transaction, 2:string key, 3:i64 oldVersion, 4:BallotNumber ballot, 5:binary newValue),
   

@@ -36,7 +36,7 @@ public class MDCCCommunicationService {
 
     public boolean ping() throws org.apache.thrift.TException;
 
-    public boolean prepare(String key, BallotNumber ballot) throws org.apache.thrift.TException;
+    public boolean prepare(String key, BallotNumber ballot, long classicEndVersion) throws org.apache.thrift.TException;
 
     public boolean accept(String transaction, String key, long oldVersion, BallotNumber ballot, ByteBuffer newValue) throws org.apache.thrift.TException;
 
@@ -54,7 +54,7 @@ public class MDCCCommunicationService {
 
     public void ping(org.apache.thrift.async.AsyncMethodCallback<AsyncClient.ping_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void prepare(String key, BallotNumber ballot, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.prepare_call> resultHandler) throws org.apache.thrift.TException;
+    public void prepare(String key, BallotNumber ballot, long classicEndVersion, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.prepare_call> resultHandler) throws org.apache.thrift.TException;
 
     public void accept(String transaction, String key, long oldVersion, BallotNumber ballot, ByteBuffer newValue, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.accept_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -110,17 +110,18 @@ public class MDCCCommunicationService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "ping failed: unknown result");
     }
 
-    public boolean prepare(String key, BallotNumber ballot) throws org.apache.thrift.TException
+    public boolean prepare(String key, BallotNumber ballot, long classicEndVersion) throws org.apache.thrift.TException
     {
-      send_prepare(key, ballot);
+      send_prepare(key, ballot, classicEndVersion);
       return recv_prepare();
     }
 
-    public void send_prepare(String key, BallotNumber ballot) throws org.apache.thrift.TException
+    public void send_prepare(String key, BallotNumber ballot, long classicEndVersion) throws org.apache.thrift.TException
     {
       prepare_args args = new prepare_args();
       args.setKey(key);
       args.setBallot(ballot);
+      args.setClassicEndVersion(classicEndVersion);
       sendBase("prepare", args);
     }
 
@@ -301,9 +302,9 @@ public class MDCCCommunicationService {
       }
     }
 
-    public void prepare(String key, BallotNumber ballot, org.apache.thrift.async.AsyncMethodCallback<prepare_call> resultHandler) throws org.apache.thrift.TException {
+    public void prepare(String key, BallotNumber ballot, long classicEndVersion, org.apache.thrift.async.AsyncMethodCallback<prepare_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      prepare_call method_call = new prepare_call(key, ballot, resultHandler, this, ___protocolFactory, ___transport);
+      prepare_call method_call = new prepare_call(key, ballot, classicEndVersion, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
@@ -311,10 +312,12 @@ public class MDCCCommunicationService {
     public static class prepare_call extends org.apache.thrift.async.TAsyncMethodCall {
       private String key;
       private BallotNumber ballot;
-      public prepare_call(String key, BallotNumber ballot, org.apache.thrift.async.AsyncMethodCallback<prepare_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private long classicEndVersion;
+      public prepare_call(String key, BallotNumber ballot, long classicEndVersion, org.apache.thrift.async.AsyncMethodCallback<prepare_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.key = key;
         this.ballot = ballot;
+        this.classicEndVersion = classicEndVersion;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
@@ -322,6 +325,7 @@ public class MDCCCommunicationService {
         prepare_args args = new prepare_args();
         args.setKey(key);
         args.setBallot(ballot);
+        args.setClassicEndVersion(classicEndVersion);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -579,7 +583,7 @@ public class MDCCCommunicationService {
 
       public prepare_result getResult(I iface, prepare_args args) throws org.apache.thrift.TException {
         prepare_result result = new prepare_result();
-        result.success = iface.prepare(args.key, args.ballot);
+        result.success = iface.prepare(args.key, args.ballot, args.classicEndVersion);
         result.setSuccessIsSet(true);
         return result;
       }
@@ -1294,6 +1298,7 @@ public class MDCCCommunicationService {
 
     private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)1);
     private static final org.apache.thrift.protocol.TField BALLOT_FIELD_DESC = new org.apache.thrift.protocol.TField("ballot", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+    private static final org.apache.thrift.protocol.TField CLASSIC_END_VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("classicEndVersion", org.apache.thrift.protocol.TType.I64, (short)3);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -1303,11 +1308,13 @@ public class MDCCCommunicationService {
 
     public String key; // required
     public BallotNumber ballot; // required
+    public long classicEndVersion; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       KEY((short)1, "key"),
-      BALLOT((short)2, "ballot");
+      BALLOT((short)2, "ballot"),
+      CLASSIC_END_VERSION((short)3, "classicEndVersion");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -1326,6 +1333,8 @@ public class MDCCCommunicationService {
             return KEY;
           case 2: // BALLOT
             return BALLOT;
+          case 3: // CLASSIC_END_VERSION
+            return CLASSIC_END_VERSION;
           default:
             return null;
         }
@@ -1366,6 +1375,8 @@ public class MDCCCommunicationService {
     }
 
     // isset id assignments
+    private static final int __CLASSICENDVERSION_ISSET_ID = 0;
+    private byte __isset_bitfield = 0;
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -1373,6 +1384,8 @@ public class MDCCCommunicationService {
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       tmpMap.put(_Fields.BALLOT, new org.apache.thrift.meta_data.FieldMetaData("ballot", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, BallotNumber.class)));
+      tmpMap.put(_Fields.CLASSIC_END_VERSION, new org.apache.thrift.meta_data.FieldMetaData("classicEndVersion", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(prepare_args.class, metaDataMap);
     }
@@ -1382,23 +1395,28 @@ public class MDCCCommunicationService {
 
     public prepare_args(
       String key,
-      BallotNumber ballot)
+      BallotNumber ballot,
+      long classicEndVersion)
     {
       this();
       this.key = key;
       this.ballot = ballot;
+      this.classicEndVersion = classicEndVersion;
+      setClassicEndVersionIsSet(true);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public prepare_args(prepare_args other) {
+      __isset_bitfield = other.__isset_bitfield;
       if (other.isSetKey()) {
         this.key = other.key;
       }
       if (other.isSetBallot()) {
         this.ballot = new BallotNumber(other.ballot);
       }
+      this.classicEndVersion = other.classicEndVersion;
     }
 
     public prepare_args deepCopy() {
@@ -1409,6 +1427,8 @@ public class MDCCCommunicationService {
     public void clear() {
       this.key = null;
       this.ballot = null;
+      setClassicEndVersionIsSet(false);
+      this.classicEndVersion = 0;
     }
 
     public String getKey() {
@@ -1459,6 +1479,29 @@ public class MDCCCommunicationService {
       }
     }
 
+    public long getClassicEndVersion() {
+      return this.classicEndVersion;
+    }
+
+    public prepare_args setClassicEndVersion(long classicEndVersion) {
+      this.classicEndVersion = classicEndVersion;
+      setClassicEndVersionIsSet(true);
+      return this;
+    }
+
+    public void unsetClassicEndVersion() {
+      __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __CLASSICENDVERSION_ISSET_ID);
+    }
+
+    /** Returns true if field classicEndVersion is set (has been assigned a value) and false otherwise */
+    public boolean isSetClassicEndVersion() {
+      return EncodingUtils.testBit(__isset_bitfield, __CLASSICENDVERSION_ISSET_ID);
+    }
+
+    public void setClassicEndVersionIsSet(boolean value) {
+      __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __CLASSICENDVERSION_ISSET_ID, value);
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case KEY:
@@ -1477,6 +1520,14 @@ public class MDCCCommunicationService {
         }
         break;
 
+      case CLASSIC_END_VERSION:
+        if (value == null) {
+          unsetClassicEndVersion();
+        } else {
+          setClassicEndVersion((Long)value);
+        }
+        break;
+
       }
     }
 
@@ -1487,6 +1538,9 @@ public class MDCCCommunicationService {
 
       case BALLOT:
         return getBallot();
+
+      case CLASSIC_END_VERSION:
+        return Long.valueOf(getClassicEndVersion());
 
       }
       throw new IllegalStateException();
@@ -1503,6 +1557,8 @@ public class MDCCCommunicationService {
         return isSetKey();
       case BALLOT:
         return isSetBallot();
+      case CLASSIC_END_VERSION:
+        return isSetClassicEndVersion();
       }
       throw new IllegalStateException();
     }
@@ -1535,6 +1591,15 @@ public class MDCCCommunicationService {
         if (!(this_present_ballot && that_present_ballot))
           return false;
         if (!this.ballot.equals(that.ballot))
+          return false;
+      }
+
+      boolean this_present_classicEndVersion = true;
+      boolean that_present_classicEndVersion = true;
+      if (this_present_classicEndVersion || that_present_classicEndVersion) {
+        if (!(this_present_classicEndVersion && that_present_classicEndVersion))
+          return false;
+        if (this.classicEndVersion != that.classicEndVersion)
           return false;
       }
 
@@ -1574,6 +1639,16 @@ public class MDCCCommunicationService {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetClassicEndVersion()).compareTo(typedOther.isSetClassicEndVersion());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetClassicEndVersion()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.classicEndVersion, typedOther.classicEndVersion);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -1609,6 +1684,10 @@ public class MDCCCommunicationService {
         sb.append(this.ballot);
       }
       first = false;
+      if (!first) sb.append(", ");
+      sb.append("classicEndVersion:");
+      sb.append(this.classicEndVersion);
+      first = false;
       sb.append(")");
       return sb.toString();
     }
@@ -1631,6 +1710,8 @@ public class MDCCCommunicationService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bitfield = 0;
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -1672,6 +1753,14 @@ public class MDCCCommunicationService {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 3: // CLASSIC_END_VERSION
+              if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+                struct.classicEndVersion = iprot.readI64();
+                struct.setClassicEndVersionIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -1697,6 +1786,9 @@ public class MDCCCommunicationService {
           struct.ballot.write(oprot);
           oprot.writeFieldEnd();
         }
+        oprot.writeFieldBegin(CLASSIC_END_VERSION_FIELD_DESC);
+        oprot.writeI64(struct.classicEndVersion);
+        oprot.writeFieldEnd();
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -1721,19 +1813,25 @@ public class MDCCCommunicationService {
         if (struct.isSetBallot()) {
           optionals.set(1);
         }
-        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetClassicEndVersion()) {
+          optionals.set(2);
+        }
+        oprot.writeBitSet(optionals, 3);
         if (struct.isSetKey()) {
           oprot.writeString(struct.key);
         }
         if (struct.isSetBallot()) {
           struct.ballot.write(oprot);
         }
+        if (struct.isSetClassicEndVersion()) {
+          oprot.writeI64(struct.classicEndVersion);
+        }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, prepare_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(2);
+        BitSet incoming = iprot.readBitSet(3);
         if (incoming.get(0)) {
           struct.key = iprot.readString();
           struct.setKeyIsSet(true);
@@ -1742,6 +1840,10 @@ public class MDCCCommunicationService {
           struct.ballot = new BallotNumber();
           struct.ballot.read(iprot);
           struct.setBallotIsSet(true);
+        }
+        if (incoming.get(2)) {
+          struct.classicEndVersion = iprot.readI64();
+          struct.setClassicEndVersionIsSet(true);
         }
       }
     }

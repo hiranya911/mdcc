@@ -8,7 +8,7 @@ import edu.ucsb.cs.mdcc.messaging.ReadValue;
 
 public interface AgentService {
     
-    public boolean onPrepare(String object, BallotNumber ballot);
+    public boolean onPrepare(String object, BallotNumber ballot, long classicEndVersion);
     
     public boolean onAccept(String transaction, String object, long oldVersion, BallotNumber ballot, ByteBuffer value);
     
