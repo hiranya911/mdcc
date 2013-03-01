@@ -52,7 +52,6 @@ public class MDCCCommunicator {
     }
 
     public void stopListener() {
-        log.info("Stopping Thrift server");
         server.stop();
         exec.shutdownNow();
     }
