@@ -3,6 +3,8 @@ package edu.ucsb.cs.mdcc.messaging;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
+import edu.ucsb.cs.mdcc.paxos.Accept;
+import edu.ucsb.cs.mdcc.paxos.Prepare;
 import org.apache.thrift.TException;
 
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService.Iface;
@@ -22,10 +24,10 @@ public class MDCCCommunicationServiceHandler implements Iface {
 		return true;
 	}
 
-	public boolean prepare(String object, BallotNumber ballot, long classicEndVersion)
+	public boolean prepare(String key, BallotNumber ballot, long classicEndVersion)
 			throws TException {
-		// TODO Auto-generated method stub
-		return agent.onPrepare(object, ballot, classicEndVersion);
+        Prepare prepare = new Prepare(key, toPaxosBallot(ballot), classicEndVersion);
+		return agent.onPrepare(prepare);
 	}
 
 	public void decide(String transaction, boolean commit) throws TException {
@@ -40,20 +42,22 @@ public class MDCCCommunicationServiceHandler implements Iface {
 
 	public boolean accept(String transaction, String key, long oldVersion,
 			BallotNumber ballot, ByteBuffer newValue) throws TException {
-		return agent.onAccept(transaction, key, oldVersion, ballot, newValue);
+        Accept accept = new Accept(transaction, toPaxosBallot(ballot), key,
+                oldVersion, newValue);
+		return agent.onAccept(accept);
 	}
 
-	@Override
 	public Map<String, ReadValue> recover(Map<String, Long> versions)
 			throws TException {
-		// TODO Auto-generated method stub
 		return agent.onRecover(versions);
 	}
 
-	@Override
 	public boolean runClassic(String transaction, String key, long oldVersion,
 			ByteBuffer newValue) throws TException {
-		// TODO Auto-generated method stub
 		return agent.runClassic(transaction, key, oldVersion, newValue);
 	}
+
+    private edu.ucsb.cs.mdcc.paxos.BallotNumber toPaxosBallot(BallotNumber b) {
+        return new edu.ucsb.cs.mdcc.paxos.BallotNumber(b.getNumber(), b.getProcessId());
+    }
 }

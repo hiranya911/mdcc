@@ -2,7 +2,7 @@ package edu.ucsb.cs.mdcc.messaging;
 
 import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.config.Member;
-import edu.ucsb.cs.mdcc.paxos.PaxosVoteCounter;
+import edu.ucsb.cs.mdcc.paxos.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.TException;
@@ -19,9 +19,6 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.server.TNonblockingServer;
-
-import edu.ucsb.cs.mdcc.paxos.AgentService;
-import edu.ucsb.cs.mdcc.paxos.RecoverySet;
 
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -95,26 +92,31 @@ public class MDCCCommunicator {
         }
     }
 	
-	public void sendAcceptAsync(Member member, String transaction,
-                                BallotNumber ballot, Option option, PaxosVoteCounter voting) {
+	public void sendAcceptAsync(Member member, Accept accept, PaxosVoteCounter voting) {
 		try {
-            TNonblockingSocket socket = new TNonblockingSocket(member.getHostName(),
+            TNonblockingSocket socket = new TNonblockingSocket(
+                    member.getHostName(),
                     member.getPort());
             TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
             TAsyncClientManager clientManager = new TAsyncClientManager();
             MDCCCommunicationService.AsyncClient client =
-                    new MDCCCommunicationService.AsyncClient(protocolFactory,
-                            clientManager, socket);
-            client.accept(transaction, option.getKey(),
-                    option.getOldVersion(), ballot, option.getValue(), voting);
+                    new MDCCCommunicationService.AsyncClient(
+                            protocolFactory,
+                            clientManager,
+                            socket);
+            client.accept(
+                    accept.getTransactionId(),
+                    accept.getKey(),
+                    accept.getOldVersion(),
+                    toThriftBallot(accept.getBallotNumber()),
+                    accept.getValue(), voting);
         } catch (Exception e) {
             voting.onError(e);
             handleException(member.getHostName(), e);
         }
 	}
 
-    public void sendPrepareAsync(Member member, String key, BallotNumber ballot,
-                                 long endVersion, PaxosVoteCounter voting) {
+    public void sendPrepareAsync(Member member, Prepare prepare, PaxosVoteCounter voting) {
         try {
             TNonblockingSocket socket = new TNonblockingSocket(member.getHostName(),
                     member.getPort());
@@ -123,11 +125,16 @@ public class MDCCCommunicator {
             MDCCCommunicationService.AsyncClient client =
                     new MDCCCommunicationService.AsyncClient(protocolFactory,
                             clientManager, socket);
-            client.prepare(key, ballot, endVersion, voting);
+            client.prepare(prepare.getKey(), toThriftBallot(prepare.getBallotNumber()),
+                    prepare.getClassicEndVersion(), voting);
         } catch (Exception e) {
             voting.onError(e);
             handleException(member.getHostName(), e);
         }
+    }
+
+    private BallotNumber toThriftBallot(edu.ucsb.cs.mdcc.paxos.BallotNumber b) {
+        return new BallotNumber(b.getNumber(), b.getProcessId());
     }
 	
 	public void sendRecoverAsync(Member member, Map<String,Long> versions, RecoverySet callback) {

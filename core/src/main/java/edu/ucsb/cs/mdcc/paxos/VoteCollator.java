@@ -7,7 +7,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import edu.ucsb.cs.mdcc.config.Member;
-import edu.ucsb.cs.mdcc.messaging.BallotNumber;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicator;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -38,9 +37,9 @@ public class VoteCollator implements VoteResultListener {
                 log.info("Running fast mode");
                 PaxosVoteCounter optionVoteCounter = new PaxosVoteCounter(option, this);
                 BallotNumber ballot = new BallotNumber(-1, DEFAULT_SERVER_ID);
+                Accept accept = new Accept(txnId, ballot, option);
                 for (Member member : members) {
-                    communicator.sendAcceptAsync(member, txnId, ballot,
-                            option, optionVoteCounter);
+                    communicator.sendAcceptAsync(member, accept, optionVoteCounter);
                 }
             } else {
                 log.info("Already in classic mode for key: " + option.getKey());
@@ -53,6 +52,7 @@ public class VoteCollator implements VoteResultListener {
                         break;
                     }
                 }
+
                 if (!done) {
                     notifyOutcome(option, false);
                 }
@@ -64,11 +64,7 @@ public class VoteCollator implements VoteResultListener {
 		return acceptedOptions.size();
 	}
 	
-	public int getRejects() {
-		return rejectedOptions.size();
-	}
-
-    public int getTotal() {
+	public int getTotal() {
         return acceptedOptions.size() + rejectedOptions.size();
     }
 

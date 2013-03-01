@@ -5,6 +5,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import edu.ucsb.cs.mdcc.messaging.ReadValue;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.TException;
@@ -12,7 +13,6 @@ import org.apache.thrift.async.AsyncMethodCallback;
 
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService.AsyncClient.recover_call;
-import edu.ucsb.cs.mdcc.messaging.ReadValue;
 
 public class RecoverySet implements
 		AsyncMethodCallback<MDCCCommunicationService.AsyncClient.recover_call> {
