@@ -25,6 +25,10 @@
             <outputDirectory>mdcc-${project.version}/conf</outputDirectory>
         </file>
         <file>
+            <source>src/main/assembly/hbase.properties</source>
+            <outputDirectory>mdcc-${project.version}/conf</outputDirectory>
+        </file>
+        <file>
             <source>src/main/assembly/log4j.properties</source>
             <outputDirectory>mdcc-${project.version}/lib</outputDirectory>
         </file>

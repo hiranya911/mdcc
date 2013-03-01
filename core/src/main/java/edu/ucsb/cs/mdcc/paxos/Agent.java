@@ -4,6 +4,8 @@ import edu.ucsb.cs.mdcc.MDCCException;
 
 import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import edu.ucsb.cs.mdcc.config.Member;
+import edu.ucsb.cs.mdcc.util.HBaseServer;
+import edu.ucsb.cs.mdcc.util.ZKServer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.*;
@@ -28,6 +30,7 @@ public abstract class Agent implements Watcher, AsyncCallback.ChildrenCallback, 
     private static final String ELECTION_NODE = "/ELECTION_";
 
     private ExecutorService zkService = Executors.newSingleThreadExecutor();
+    private HBaseServer hbaseServer;
     private ZooKeeper zkClient;
     private Map<String,Member> leaders = new ConcurrentHashMap<String, Member>();
 
@@ -56,10 +59,14 @@ public abstract class Agent implements Watcher, AsyncCallback.ChildrenCallback, 
         } catch (IOException e) {
             handleException("Error initializing the ZooKeeper client", e);
         }
+
+        hbaseServer = new HBaseServer();
+        hbaseServer.start();
     }
 
     public void stop() {
         zkService.shutdownNow();
+        hbaseServer.stop();
         System.out.println("Program terminated");
     }
 
@@ -180,24 +187,5 @@ public abstract class Agent implements Watcher, AsyncCallback.ChildrenCallback, 
             log.fatal(msg);
         }
         System.exit(1);
-    }
-
-    private class ZKServer implements Runnable {
-
-        private QuorumPeerConfig config;
-        private QuorumPeerMain peer;
-
-        private ZKServer(QuorumPeerConfig config) {
-            this.config = config;
-            this.peer = new QuorumPeerMain();
-        }
-
-        public void run() {
-            try {
-                peer.runFromConfig(config);
-            } catch (IOException e) {
-                handleFatalException("Fatal error encountered in ZooKeeper server", e);
-            }
-        }
     }
 }
