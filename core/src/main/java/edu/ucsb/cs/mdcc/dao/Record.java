@@ -43,6 +43,10 @@ public class Record {
         return ballot;
     }
 
+    public void setBallot(BallotNumber ballot) {
+        this.ballot = ballot;
+    }
+
     public ByteBuffer getValue() {
         return value;
     }

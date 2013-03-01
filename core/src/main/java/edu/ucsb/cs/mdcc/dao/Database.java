@@ -9,4 +9,8 @@ public interface Database {
     public Collection<Record> getAll();
 
     public void put(Record record);
+
+    public TransactionRecord getTransactionRecord(String transactionId);
+
+    public void putTransactionRecord(TransactionRecord record);
 }

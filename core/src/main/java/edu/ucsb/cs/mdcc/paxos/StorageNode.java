@@ -9,6 +9,7 @@ import edu.ucsb.cs.mdcc.config.Member;
 import edu.ucsb.cs.mdcc.dao.Database;
 import edu.ucsb.cs.mdcc.dao.InMemoryDatabase;
 import edu.ucsb.cs.mdcc.dao.Record;
+import edu.ucsb.cs.mdcc.dao.TransactionRecord;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicator;
 
 import edu.ucsb.cs.mdcc.messaging.ReadValue;
@@ -20,8 +21,7 @@ public class StorageNode extends Agent {
     private static final Log log = LogFactory.getLog(StorageNode.class);
 
     private Database db = new InMemoryDatabase();
-	private Map<String, Set<Option>> transactions = new HashMap<String, Set<Option>>();
-    private MDCCConfiguration config;
+	private MDCCConfiguration config;
 
     private MDCCCommunicator communicator;
 
@@ -106,20 +106,14 @@ public class StorageNode extends Agent {
             if (success) {
                 record.setOutstanding(true);
                 db.put(record);
-                if (!transactions.containsKey(transaction)) {
-                    Set<Option> set = new TreeSet<Option>(new Comparator<Option>() {
-                        public int compare(Option o1, Option o2) {
-                            return o1.getKey().compareTo(o2.getKey());
-                        }
-                    });
-                    transactions.put(transaction, set);
-                }
-                transactions.get(transaction).add(
-                        new Option(key, value, record.getVersion(), false));
-				log.info("option accepted");
+                log.info("option accepted");
             } else {
 				log.warn("option denied");
             }
+
+            TransactionRecord txnRecord = db.getTransactionRecord(transaction);
+            txnRecord.addOption(new Option(key, value, record.getVersion(), false));
+            db.putTransactionRecord(txnRecord);
 			return success;
 		}
 	}
@@ -131,8 +125,9 @@ public class StorageNode extends Agent {
 			log.info("Received Abort on transaction id: " + transaction);
         }
 
-		if (commit && transactions.containsKey(transaction)) {
-            for (Option option : transactions.get(transaction)) {
+        TransactionRecord txnRecord = db.getTransactionRecord(transaction);
+        if (commit && !txnRecord.isComplete()) {
+            for (Option option : txnRecord.getOptions()) {
                 Record record = db.get(option.getKey());
                 record.setVersion(option.getOldVersion() + 1);
                 record.setValue(option.getValue());
@@ -142,7 +137,11 @@ public class StorageNode extends Agent {
                 log.info("[COMMIT] Saved option to DB");
             }
 		}
-        transactions.remove(transaction);
+
+        if (!txnRecord.isComplete()) {
+            txnRecord.finish(commit);
+            db.putTransactionRecord(txnRecord);
+        }
     }
 
 	public ReadValue onRead(String key) {
@@ -197,67 +196,73 @@ public class StorageNode extends Agent {
 	public boolean runClassic(String transaction, String key,
 			long oldVersion, ByteBuffer value) {
         log.info("Requested classic paxos on key: " + key);
-		Member leader = findLeader(key, false);
-        log.info("Found leader (for key = " + key + ") : " + leader.getProcessId());
-        Option option = new Option(key, value, oldVersion, true);
-        boolean result;
-        if (leader.isLocal()) {
-            synchronized (this) {
+        boolean forceElection = false;
+        while (true) {
+            Member leader = findLeader(key, forceElection);
+            forceElection = true;
+            log.info("Found leader (for key = " + key + ") : " + leader.getProcessId());
+            Option option = new Option(key, value, oldVersion, true);
+
+            if (leader.isLocal()) {
                 Record record = db.get(key);
-                if (record.isOutstandingClassic()) {
-                    log.info("Outstanding classic key found for: " + key);
-                    return false;
-                }
-                record.setOutstandingClassic(true);
-                db.put(record);
-            }
-
-            Member[] members = MDCCConfiguration.getConfiguration().getMembers();
-            BallotNumber ballot = new BallotNumber(1, leader.getProcessId());
-            Record record = db.get(key);
-            if (!record.isPrepared()) {
-                // run prepare
-                log.info("Running prepare phase");
-                record.setClassicEndVersion(record.getVersion() + 4);
-                db.put(record);
-
-                ClassicPaxosVoteListener prepareListener = new ClassicPaxosVoteListener();
-                PaxosVoteCounter prepareVoteCounter = new PaxosVoteCounter(option, prepareListener);
-                Prepare prepare = new Prepare(key, ballot, record.getClassicEndVersion());
-                for (Member member : members) {
-                    communicator.sendPrepareAsync(member, prepare, prepareVoteCounter);
-                }
-
-                if (prepareListener.getResult()) {
-                    log.info("Prepare phase SUCCESSFUL");
-                    record.setPrepared(true);
+                synchronized (this) {
+                    if (record.isOutstandingClassic()) {
+                        log.info("Outstanding classic key found for: " + key);
+                        return false;
+                    }
+                    record.setOutstandingClassic(true);
                     db.put(record);
-                } else {
-                    log.warn("Failed to run the prepare phase");
-                    return false;
+                }
+
+                Member[] members = MDCCConfiguration.getConfiguration().getMembers();
+                BallotNumber ballot = record.getBallot();
+                if (!record.isPrepared()) {
+                    // run prepare
+                    log.info("Running prepare phase");
+                    ballot = new BallotNumber(ballot.getNumber() + 1, leader.getProcessId());
+                    record.setBallot(ballot);
+                    record.setClassicEndVersion(record.getVersion() + 4);
+                    db.put(record);
+
+                    ClassicPaxosVoteListener prepareListener = new ClassicPaxosVoteListener();
+                    PaxosVoteCounter prepareVoteCounter = new PaxosVoteCounter(option, prepareListener);
+                    Prepare prepare = new Prepare(key, ballot, record.getClassicEndVersion());
+                    for (Member member : members) {
+                        communicator.sendPrepareAsync(member, prepare, prepareVoteCounter);
+                    }
+
+                    if (prepareListener.getResult()) {
+                        log.info("Prepare phase SUCCESSFUL");
+                        record.setPrepared(true);
+                        db.put(record);
+                    } else {
+                        log.warn("Failed to run the prepare phase");
+                        continue;
+                    }
+                }
+
+                ClassicPaxosVoteListener listener = new ClassicPaxosVoteListener();
+                PaxosVoteCounter voteCounter = new PaxosVoteCounter(option, listener);
+                log.info("Running accept phase");
+                Accept accept = new Accept(transaction, ballot, option);
+                for (Member member : members) {
+                    communicator.sendAcceptAsync(member, accept, voteCounter);
+                }
+
+                if (record.getVersion() == record.getClassicEndVersion()) {
+                    log.info("Done with the classic rounds - Reverting back to fast mode");
+                    record.setPrepared(false);
+                    db.put(record);
+                }
+                return listener.getResult();
+            } else {
+                ClassicPaxosResultObserver observer = new ClassicPaxosResultObserver(option);
+                if (communicator.runClassicPaxos(leader, transaction, option, observer)) {
+                    return observer.getResult();
                 }
             }
-
-            ClassicPaxosVoteListener listener = new ClassicPaxosVoteListener();
-            PaxosVoteCounter voteCounter = new PaxosVoteCounter(option, listener);
-            log.info("Running accept phase");
-            Accept accept = new Accept(transaction, ballot, option);
-            for (Member member : members) {
-                communicator.sendAcceptAsync(member, accept, voteCounter);
-            }
-
-            if (record.getVersion() == record.getClassicEndVersion()) {
-                log.info("Done with the classic rounds - Reverting back to fast mode");
-                record.setPrepared(false);
-                db.put(record);
-            }
-            result = listener.getResult();
-        } else {
-            ClassicPaxosResultObserver observer = new ClassicPaxosResultObserver(option);
-            communicator.runClassicPaxos(leader, transaction, option, observer);
-            result = observer.getResult();
         }
-        return result;
+
     }
 
 }
