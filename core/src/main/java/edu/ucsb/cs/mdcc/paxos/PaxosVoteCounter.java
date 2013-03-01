@@ -9,8 +9,9 @@ import org.apache.thrift.async.AsyncMethodCallback;
 
 import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService.AsyncClient.accept_call;
+import edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService.AsyncClient.prepare_call;
 
-public class PaxosVoteCounter implements AsyncMethodCallback<accept_call> {
+public class PaxosVoteCounter implements AsyncMethodCallback {
 
 	private AtomicInteger accepts = new AtomicInteger(0);
 	private AtomicInteger rejects = new AtomicInteger(0);
@@ -32,15 +33,27 @@ public class PaxosVoteCounter implements AsyncMethodCallback<accept_call> {
 		this.myOption = option;
 	}
 	
-	public void onComplete(accept_call response) {
-        try {
-            boolean result = response.getResult();
-            if (result) {
-                onAccept();
-            } else {
+	public void onComplete(Object response) {
+        boolean result = false;
+        if (response instanceof accept_call) {
+            try {
+                result = ((accept_call) response).getResult();
+            } catch (TException e) {
                 onReject();
             }
-        } catch (TException e) {
+        } else if (response instanceof prepare_call) {
+            try {
+                result = ((prepare_call) response).getResult();
+            } catch (TException e) {
+                onReject();
+            }
+        } else {
+            return;
+        }
+
+        if (result) {
+            onAccept();
+        } else {
             onReject();
         }
 	}

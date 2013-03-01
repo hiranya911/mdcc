@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import edu.ucsb.cs.mdcc.paxos.TransactionException;
 
@@ -13,40 +14,44 @@ public class TestClient {
         ExecutorService exec = Executors.newFixedThreadPool(2);
         Runnable r1 = new Runnable() {
             public void run() {
-                while (true) {
-                    LocalTransaction txn1 = new LocalTransaction();
-                    try {
-                        txn1.begin();
-                        txn1.write("X", ByteBuffer.wrap("1".getBytes()));
-                        txn1.commit();
-                        System.out.println("Txn 1 committed");
-                    } catch (TransactionException e) {
-                        e.printStackTrace();
-                        System.exit(1);
-                    }
+                LocalTransaction txn1 = new LocalTransaction();
+                try {
+                    txn1.begin();
+                    txn1.write("X", ByteBuffer.wrap("1".getBytes()));
+                    txn1.commit();
+                    System.out.println("Txn 1 committed");
+                } catch (TransactionException e) {
+                    e.printStackTrace();
+                    System.exit(1);
                 }
             }
         };
 
         Runnable r2 = new Runnable() {
             public void run() {
-                while (true) {
-                    LocalTransaction txn2 = new LocalTransaction();
-                    try {
-                        txn2.begin();
-                        txn2.write("X", ByteBuffer.wrap("2".getBytes()));
-                        txn2.commit();
-                        System.out.println("Txn 2 committed");
-                    } catch (TransactionException e) {
-                        e.printStackTrace();
-                        System.exit(1);
-                    }
+                LocalTransaction txn2 = new LocalTransaction();
+                try {
+                    txn2.begin();
+                    txn2.write("X", ByteBuffer.wrap("2".getBytes()));
+                    txn2.commit();
+                    System.out.println("Txn 2 committed");
+                } catch (TransactionException e) {
+                    e.printStackTrace();
+                    System.exit(1);
                 }
             }
         };
 
         exec.submit(r1);
         exec.submit(r2);
+
+        exec.shutdown();
+        try {
+            exec.awaitTermination(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+
+        }
+
 
         /*LocalTransaction txn1 = new LocalTransaction();
         try {

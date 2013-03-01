@@ -21,7 +21,7 @@ public class StorageNode extends Agent {
     private Map<String,BallotNumber> ballots = new HashMap<String, BallotNumber>();
     private Map<String, Boolean> prepare = new HashMap<String, Boolean>();
     private Map<String, ReadValue> db = new HashMap<String, ReadValue>();
-    private Map<String, List<Option>> transactions = new HashMap<String, List<Option>>();
+    private Map<String, Set<Option>> transactions = new HashMap<String, Set<Option>>();
     private Set<String> outstandingClassicKeys = new HashSet<String>();
     private MDCCConfiguration config;
 
@@ -106,10 +106,19 @@ public class StorageNode extends Agent {
                     ((ballot.getNumber() + ":" + ballot.getProcessId()).compareTo(
                             entryBallot.getNumber() + ":" + entryBallot.getProcessId()) >= 0));
 
+            log.info("version=" + version + "; oldVersion=" + oldVersion);
+            log.info("Ballot comparison: " + ((ballot.getNumber() + ":" + ballot.getProcessId()).compareTo(
+                    entryBallot.getNumber() + ":" + entryBallot.getProcessId()) >= 0));
+
             if (success) {
                 outstandingOptions.put(key, true);
                 if (!transactions.containsKey(transaction)) {
-                    transactions.put(transaction, new LinkedList<Option>());
+                    Set<Option> set = new TreeSet<Option>(new Comparator<Option>() {
+                        public int compare(Option o1, Option o2) {
+                            return o1.getKey().compareTo(o2.getKey());
+                        }
+                    });
+                    transactions.put(transaction, set);
                 }
                 transactions.get(transaction).add(
                         new Option(key, value, entryValue.getVersion(), false));
@@ -130,13 +139,30 @@ public class StorageNode extends Agent {
 
 		if (commit && transactions.containsKey(transaction)) {
             for (Option option : transactions.get(transaction)) {
-                db.put(option.getKey(), new ReadValue(option.getOldVersion() + 1, 0,
+                ReadValue read = db.get(option.getKey());
+                long classicEnd;
+                if (read == null) {
+                    classicEnd = -1;
+                } else {
+                    classicEnd = read.getClassicEndVersion();
+                }
+                db.put(option.getKey(), new ReadValue(option.getOldVersion() + 1,
+                        classicEnd,
                         option.getValue()));
+                log.info("[COMMIT] Saved option to DB");
                 outstandingOptions.remove(option.getKey());
             }
-		}
-		transactions.remove(transaction);
-	}
+		} else {
+            log.warn("[COMMIT=" + commit + "] Not saving to DB");
+        }
+
+        for (Option option : transactions.get(transaction)) {
+            synchronized (outstandingClassicKeys) {
+                outstandingClassicKeys.remove(option.getKey());
+            }
+        }
+        transactions.remove(transaction);
+    }
 
 	public ReadValue onRead(String object) {
 		if (db.containsKey(object)) {
@@ -157,8 +183,18 @@ public class StorageNode extends Agent {
         storageNode.start();
 	}
 
-	public boolean onPrepare(String object, BallotNumber ballot, long classicEndVersion) {
-		return false;
+	public boolean onPrepare(String key, BallotNumber ballot, long classicEndVersion) {
+        BallotNumber existingBallot = ballots.get(key);
+        // TODO: Compare ballots
+        ReadValue readValue = db.get(key);
+        if (readValue == null) {
+            readValue = new ReadValue(0, classicEndVersion, ByteBuffer.wrap("".getBytes()));
+            db.put(key, readValue);
+        } else {
+            readValue.setClassicEndVersion(classicEndVersion);
+        }
+
+		return true;
 	}
 
 	public Map<String, ReadValue> onRecover(Map<String, Long> versions) {
@@ -181,7 +217,7 @@ public class StorageNode extends Agent {
 		Member leader = findLeader(key, false);
         log.info("Found leader (for key = " + key + ") : " + leader.getProcessId());
         Option option = new Option(key, value, oldVersion, true);
-        ClassicPaxosVoteListener listener = new ClassicPaxosVoteListener();
+        boolean result;
         if (leader.isLocal()) {
             synchronized (outstandingClassicKeys) {
                 if (outstandingClassicKeys.contains(key)) {
@@ -191,10 +227,12 @@ public class StorageNode extends Agent {
                 outstandingClassicKeys.add(key);
             }
 
+            Member[] members = MDCCConfiguration.getConfiguration().getMembers();
+            BallotNumber ballot = new BallotNumber(1, leader.getProcessId());
             if (!prepare.containsKey(key)) {
                 // run prepare
                 log.info("Running prepare phase");
-                prepare.put(key, true);
+
                 ReadValue readValue = db.get(key);
                 if (readValue != null) {
                     readValue.setClassicEndVersion(readValue.getVersion() + 4);
@@ -202,17 +240,28 @@ public class StorageNode extends Agent {
                     readValue = new ReadValue(0, 4, ByteBuffer.wrap("".getBytes()));
                     db.put(key, readValue);
                 }
+
+                ClassicPaxosVoteListener prepareListener = new ClassicPaxosVoteListener();
+                PaxosVoteCounter prepareVoteCounter = new PaxosVoteCounter(option, prepareListener);
+                for (Member member : members) {
+                    communicator.sendPrepareAsync(member, key, ballot,
+                            readValue.getClassicEndVersion(), prepareVoteCounter);
+                }
+                if (prepareListener.getResult()) {
+                    log.info("Prepare phase SUCCESSFUL");
+                    prepare.put(key, true);
+                } else {
+                    log.warn("Failed to run the prepare phase");
+                    return false;
+                }
             }
 
+            ClassicPaxosVoteListener listener = new ClassicPaxosVoteListener();
             PaxosVoteCounter voteCounter = new PaxosVoteCounter(option, listener);
-            Member[] members = MDCCConfiguration.getConfiguration().getMembers();
-            BallotNumber ballot = new BallotNumber(1, leader.getProcessId());
             log.info("Running accept phase");
             for (Member member : members) {
-                if (!member.isLocal()) {
-                    communicator.sendAcceptAsync(member, transaction,
+                communicator.sendAcceptAsync(member, transaction,
                         ballot, option, voteCounter);
-                }
             }
 
             ReadValue readValue = db.get(key);
@@ -220,13 +269,12 @@ public class StorageNode extends Agent {
                 log.info("Done with the classic rounds - Reverting back to fast mode");
                 prepare.remove(key);
             }
+            result = listener.getResult();
         } else {
+            ClassicPaxosVoteListener listener = new ClassicPaxosVoteListener();
             ClassicPaxosResultObserver observer = new ClassicPaxosResultObserver(option, listener);
             communicator.runClassicPaxos(leader, transaction, option, observer);
-        }
-        boolean result = listener.getResult();
-        synchronized (outstandingClassicKeys) {
-            outstandingClassicKeys.remove(key);
+            result = listener.getResult();
         }
         return result;
     }

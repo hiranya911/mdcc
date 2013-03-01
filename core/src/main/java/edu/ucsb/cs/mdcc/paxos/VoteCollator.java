@@ -35,6 +35,7 @@ public class VoteCollator implements VoteResultListener {
         Member[] members = MDCCConfiguration.getConfiguration().getMembers();
         for (Option option : options) {
             if (!option.isClassic()) {
+                log.info("Running fast mode");
                 PaxosVoteCounter optionVoteCounter = new PaxosVoteCounter(option, this);
                 BallotNumber ballot = new BallotNumber(-1, DEFAULT_SERVER_ID);
                 for (Member member : members) {
@@ -42,6 +43,7 @@ public class VoteCollator implements VoteResultListener {
                             option, optionVoteCounter);
                 }
             } else {
+                log.info("Already in classic mode for key: " + option.getKey());
                 boolean done = false;
                 ClassicPaxosResultObserver observer = new ClassicPaxosResultObserver(option, this);
                 for (Member member : members) {

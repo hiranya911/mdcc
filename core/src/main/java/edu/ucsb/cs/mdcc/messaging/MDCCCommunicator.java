@@ -112,6 +112,23 @@ public class MDCCCommunicator {
             handleException(member.getHostName(), e);
         }
 	}
+
+    public void sendPrepareAsync(Member member, String key, BallotNumber ballot,
+                                 long endVersion, PaxosVoteCounter voting) {
+        try {
+            TNonblockingSocket socket = new TNonblockingSocket(member.getHostName(),
+                    member.getPort());
+            TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
+            TAsyncClientManager clientManager = new TAsyncClientManager();
+            MDCCCommunicationService.AsyncClient client =
+                    new MDCCCommunicationService.AsyncClient(protocolFactory,
+                            clientManager, socket);
+            client.prepare(key, ballot, endVersion, voting);
+        } catch (Exception e) {
+            voting.onError(e);
+            handleException(member.getHostName(), e);
+        }
+    }
 	
 	public void sendRecoverAsync(Member member, Map<String,Long> versions, RecoverySet callback) {
 		try {
