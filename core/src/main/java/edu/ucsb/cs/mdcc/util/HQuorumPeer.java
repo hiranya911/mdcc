@@ -1,5 +1,6 @@
 package edu.ucsb.cs.mdcc.util;
 
+import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.util.Strings;
@@ -26,6 +27,12 @@ import java.util.*;
  */
 public class HQuorumPeer implements Runnable {
 
+    private Properties hbaseProperties;
+
+    public HQuorumPeer(Properties hbaseProperties) {
+        this.hbaseProperties = hbaseProperties;
+    }
+
     public void run() {
         Configuration conf = HBaseConfiguration.create();
         try {
@@ -34,11 +41,6 @@ public class HQuorumPeer implements Runnable {
             String hbasePath = System.getProperty("mdcc.hbase.dir", "hbase");
             File zkDataDir = new File(hbasePath, "zk");
             zkProperties.setProperty("dataDir", zkDataDir.getAbsolutePath());
-
-            String configPath = System.getProperty("mdcc.config.dir", "conf");
-            File configFile = new File(configPath, "hbase.properties");
-            Properties hbaseProperties = new Properties();
-            hbaseProperties.load(new FileInputStream(configFile));
             for (String key : hbaseProperties.stringPropertyNames()) {
                 zkProperties.setProperty(key, hbaseProperties.getProperty(key));
             }

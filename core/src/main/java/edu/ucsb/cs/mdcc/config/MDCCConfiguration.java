@@ -20,15 +20,21 @@ public class MDCCConfiguration {
 	private static volatile MDCCConfiguration config = null;
 	
 	private Member[] members;
+    private int myId = 0;
 	
 	private MDCCConfiguration(Properties properties) {
+        String myIdValue = System.getProperty("mdcc.my.id");
+        if (myIdValue != null) {
+            myId = Integer.parseInt(myIdValue);
+        }
+
 		File zkDir = new File(System.getProperty("mdcc.zk.dir"));
         File myIdFile = new File(zkDir, "myid");
-        String myId;
         try {
-            myId = FileUtils.readFileToString(myIdFile).trim();
+            log.info("Writing out my id value to: " + myId);
+            FileUtils.write(myIdFile, String.valueOf(myId));
         } catch (IOException e) {
-            throw new MDCCException("Unable to read the ZK myid file", e);
+            throw new MDCCException("Unable to write the ZK myid file", e);
         }
 		
 		List<Member> allMembers = new ArrayList<Member>();
@@ -37,7 +43,7 @@ public class MDCCConfiguration {
                 String value = properties.getProperty(property);
                 String processId = property.substring(property.lastIndexOf('.') + 1);
                 String[] connection = value.split(":");
-                boolean local = processId.equals(myId);
+                boolean local = processId.equals(String.valueOf(myId));
                 Member member = new Member(connection[0],
                         Integer.parseInt(connection[1]), processId, local);
                 allMembers.add(member);
@@ -87,6 +93,10 @@ public class MDCCConfiguration {
             }
         }
         throw new MDCCException("Unable to locate a member by ID: " + id);
+    }
+
+    public int getMyId() {
+        return myId;
     }
 
 }

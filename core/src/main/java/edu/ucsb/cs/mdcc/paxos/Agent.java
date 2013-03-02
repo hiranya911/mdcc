@@ -5,6 +5,7 @@ import edu.ucsb.cs.mdcc.MDCCException;
 import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import edu.ucsb.cs.mdcc.config.Member;
 import edu.ucsb.cs.mdcc.util.HBaseServer;
+import edu.ucsb.cs.mdcc.util.Utils;
 import edu.ucsb.cs.mdcc.util.ZKServer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -41,9 +42,13 @@ public abstract class Agent implements Watcher, AsyncCallback.ChildrenCallback, 
         File configFile = new File(configPath, "zk.properties");
         try {
             properties.load(new FileInputStream(configFile));
+            int myId = MDCCConfiguration.getConfiguration().getMyId();
+            Utils.incrementPort(properties, "clientPort", myId);
+
             properties.setProperty("dataDir", dataPath);
             QuorumPeerConfig config = new QuorumPeerConfig();
             config.parseProperties(properties);
+
             ZKServer server = new ZKServer(config);
             zkService.submit(server);
             log.info("ZooKeeper server started");

@@ -1,6 +1,7 @@
 package edu.ucsb.cs.mdcc.util;
 
 import edu.ucsb.cs.mdcc.MDCCException;
+import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -36,19 +37,28 @@ public class HBaseServer {
         File configFile = new File(configPath, "hbase.properties");
         try {
             properties.load(new FileInputStream(configFile));
-            exec.submit(new HQuorumPeer());
-            log.info("HBase ZooKeeper server started");
+            int myId = MDCCConfiguration.getConfiguration().getMyId();
+            Utils.incrementPort(properties, "clientPort", myId);
+            Utils.incrementPort(properties, "hbase.master.port", myId);
+            Utils.incrementPort(properties, "hbase.regionserver.port", myId);
+            Utils.rewriteQuorumPorts(properties, myId);
         } catch (IOException e) {
             handleException("Error loading the ZooKeeper configuration", e);
         }
+
+        exec.submit(new HQuorumPeer(properties));
+        log.info("HBase ZooKeeper server started");
 
         Configuration config = HBaseConfiguration.create();
         File hbaseDir = new File(hbasePath, "data");
         config.set("hbase.rootdir", hbaseDir.getAbsolutePath());
         for (String key : properties.stringPropertyNames()) {
-            String name = "hbase.zookeeper.property." + key;
-            log.info(name + " = " + properties.getProperty(key));
-            config.set(name, properties.getProperty(key));
+            if (key.startsWith("hbase.")) {
+                config.set(key, properties.getProperty(key));
+            } else {
+                String name = "hbase.zookeeper.property." + key;
+                config.set(name, properties.getProperty(key));
+            }
         }
 
         try {
