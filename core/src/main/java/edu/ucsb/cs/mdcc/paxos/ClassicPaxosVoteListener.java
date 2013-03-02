@@ -14,7 +14,9 @@ public class ClassicPaxosVoteListener implements VoteResultListener {
     private AtomicBoolean result = new AtomicBoolean(false);
 
     public void notifyOutcome(Option option, boolean accepted) {
-        log.info("Vote came to and end with the result: " + accepted);
+        if (log.isDebugEnabled()) {
+            log.info("Vote came to and end with the result: " + accepted);
+        }
         synchronized (done) {
             if (done.compareAndSet(false, true)) {
                 result.set(accepted);
@@ -26,13 +28,13 @@ public class ClassicPaxosVoteListener implements VoteResultListener {
     public boolean getResult() {
         synchronized (done) {
             while (!done.get()) {
+                log.debug("Waiting for the vote to come to an end");
                 try {
                     done.wait(5000);
                 } catch (InterruptedException ignored) {
                 }
             }
         }
-        log.info("Returning vote result");
         return result.get();
     }
 }

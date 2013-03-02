@@ -13,7 +13,6 @@ public class Record {
     private BallotNumber ballot = new BallotNumber(0, "");
     private boolean prepared = false;
     private String outstanding = null;
-    private String outstandingClassic = null;
 
     public Record(String key) {
         this.key = key;
@@ -69,13 +68,5 @@ public class Record {
 
     public void setValue(ByteBuffer value) {
         this.value = value;
-    }
-
-    public String getOutstandingClassic() {
-        return outstandingClassic;
-    }
-
-    public void setOutstandingClassic(String outstandingClassic) {
-        this.outstandingClassic = outstandingClassic;
     }
 }

@@ -137,7 +137,6 @@ public class StorageNode extends Agent {
                     record.setVersion(option.getOldVersion() + 1);
                     record.setValue(option.getValue());
                     record.setOutstanding(null);
-                    record.setOutstandingClassic(null);
                     db.put(record);
                 }
                 log.info("[COMMIT] Saved option to DB");
@@ -147,9 +146,6 @@ public class StorageNode extends Agent {
                 Record record = db.get(option.getKey());
                 if (transaction.equals(record.getOutstanding())) {
                     record.setOutstanding(null);
-                }
-                if (transaction.equals(record.getOutstandingClassic())) {
-                    record.setOutstandingClassic(null);
                 }
                 db.put(record);
                 log.info("[ABORT] Not saving option to DB");
@@ -224,13 +220,15 @@ public class StorageNode extends Agent {
             if (leader.isLocal()) {
                 Record record = db.get(key);
                 synchronized (this) {
-                    if (record.getOutstandingClassic() != null &&
-                            !transaction.equals(record.getOutstandingClassic())) {
-                        log.info("Outstanding classic key found for: " + key);
-                        return false;
+                    if (record.getOutstanding() != null) {
+                        if (!transaction.equals(record.getOutstanding())) {
+                            log.info("Outstanding (classic) option found for: " + key);
+                            return false;
+                        }
+                    } else {
+                        record.setOutstanding(transaction);
+                        db.put(record);
                     }
-                    record.setOutstandingClassic(transaction);
-                    db.put(record);
                 }
 
                 Member[] members = MDCCConfiguration.getConfiguration().getMembers();
@@ -268,7 +266,7 @@ public class StorageNode extends Agent {
                     if (!member.isLocal()) {
                         communicator.sendAcceptAsync(member, accept, voteCounter);
                     } else {
-                        voteCounter.onComplete(Boolean.valueOf(onAccept(accept)));
+                        voteCounter.onComplete(onAccept(accept));
                     }
                 }
 
@@ -278,7 +276,6 @@ public class StorageNode extends Agent {
                     db.put(record);
                 }
                 boolean result = listener.getResult();
-                log.info("RETURNING " + result);
                 return result;
             } else {
                 ClassicPaxosResultObserver observer = new ClassicPaxosResultObserver(option);
