@@ -89,13 +89,17 @@ public class StorageNode extends Agent {
         ByteBuffer value = accept.getValue();
 
         synchronized (accept.getKey().intern()) {
-            if (ballot.isFastBallot() && db.get(key).isOutstanding()) {
+            Record record = db.get(key);
+            if (record.getOutstanding() != null &&
+                    !transaction.equals(record.getOutstanding())) {
                 log.warn("Outstanding option detected on " + key +
                         " - Denying the new option");
+                TransactionRecord txnRecord = db.getTransactionRecord(transaction);
+                txnRecord.addOption(new Option(key, value, record.getVersion(), false));
+                db.putTransactionRecord(txnRecord);
                 return false;
             }
 
-            Record record = db.get(key);
             BallotNumber entryBallot = record.getBallot();
 
             long version = record.getVersion();
@@ -104,7 +108,7 @@ public class StorageNode extends Agent {
                     (ballot.isFastBallot() || ballot.compareTo(entryBallot) >= 0);
 
             if (success) {
-                record.setOutstanding(true);
+                record.setOutstanding(transaction);
                 db.put(record);
                 log.info("option accepted");
             } else {
@@ -126,17 +130,31 @@ public class StorageNode extends Agent {
         }
 
         TransactionRecord txnRecord = db.getTransactionRecord(transaction);
-        if (commit && !txnRecord.isComplete()) {
+        if (commit) {
             for (Option option : txnRecord.getOptions()) {
                 Record record = db.get(option.getKey());
-                record.setVersion(option.getOldVersion() + 1);
-                record.setValue(option.getValue());
-                record.setOutstanding(false);
-                record.setOutstandingClassic(false);
-                db.put(record);
+                if (record.getVersion() <= option.getOldVersion()) {
+                    record.setVersion(option.getOldVersion() + 1);
+                    record.setValue(option.getValue());
+                    record.setOutstanding(null);
+                    record.setOutstandingClassic(null);
+                    db.put(record);
+                }
                 log.info("[COMMIT] Saved option to DB");
             }
-		}
+		} else {
+            for (Option option : txnRecord.getOptions()) {
+                Record record = db.get(option.getKey());
+                if (transaction.equals(record.getOutstanding())) {
+                    record.setOutstanding(null);
+                }
+                if (transaction.equals(record.getOutstandingClassic())) {
+                    record.setOutstandingClassic(null);
+                }
+                db.put(record);
+                log.info("[ABORT] Not saving option to DB");
+            }
+        }
 
         if (!txnRecord.isComplete()) {
             txnRecord.finish(commit);
@@ -206,11 +224,12 @@ public class StorageNode extends Agent {
             if (leader.isLocal()) {
                 Record record = db.get(key);
                 synchronized (this) {
-                    if (record.isOutstandingClassic()) {
+                    if (record.getOutstandingClassic() != null &&
+                            !transaction.equals(record.getOutstandingClassic())) {
                         log.info("Outstanding classic key found for: " + key);
                         return false;
                     }
-                    record.setOutstandingClassic(true);
+                    record.setOutstandingClassic(transaction);
                     db.put(record);
                 }
 
@@ -246,7 +265,11 @@ public class StorageNode extends Agent {
                 log.info("Running accept phase");
                 Accept accept = new Accept(transaction, ballot, option);
                 for (Member member : members) {
-                    communicator.sendAcceptAsync(member, accept, voteCounter);
+                    if (!member.isLocal()) {
+                        communicator.sendAcceptAsync(member, accept, voteCounter);
+                    } else {
+                        voteCounter.onComplete(Boolean.valueOf(onAccept(accept)));
+                    }
                 }
 
                 if (record.getVersion() == record.getClassicEndVersion()) {
@@ -254,7 +277,9 @@ public class StorageNode extends Agent {
                     record.setPrepared(false);
                     db.put(record);
                 }
-                return listener.getResult();
+                boolean result = listener.getResult();
+                log.info("RETURNING " + result);
+                return result;
             } else {
                 ClassicPaxosResultObserver observer = new ClassicPaxosResultObserver(option);
                 if (communicator.runClassicPaxos(leader, transaction, option, observer)) {

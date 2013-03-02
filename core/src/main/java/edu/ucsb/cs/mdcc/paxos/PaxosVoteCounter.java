@@ -4,6 +4,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.TException;
 import org.apache.thrift.async.AsyncMethodCallback;
 
@@ -12,6 +14,8 @@ import edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService.AsyncClient.accept_ca
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService.AsyncClient.prepare_call;
 
 public class PaxosVoteCounter implements AsyncMethodCallback {
+
+    private static final Log log = LogFactory.getLog(PaxosVoteCounter.class);
 
 	private AtomicInteger accepts = new AtomicInteger(0);
 	private AtomicInteger rejects = new AtomicInteger(0);
@@ -34,19 +38,23 @@ public class PaxosVoteCounter implements AsyncMethodCallback {
 	}
 	
 	public void onComplete(Object response) {
-        boolean result = false;
+        boolean result;
         if (response instanceof accept_call) {
             try {
                 result = ((accept_call) response).getResult();
             } catch (TException e) {
                 onReject();
+                return;
             }
         } else if (response instanceof prepare_call) {
             try {
                 result = ((prepare_call) response).getResult();
             } catch (TException e) {
                 onReject();
+                return;
             }
+        } else if (response instanceof Boolean) {
+            result = ((Boolean) response).booleanValue();
         } else {
             return;
         }
@@ -63,6 +71,9 @@ public class PaxosVoteCounter implements AsyncMethodCallback {
 	}
 
     private void onAccept() {
+        if (log.isDebugEnabled()) {
+            log.debug("Key=" + myOption.getKey() + " accept " + this.hashCode());
+        }
         if (accepts.incrementAndGet() >= acceptQuorum &&
                 outcomeReached.compareAndSet(false, true)) {
             callback.notifyOutcome(myOption, true);
@@ -70,6 +81,9 @@ public class PaxosVoteCounter implements AsyncMethodCallback {
     }
 
     private void onReject() {
+        if (log.isDebugEnabled()) {
+            log.info("Key=" + myOption.getKey() + " reject " + this.hashCode());
+        }
         if (rejects.incrementAndGet() > (numVoters - acceptQuorum) &&
                 outcomeReached.compareAndSet(false, true)) {
             callback.notifyOutcome(myOption, false);

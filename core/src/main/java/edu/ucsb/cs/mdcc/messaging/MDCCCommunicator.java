@@ -92,10 +92,12 @@ public class MDCCCommunicator {
     }
 	
 	public void sendAcceptAsync(Member member, Accept accept, PaxosVoteCounter voting) {
+        AsyncMethodCallbackDecorator callback = null;
 		try {
             TNonblockingSocket socket = new TNonblockingSocket(
                     member.getHostName(),
                     member.getPort());
+            callback = new AsyncMethodCallbackDecorator(voting, socket);
             TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
             TAsyncClientManager clientManager = new TAsyncClientManager();
             MDCCCommunicationService.AsyncClient client =
@@ -108,26 +110,36 @@ public class MDCCCommunicator {
                     accept.getKey(),
                     accept.getOldVersion(),
                     toThriftBallot(accept.getBallotNumber()),
-                    accept.getValue(), voting);
+                    accept.getValue(), callback);
         } catch (Exception e) {
-            voting.onError(e);
+            if (callback != null) {
+                callback.onError(e);
+            } else {
+                voting.onError(e);
+            }
             handleException(member.getHostName(), e);
         }
 	}
 
     public void sendPrepareAsync(Member member, Prepare prepare, PaxosVoteCounter voting) {
+        AsyncMethodCallbackDecorator callback = null;
         try {
             TNonblockingSocket socket = new TNonblockingSocket(member.getHostName(),
                     member.getPort());
+            callback = new AsyncMethodCallbackDecorator(voting, socket);
             TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
             TAsyncClientManager clientManager = new TAsyncClientManager();
             MDCCCommunicationService.AsyncClient client =
                     new MDCCCommunicationService.AsyncClient(protocolFactory,
                             clientManager, socket);
             client.prepare(prepare.getKey(), toThriftBallot(prepare.getBallotNumber()),
-                    prepare.getClassicEndVersion(), voting);
+                    prepare.getClassicEndVersion(), callback);
         } catch (Exception e) {
-            voting.onError(e);
+            if (callback != null) {
+                callback.onError(e);
+            } else {
+                voting.onError(e);
+            }
             handleException(member.getHostName(), e);
         }
     }

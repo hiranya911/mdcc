@@ -12,8 +12,8 @@ public class Record {
     private long classicEndVersion = -1;
     private BallotNumber ballot = new BallotNumber(0, "");
     private boolean prepared = false;
-    private boolean outstanding = false;
-    private boolean outstandingClassic = false;
+    private String outstanding = null;
+    private String outstandingClassic = null;
 
     public Record(String key) {
         this.key = key;
@@ -27,7 +27,7 @@ public class Record {
         return version;
     }
 
-    public boolean isOutstanding() {
+    public String getOutstanding() {
         return outstanding;
     }
 
@@ -59,7 +59,7 @@ public class Record {
         this.classicEndVersion = classicEndVersion;
     }
 
-    public void setOutstanding(boolean outstanding) {
+    public void setOutstanding(String outstanding) {
         this.outstanding = outstanding;
     }
 
@@ -71,11 +71,11 @@ public class Record {
         this.value = value;
     }
 
-    public boolean isOutstandingClassic() {
+    public String getOutstandingClassic() {
         return outstandingClassic;
     }
 
-    public void setOutstandingClassic(boolean outstandingClassic) {
+    public void setOutstandingClassic(String outstandingClassic) {
         this.outstandingClassic = outstandingClassic;
     }
 }
