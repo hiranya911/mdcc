@@ -275,12 +275,13 @@ public class StorageNode extends Agent {
                     record.setPrepared(false);
                     db.put(record);
                 }
-                boolean result = listener.getResult();
-                return result;
+                return listener.getResult();
             } else {
                 ClassicPaxosResultObserver observer = new ClassicPaxosResultObserver(option);
                 if (communicator.runClassicPaxos(leader, transaction, option, observer)) {
                     return observer.getResult();
+                } else {
+                    log.warn("Failed to connect to the leader - Retrying...");
                 }
             }
         }

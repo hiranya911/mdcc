@@ -6,6 +6,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.master.HMaster;
 import org.apache.hadoop.hbase.regionserver.HRegionServer;
 
@@ -16,6 +17,8 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class HBaseServer {
 
@@ -29,7 +32,12 @@ public class HBaseServer {
     private Future regionServerFuture;
 
     public void start() {
-        exec = Executors.newFixedThreadPool(3);
+        exec = Executors.newFixedThreadPool(3, new ThreadFactory() {
+            private AtomicInteger counter = new AtomicInteger(0);
+            public Thread newThread(Runnable r) {
+                return new Thread(r, "hbase-pool-" + counter.getAndIncrement());
+            }
+        });
 
         Properties properties = new Properties();
         String configPath = System.getProperty("mdcc.config.dir", "conf");
@@ -39,8 +47,8 @@ public class HBaseServer {
             properties.load(new FileInputStream(configFile));
             int myId = MDCCConfiguration.getConfiguration().getMyId();
             Utils.incrementPort(properties, "clientPort", myId);
-            Utils.incrementPort(properties, "hbase.master.port", myId);
-            Utils.incrementPort(properties, "hbase.regionserver.port", myId);
+            Utils.incrementPort(properties, HConstants.MASTER_PORT, myId);
+            Utils.incrementPort(properties, HConstants.REGIONSERVER_PORT, myId);
             Utils.rewriteQuorumPorts(properties, myId);
         } catch (IOException e) {
             handleException("Error loading the ZooKeeper configuration", e);
@@ -51,12 +59,12 @@ public class HBaseServer {
 
         Configuration config = HBaseConfiguration.create();
         File hbaseDir = new File(hbasePath, "data");
-        config.set("hbase.rootdir", hbaseDir.getAbsolutePath());
+        config.set(HConstants.HBASE_DIR, hbaseDir.getAbsolutePath());
         for (String key : properties.stringPropertyNames()) {
             if (key.startsWith("hbase.")) {
                 config.set(key, properties.getProperty(key));
             } else {
-                String name = "hbase.zookeeper.property." + key;
+                String name = HConstants.ZK_CFG_PROPERTY_PREFIX + key;
                 config.set(name, properties.getProperty(key));
             }
         }
@@ -78,14 +86,14 @@ public class HBaseServer {
         while (!masterFuture.isDone()) {
             try {
                 Thread.sleep(1000);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException ignored) {
             }
         }
 
         while (!regionServerFuture.isDone()) {
             try {
                 Thread.sleep(1000);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException ignored) {
             }
         }
         exec.shutdownNow();

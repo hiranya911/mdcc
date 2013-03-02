@@ -40,21 +40,21 @@ public class AppServer {
 		boolean success;
         Member[] members = configuration.getMembers();
         
-        VoteCollator collator = new VoteCollator(options, communicator, txnId);
-        collator.start();
+        FastPaxosVoteListener voteListener = new FastPaxosVoteListener(options, communicator, txnId);
+        voteListener.start();
 
         int loopCount = 0;
-        synchronized (collator) {
-        	while (collator.getTotal() < options.size() && loopCount < 10) {
+        synchronized (voteListener) {
+        	while (voteListener.getTotal() < options.size() && loopCount < 10) {
         		try {
-					collator.wait(5000);
+					voteListener.wait(5000);
 				} catch (InterruptedException ignored) {
 				}
         		loopCount++;
         	}
         }
         
-        success = collator.getAccepts() == options.size();
+        success = voteListener.getAccepts() == options.size();
         for (Member member : members) {
             communicator.sendDecide(member, txnId, success);
         }

@@ -12,7 +12,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
-import org.apache.zookeeper.server.quorum.QuorumPeerMain;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,6 +22,7 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 public abstract class Agent implements Watcher, AsyncCallback.ChildrenCallback, AgentService {
 
@@ -30,10 +30,10 @@ public abstract class Agent implements Watcher, AsyncCallback.ChildrenCallback, 
 
     private static final String ELECTION_NODE = "/ELECTION_";
 
-    private ExecutorService zkService = Executors.newSingleThreadExecutor();
+    private ExecutorService zkService;
     private HBaseServer hbaseServer;
     private ZooKeeper zkClient;
-    private Map<String,Member> leaders = new ConcurrentHashMap<String, Member>();
+    private final Map<String,Member> leaders = new ConcurrentHashMap<String, Member>();
 
     public void start() {
         Properties properties = new Properties();
@@ -50,6 +50,11 @@ public abstract class Agent implements Watcher, AsyncCallback.ChildrenCallback, 
             config.parseProperties(properties);
 
             ZKServer server = new ZKServer(config);
+            zkService = Executors.newSingleThreadExecutor(new ThreadFactory() {
+                public Thread newThread(Runnable r) {
+                    return new Thread(r, "zk-thread-pool");
+                }
+            });
             zkService.submit(server);
             log.info("ZooKeeper server started");
         } catch (IOException e) {

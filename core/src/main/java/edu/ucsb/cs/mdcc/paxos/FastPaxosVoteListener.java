@@ -11,9 +11,9 @@ import edu.ucsb.cs.mdcc.messaging.MDCCCommunicator;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public class VoteCollator implements VoteResultListener {
+public class FastPaxosVoteListener implements VoteResultListener {
 
-    private static final Log log = LogFactory.getLog(VoteCollator.class);
+    private static final Log log = LogFactory.getLog(FastPaxosVoteListener.class);
 
     public static final String DEFAULT_SERVER_ID = "AppServer";
 
@@ -23,8 +23,8 @@ public class VoteCollator implements VoteResultListener {
     private MDCCCommunicator communicator;
     private String txnId;
 
-    public VoteCollator(Collection<Option> options, MDCCCommunicator communicator,
-                        String txnId) {
+    public FastPaxosVoteListener(Collection<Option> options, MDCCCommunicator communicator,
+                                 String txnId) {
         this.options = options;
         this.communicator = communicator;
         this.txnId = txnId;
