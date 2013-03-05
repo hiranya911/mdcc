@@ -30,15 +30,13 @@ import org.apache.hadoop.hbase.util.Bytes;
 import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.paxos.BallotNumber;
 
-public class HBase implements Database{       
+public class HBase implements Database {
 	
-    private static Configuration conf =null;  
-     /** 
-      * config init 
-     */  
-     static {  
-         conf = HBaseConfiguration.create();  
-     }  
+    private static Configuration conf =null;
+
+    public HBase() {
+        conf = HBaseConfiguration.create();
+    }
      
     /**   
      * create table   
@@ -125,7 +123,7 @@ public class HBase implements Database{
     /**   
      * get one   
      */    
-    public static Result getOneRecord (String tableName, String rowKey) throws IOException{     
+    private Result getOneRecord (String tableName, String rowKey) throws IOException{
         HTable table = new HTable(conf, tableName);     
         Get get = new Get(rowKey.getBytes());     
         Result rs = table.get(get);
@@ -164,20 +162,6 @@ public class HBase implements Database{
          return ss;        
     }     
 
-    public static void insertToRecords(String key, ByteBuffer value, Long version, Long classicEndVersion, 
-    		BallotNumber ballot, Boolean prepared, String outstanding){
-    	try{
-    		HBase.addRecord("Records",key,"value", "", Bytes.toString(value.array())); 
-    		HBase.addRecord("Records",key,"version","",Long.toString(version));
-    		HBase.addRecord("Records",key,"classicEndVersion","",Long.toString(classicEndVersion));
-    		HBase.addRecord("Records",key,"BallotNumber","",ballot.toString());
-    		HBase.addRecord("Records",key,"prepared","",prepared.toString());        		
-    		HBase.addRecord("Records",key,"outstanding","",outstanding);        		
-    	}catch (Exception e) {     
-            e.printStackTrace();     
-        }
-    }
-    
     public static void insertToTxnRecords(String txn_id, Boolean complete, Collection<Option> options ){
     	try{
     		// add 'tex_id/complete'
@@ -203,11 +187,29 @@ public class HBase implements Database{
     }
      
 	/**   
-     * implementes Database.java   
+     * implements Database.java
      */ 
     public void put(Record record){
-    	insertToRecords(record.getKey(), record.getValue(), record.getVersion(), record.getClassicEndVersion(), 
-    			record.getBallot(), record.isPrepared(), record.getOutstanding());
+        try {
+            HTable table = new HTable(conf, "Records");
+            Put put = new Put(record.getKey().getBytes());
+            put.add(Bytes.toBytes("value"),Bytes.toBytes(""),
+                    Bytes.toBytes(record.getValue()));
+            put.add(Bytes.toBytes("version"),Bytes.toBytes(""),
+                    Bytes.toBytes(record.getVersion()));
+            put.add(Bytes.toBytes("classicEndVersion"),Bytes.toBytes(""),
+                    Bytes.toBytes(record.getClassicEndVersion()));
+            put.add(Bytes.toBytes("BallotNumber"),Bytes.toBytes(""),
+                    Bytes.toBytes(record.getBallot().toString()));
+            put.add(Bytes.toBytes("prepared"),Bytes.toBytes(""),
+                    Bytes.toBytes(record.isPrepared()));
+            put.add(Bytes.toBytes("outstanding"),Bytes.toBytes(""),
+                    Bytes.toBytes(record.getOutstanding()));
+            table.put(put);
+            table.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
     
     public void putTransactionRecord(TransactionRecord record){    	
@@ -218,11 +220,10 @@ public class HBase implements Database{
     	Result rs;
 		Record rec = new Record(key);
 		try {
-			rs = HBase.getOneRecord("Records", key);
+			rs = getOneRecord("Records", key);
 			if (rs.isEmpty()){
-	        	System.out.print("Not found!"); 
-	        }
-			else{
+	        	return new Record(key);
+	        } else {
 				for(KeyValue kv : rs.raw()){  
 		            String familyName = Bytes.toString(kv.getFamily());
 		            String columnValue =  Bytes.toString(kv.getValue());
@@ -307,7 +308,7 @@ public class HBase implements Database{
     	Result rs;
     	TransactionRecord rec = new TransactionRecord(transactionId);
 		try {
-			rs = HBase.getOneRecord("TxnRecords", transactionId);
+			rs = getOneRecord("TxnRecords", transactionId);
 			if (rs.isEmpty()){
 	        	System.out.print("Not found!"); 
 	        }

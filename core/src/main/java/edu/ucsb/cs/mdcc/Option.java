@@ -5,9 +5,13 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.util.Bytes;
 
 public class Option {
+
+    private static final Log log = LogFactory.getLog(Option.class);
 
     private String key;
     private ByteBuffer value;
@@ -19,6 +23,29 @@ public class Option {
         this.value = value;
         this.oldVersion = oldVersion;
         this.classic = classic;
+    }
+
+    public Option(ByteBuffer serialized){
+        int offset = 0;
+        byte[] concatenated = serialized.array();
+
+        int keyLength = Bytes.toInt(concatenated, offset, 4);
+        offset += 4;
+
+        //parse the key
+        this.key = Bytes.toString(concatenated, offset, keyLength);
+        offset += keyLength;
+
+        //parse the valueLength
+        int valueLength = Bytes.toInt(concatenated, offset, 4);
+        offset += 4;
+
+        //parse the value
+        this.value = ByteBuffer.wrap(concatenated, offset, valueLength);
+        offset += valueLength;
+
+        this.oldVersion = Bytes.toLong(concatenated, offset, 8);
+        this.classic = false;
     }
 
     public String getKey() {
@@ -42,7 +69,6 @@ public class Option {
     }
     
     public ByteBuffer toBytes(){
-    	ByteBuffer serialized;
     	byte[] keyBytes = Bytes.toBytes(key);
     	byte[] keyLengthBytes = Bytes.toBytes(keyBytes.length);
     	byte[] valueLengthBytes = Bytes.toBytes(value.array().length);
@@ -56,61 +82,16 @@ public class Option {
 	    	outputStream.write( value.array() );
 	    	outputStream.write( oldVersionBytes );
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("Unexpected error while serializing an option", e);
 		}
-    	byte[] concatenated = outputStream.toByteArray( );
-    	serialized = ByteBuffer.wrap(concatenated);
+
+        byte[] concatenated = outputStream.toByteArray( );
+    	ByteBuffer serialized = ByteBuffer.wrap(concatenated);
     	try {
 			outputStream.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (IOException ignored) {
 		}
     	return serialized;    
     }
-    
-    //overload constructor
-    public Option(ByteBuffer serialized){
-    	byte[] concatenated = serialized.array();
-    	
-    	//parse the keyLength
-    	byte[] keyLengthBytes = new byte[4];
-    	for (int i= 0; i < 4; i++){
-    		keyLengthBytes[i] = concatenated[i];
-    	}
-    	int keyLength = Bytes.toInt(keyLengthBytes);
-    	
-    	//parse the key
-    	byte[] keyBytes = new byte[keyLength];
-    	for (int i= 0; i < keyLength; i++){
-    		keyBytes[i] = concatenated[4 + i];
-    	}
-    	String key = Bytes.toString(keyBytes);
-    	
-    	//parse the valueLength
-    	byte[] valueLengthBytes = new byte[4];
-    	for (int i= 0; i < 4; i++){
-    		valueLengthBytes[i] = concatenated[4 + keyLength + i];
-    	}
-    	int valueLength = Bytes.toInt(valueLengthBytes);
-    	
-    	//parse the value
-    	byte[] valueBytes = new byte[valueLength];
-    	for (int i= 0; i < valueLength; i++){
-    		valueBytes[i] = concatenated[4 + keyLength + 4 + i];
-    	}
-    	ByteBuffer value = ByteBuffer.wrap(valueBytes);
-    	
-    	//parse the oldVersion
-    	byte[] oldVersionBytes = new byte[8];
-    	for (int i= 0; i < 8; i++){
-    		oldVersionBytes[i] = concatenated[4 + keyLength + 4 + valueLength + i];
-    	}
-    	long oldVersion = Bytes.toLong(oldVersionBytes);
-    	
-    	this.key = key;
-        this.value = value;
-        this.oldVersion = oldVersion;
-        this.classic = false;
-    }
+
 }
