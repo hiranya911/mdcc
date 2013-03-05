@@ -80,6 +80,10 @@ public class HBaseServer {
         }
     }
 
+    public boolean isInitialized() {
+        return master.isInitialized() && master.isMasterRunning();
+    }
+
     public void stop() {
         master.stop("Shutting down HBase master");
         regionServer.stop("Shutting down HBase region server");

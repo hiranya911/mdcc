@@ -56,13 +56,13 @@ public class StorageNode extends Agent {
 
         Map<String, ReadValue> versions;
         while ((versions = recoveryVersions.dequeueRecoveryInfo()) != null) {
-            log.info("Received recovery set");
+            log.debug("Received recovery data");
             //replace our entries with any newer entries
             for (Map.Entry<String, ReadValue> entry : versions.entrySet()) {
                 Record record = db.get(entry.getKey());
                 if ((record.getVersion() == 0) ||
                         (entry.getValue().getVersion() > record.getVersion())) {
-                    log.debug("recovered value for '" + entry.getKey() + "'");
+                    log.info("Recovered value for '" + entry.getKey() + "'");
                     ReadValue readValue = entry.getValue();
                     record.setValue(ByteBuffer.wrap(readValue.getValue()));
                     record.setVersion(readValue.getVersion());

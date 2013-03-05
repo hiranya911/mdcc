@@ -72,6 +72,13 @@ public abstract class Agent implements Watcher, AsyncCallback.ChildrenCallback, 
 
         hbaseServer = new HBaseServer();
         hbaseServer.start();
+        while (!hbaseServer.isInitialized()) {
+            log.debug("Waiting for HBase server to initialize");
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ignored) {
+            }
+        }
     }
 
     public void stop() {
