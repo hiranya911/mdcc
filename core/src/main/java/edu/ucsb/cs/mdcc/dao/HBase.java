@@ -324,13 +324,13 @@ public class HBase implements Database{
 		            		byte[] valueBytes =  kv.getValue();
 		            		boolean isLength = true;
 		            		int optionBytesLength = 0;
-		            		byte[] optionBytesLengthBytes = new byte[32];
+		            		byte[] optionBytesLengthBytes = new byte[4];
 		            		int lengthCount = 0;
 		            		int optionBytesCount = 0;
 		            		for (int i = 0; i < valueBytes.length ; i++) {
 		            			if (isLength){
 		            				lengthCount++;
-			            			if (lengthCount < 32){
+			            			if (lengthCount < 4){
 			            				optionBytesLengthBytes[lengthCount] = valueBytes[i];
 			            			}
 			            			else{

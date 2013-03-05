@@ -74,8 +74,8 @@ public class Option {
     	byte[] concatenated = serialized.array();
     	
     	//parse the keyLength
-    	byte[] keyLengthBytes = new byte[32];
-    	for (int i= 0; i < 32; i++){
+    	byte[] keyLengthBytes = new byte[4];
+    	for (int i= 0; i < 4; i++){
     		keyLengthBytes[i] = concatenated[i];
     	}
     	int keyLength = Bytes.toInt(keyLengthBytes);
@@ -83,28 +83,28 @@ public class Option {
     	//parse the key
     	byte[] keyBytes = new byte[keyLength];
     	for (int i= 0; i < keyLength; i++){
-    		keyBytes[i] = concatenated[32 + i];
+    		keyBytes[i] = concatenated[4 + i];
     	}
     	String key = Bytes.toString(keyBytes);
     	
     	//parse the valueLength
-    	byte[] valueLengthBytes = new byte[32];
-    	for (int i= 0; i < 32; i++){
-    		valueLengthBytes[i] = concatenated[32 + keyLength + i];
+    	byte[] valueLengthBytes = new byte[4];
+    	for (int i= 0; i < 4; i++){
+    		valueLengthBytes[i] = concatenated[4 + keyLength + i];
     	}
     	int valueLength = Bytes.toInt(valueLengthBytes);
     	
     	//parse the value
     	byte[] valueBytes = new byte[valueLength];
     	for (int i= 0; i < valueLength; i++){
-    		valueBytes[i] = concatenated[32 + keyLength + 32 + i];
+    		valueBytes[i] = concatenated[4 + keyLength + 4 + i];
     	}
     	ByteBuffer value = ByteBuffer.wrap(valueBytes);
     	
     	//parse the oldVersion
-    	byte[] oldVersionBytes = new byte[64];
-    	for (int i= 0; i < 32; i++){
-    		oldVersionBytes[i] = concatenated[32 + keyLength + 32 + valueLength + i];
+    	byte[] oldVersionBytes = new byte[8];
+    	for (int i= 0; i < 8; i++){
+    		oldVersionBytes[i] = concatenated[4 + keyLength + 4 + valueLength + i];
     	}
     	long oldVersion = Bytes.toLong(oldVersionBytes);
     	
