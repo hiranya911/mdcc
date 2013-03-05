@@ -4,6 +4,8 @@ import java.util.Collection;
 
 public interface Database {
 
+    public void onStartup();
+
     public Record get(String key);
 
     public Collection<Record> getAll();

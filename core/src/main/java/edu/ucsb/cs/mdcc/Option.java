@@ -41,7 +41,9 @@ public class Option {
         offset += 4;
 
         //parse the value
-        this.value = ByteBuffer.wrap(concatenated, offset, valueLength);
+        byte[] temp = new byte[valueLength];
+        System.arraycopy(concatenated, offset, temp, 0, valueLength);
+        this.value = ByteBuffer.wrap(temp);
         offset += valueLength;
 
         this.oldVersion = Bytes.toLong(concatenated, offset, 8);
