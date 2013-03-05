@@ -2,12 +2,9 @@ package edu.ucsb.cs.mdcc.dao;
 
 import java.io.IOException;     
 import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.ArrayList;     
+import java.util.Collection;   
 import java.util.HashMap;
-import java.util.List;     
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.hadoop.conf.Configuration;     
@@ -16,8 +13,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;     
 import org.apache.hadoop.hbase.KeyValue;     
 import org.apache.hadoop.hbase.MasterNotRunningException;     
-import org.apache.hadoop.hbase.ZooKeeperConnectionException;     
-import org.apache.hadoop.hbase.client.Delete;     
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;    
 import org.apache.hadoop.hbase.client.Get;     
 import org.apache.hadoop.hbase.client.HBaseAdmin;     
 import org.apache.hadoop.hbase.client.HTable;     
@@ -74,53 +70,6 @@ public class HBase implements Database {
     }     
 
     /**   
-     * add record   
-     */    
-    public static void addRecord (String tableName, String rowKey, String family, String qualifier, String value)     
-            throws Exception{     
-        try {     
-            HTable table = new HTable(conf, tableName);     
-            Put put = new Put(rowKey.getBytes());     
-            put.add(Bytes.toBytes(family),Bytes.toBytes(qualifier), Bytes.toBytes(value));     
-            table.put(put);     
-            System.out.println("insert recored " + rowKey + " to table " + tableName +" ok.");   
-            table.close();
-        } catch (IOException e) {     
-            e.printStackTrace();     
-        }
-    }
-
-    /**   
-     * add record overloaded  
-     */ 
-    private static void addRecord(String tableName, String rowKey, String family, String qualifier, 
-    					byte[] optionCollectionBytes) throws Exception{
-    	try {     
-            HTable table = new HTable(conf, tableName);     
-            Put put = new Put(rowKey.getBytes());     
-            put.add(Bytes.toBytes(family),Bytes.toBytes(qualifier), optionCollectionBytes);     
-            table.put(put);     
-            System.out.println("insert recored " + rowKey + " to table " + tableName +" ok."); 
-            table.close();   
-        } catch (IOException e) {     
-            e.printStackTrace();     
-        }
-	}
-    
-    /**   
-     * del record   
-     */    
-    public static void delRecord (String tableName, String rowKey) throws IOException{     
-        HTable table = new HTable(conf, tableName);     
-        List list = new ArrayList();     
-        Delete del = new Delete(rowKey.getBytes());     
-        list.add(del);     
-        table.delete(list);
-        table.close();
-        System.out.println("del recored " + rowKey + " ok.");     
-    }     
-
-    /**   
      * get one   
      */    
     private Result getOneRecord (String tableName, String rowKey) throws IOException{
@@ -161,30 +110,6 @@ public class HBase implements Database {
          table.close();
          return ss;        
     }     
-
-    public static void insertToTxnRecords(String txn_id, Boolean complete, Collection<Option> options ){
-    	try{
-    		// add 'tex_id/complete'
-    		HBase.addRecord("TxnRecords",txn_id,"complete","",complete.toString());
-    		
-    		//serialize Collection<Option>
-    		Option[] optionArray = options.toArray(new Option[0]);
-    		int arrayLength = optionArray.length;    		
-    		ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
-    		for (int i = 0; i < arrayLength; i++){
-    			int optionBytesLength = optionArray[i].toBytes().array().length;
-    			byte[] optionBytesLengthBytes = Bytes.toBytes(optionBytesLength);
-    			outputStream.write( optionBytesLengthBytes);
-    			outputStream.write( optionArray[i].toBytes().array());
-    		}
-    		byte[] optionCollectionBytes = outputStream.toByteArray( );
-    		outputStream.close();
-    		//add 'tex_id/Collection<Option>'
-    		HBase.addRecord("TxnRecords",txn_id,"options","", optionCollectionBytes);
-    	}catch (Exception e) {     
-            e.printStackTrace();     
-        }
-    }
      
 	/**   
      * implements Database.java
@@ -213,49 +138,69 @@ public class HBase implements Database {
     }
     
     public void putTransactionRecord(TransactionRecord record){    	
-    	insertToTxnRecords(record.getTransactionId(), record.isComplete(), record.getOptions());    	
+    	try{    		
+    		//serialize Collection<Option>
+    		Option[] optionArray = record.getOptions().toArray(new Option[0]);
+    		int arrayLength = optionArray.length;    		
+    		ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+    		for (int i = 0; i < arrayLength; i++){
+    			int optionBytesLength = optionArray[i].toBytes().array().length;
+    			byte[] optionBytesLengthBytes = Bytes.toBytes(optionBytesLength);
+    			outputStream.write( optionBytesLengthBytes);
+    			outputStream.write( optionArray[i].toBytes().array());
+    		}
+    		byte[] optionCollectionBytes = outputStream.toByteArray( );
+    		outputStream.close();
+    		
+    		HTable table = new HTable(conf, "TxnRecords");
+            Put put = new Put(record.getTransactionId().getBytes());    		
+    		put.add(Bytes.toBytes("complete"),Bytes.toBytes(""),
+                    Bytes.toBytes(record.isComplete()));
+    		put.add(Bytes.toBytes("options"),Bytes.toBytes(""),
+    				optionCollectionBytes);
+            table.put(put);
+            table.close();
+    	}catch (Exception e) {     
+            e.printStackTrace();     
+        } 	
     }
     
     public Record get(String key){
-    	Result rs;
 		Record rec = new Record(key);
 		try {
-			rs = getOneRecord("Records", key);
-			if (rs.isEmpty()){
-	        	return new Record(key);
-	        } else {
+			HTable table = new HTable(conf, "Records");     
+	        Get get = new Get(key.getBytes());     
+	        Result rs = table.get(get);
+			if (rs.isEmpty()){	        } 
+			else {
 				for(KeyValue kv : rs.raw()){  
 		            String familyName = Bytes.toString(kv.getFamily());
 		            String columnValue =  Bytes.toString(kv.getValue());
-		            switch(familyName){
-		            	case "value":  
+		            if (familyName == "value"){
 		            		rec.setValue(ByteBuffer.wrap(columnValue.getBytes()));
-		            		break;
-		            	case "version":
-		            		rec.setVersion(Long.valueOf(columnValue));
-		            		break;
-		            	case "classicEndVersion":
+		            		}
+		            else if (familyName == "version"){
+		            		rec.setVersion(Long.valueOf(columnValue));		            
+		            		}
+		            else if (familyName == "classicEndVersion"){
 		            		rec.setClassicEndVersion(Long.valueOf(columnValue));
-		            		break;
-		            	case "BallotNumber":
+		            		}
+		            else if (familyName == "BallotNumber"){
 		            		rec.setBallot(new BallotNumber(columnValue));
-		            		break;
-		            	case "prepared":
+		            		}
+		            else if (familyName == "prepared"){
 		            		rec.setPrepared(Boolean.valueOf(columnValue));
-		            		break;
-		            	case "outstanding":
+		            		}
+		            else if (familyName == "outstanding"){
 		            		rec.setOutstanding(columnValue);
-		            		break;
-		            	default: 
-		            		break;
+		            		}
 		            }
-				}
-	        }
-			return rec;
+				}	        
+            table.close();
 		} catch (IOException e) {
 			e.printStackTrace();
-			return rec;
 		}
+		return rec;
     }
     
     public Collection<Record> getAll(){
@@ -272,28 +217,24 @@ public class HBase implements Database {
 		            if (!db.containsKey(key)){
 		            	db.put(key, new Record(key));
 		            }
-	            	switch(familyName){
-		            	case "value":  
-		            		db.get(key).setValue(ByteBuffer.wrap(columnValue.getBytes()));
-		            		break;
-		            	case "version":
-		            		db.get(key).setVersion(Long.valueOf(columnValue));
-		            		break;
-		            	case "classicEndVersion":
-		            		db.get(key).setClassicEndVersion(Long.valueOf(columnValue));
-		            		break;
-		            	case "BallotNumber":
-		            		db.get(key).setBallot(new BallotNumber(columnValue));
-		            		break;
-		            	case "prepared":
-		            		db.get(key).setPrepared(Boolean.valueOf(columnValue));
-		            		break;
-		            	case "outstanding":
-		            		db.get(key).setOutstanding(columnValue);
-		            		break;
-		            	default: 
-		            		break;
-		            }
+		            if (familyName == "value"){
+	            		db.get(key).setValue(ByteBuffer.wrap(columnValue.getBytes()));
+	            		}
+		            else if (familyName == "version"){
+		            	db.get(key).setVersion(Long.valueOf(columnValue));		            
+	            		}
+		            else if (familyName == "classicEndVersion"){
+		            	db.get(key).setClassicEndVersion(Long.valueOf(columnValue));
+	            		}
+		            else if (familyName == "BallotNumber"){
+		            	db.get(key).setBallot(new BallotNumber(columnValue));
+	            		}
+		            else if (familyName == "prepared"){
+		            	db.get(key).setPrepared(Boolean.valueOf(columnValue));
+	            		}
+	            	else if (familyName == "outstanding"){
+	            		db.get(key).setOutstanding(columnValue);
+	            		}
                 }     
             }
             table.close();
@@ -315,50 +256,44 @@ public class HBase implements Database {
 			else{
 				for(KeyValue kv : rs.raw()){  
 		            String familyName = Bytes.toString(kv.getFamily());		            
-		            switch(familyName){
-		            	case "complete":  
-		            		String columnValue =  Bytes.toString(kv.getValue());
-		            		rec.finish(Boolean.valueOf(columnValue));
-		            		break;
-		            	case "options":
-		            	{
-		            		byte[] valueBytes =  kv.getValue();
-		            		boolean isLength = true;
-		            		int optionBytesLength = 0;
-		            		byte[] optionBytesLengthBytes = new byte[4];
-		            		int lengthCount = 0;
-		            		int optionBytesCount = 0;
-		            		for (int i = 0; i < valueBytes.length ; i++) {
-		            			if (isLength){
-		            				lengthCount++;
-			            			if (lengthCount < 4){
-			            				optionBytesLengthBytes[lengthCount] = valueBytes[i];
-			            			}
-			            			else{
-			            				optionBytesLength = Bytes.toInt(optionBytesLengthBytes);
-			            				lengthCount = 0;
-			            				isLength = false;
-			            			}
+		            if (familyName == "complete"){
+		            	String columnValue =  Bytes.toString(kv.getValue());
+		            	rec.finish(Boolean.valueOf(columnValue));
+		            	}
+		            else if(familyName == "options"){
+	            		byte[] valueBytes =  kv.getValue();
+	            		boolean isLength = true;
+	            		int optionBytesLength = 0;
+	            		byte[] optionBytesLengthBytes = new byte[4];
+	            		int lengthCount = 0;
+	            		int optionBytesCount = 0;
+	            		for (int i = 0; i < valueBytes.length ; i++) {
+	            			if (isLength){
+	            				lengthCount++;
+		            			if (lengthCount < 4){
+		            				optionBytesLengthBytes[lengthCount] = valueBytes[i];
 		            			}
 		            			else{
-		            				byte[] optionBytes = new byte[optionBytesLength];
-		            				optionBytesCount++;
-		            				if (optionBytesCount < optionBytesLength){
-		            					optionBytes[optionBytesCount] = valueBytes[i];
-		            				}
-		            				else{
-		            					ByteBuffer serialized = ByteBuffer.wrap(optionBytes);
-		            					Option newOption = new Option(serialized);
-		            					rec.addOption(newOption);
-		            					optionBytesCount = 0;
-			            				isLength = true;
-		            				}
+		            				optionBytesLength = Bytes.toInt(optionBytesLengthBytes);
+		            				lengthCount = 0;
+		            				isLength = false;
 		            			}
+	            			}
+	            			else{
+	            				byte[] optionBytes = new byte[optionBytesLength];
+	            				optionBytesCount++;
+	            				if (optionBytesCount < optionBytesLength){
+	            					optionBytes[optionBytesCount] = valueBytes[i];
+	            				}
+	            				else{
+	            					ByteBuffer serialized = ByteBuffer.wrap(optionBytes);
+	            					Option newOption = new Option(serialized);
+	            					rec.addOption(newOption);
+	            					optionBytesCount = 0;
+		            				isLength = true;
+	            				}	            			
 		            		}
-		            	}
-		            		break;
-		            	default: 
-		            		break;		            	
+		            	}            	
 		            }
 				}
 	        }
