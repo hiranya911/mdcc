@@ -69,10 +69,6 @@ public class HBase implements Database {
         }
     }
 
-    public void onStartup() {
-
-    }
-
     /**
      * create table   
      */    
@@ -89,28 +85,23 @@ public class HBase implements Database {
             System.out.println("create table " + tableName + " ok.");     
         }      
         admin.close();
-    }     
-
-    /**   
-     * drop table  
-     */    
-    public static void deleteTable(String tableName) throws Exception {     
-       try {     
-           HBaseAdmin admin = new HBaseAdmin(conf);     
-           admin.disableTable(tableName);     
-           admin.deleteTable(tableName);     
-           System.out.println("delete table " + tableName + " ok.");           
-           admin.close();
-       } catch (MasterNotRunningException e) {     
-           e.printStackTrace();     
-       } catch (ZooKeeperConnectionException e) {     
-           e.printStackTrace();     
-       }     
-    }     
+    }
 
     /**
      * implements Database.java
      */ 
+
+    public void onStartup() {
+    	String[] record_familys= {VALUE, VERSION, PREPARED, CLASSIC_END_VERSION, BALLOT_NUMBER, OUTSTANDING};
+    	String[] txn_familys= {COMPLETE, OPTIONS};
+    	try {
+			createTable(RECORDS_TABLE, record_familys);			
+	    	createTable(TRANSACTIONS_TABLE, txn_familys);
+		} catch (Exception e) {
+			handleException("Error while creating tables", e);
+		}    
+    }
+    
     public void put(Record record){
         try {
             HTable table = new HTable(conf, RECORDS_TABLE);
@@ -228,6 +219,7 @@ public class HBase implements Database {
             HTable table = new HTable(conf, TRANSACTIONS_TABLE);
             Get get = new Get(transactionId.getBytes());
             Result rs = table.get(get);
+            table.close();
 			if (rs.isEmpty()){
                 return record;
 	        }
