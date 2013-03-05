@@ -55,6 +55,7 @@ public class HBase implements Database{
             admin.createTable(tableDesc);     
             System.out.println("create table " + tableName + " ok.");     
         }      
+        admin.close();
     }     
 
     /**   
@@ -65,7 +66,8 @@ public class HBase implements Database{
            HBaseAdmin admin = new HBaseAdmin(conf);     
            admin.disableTable(tableName);     
            admin.deleteTable(tableName);     
-           System.out.println("delete table " + tableName + " ok.");     
+           System.out.println("delete table " + tableName + " ok.");           
+           admin.close();
        } catch (MasterNotRunningException e) {     
            e.printStackTrace();     
        } catch (ZooKeeperConnectionException e) {     
@@ -83,7 +85,8 @@ public class HBase implements Database{
             Put put = new Put(rowKey.getBytes());     
             put.add(Bytes.toBytes(family),Bytes.toBytes(qualifier), Bytes.toBytes(value));     
             table.put(put);     
-            System.out.println("insert recored " + rowKey + " to table " + tableName +" ok.");     
+            System.out.println("insert recored " + rowKey + " to table " + tableName +" ok.");   
+            table.close();
         } catch (IOException e) {     
             e.printStackTrace();     
         }
@@ -99,7 +102,8 @@ public class HBase implements Database{
             Put put = new Put(rowKey.getBytes());     
             put.add(Bytes.toBytes(family),Bytes.toBytes(qualifier), optionCollectionBytes);     
             table.put(put);     
-            System.out.println("insert recored " + rowKey + " to table " + tableName +" ok.");     
+            System.out.println("insert recored " + rowKey + " to table " + tableName +" ok."); 
+            table.close();   
         } catch (IOException e) {     
             e.printStackTrace();     
         }
@@ -113,7 +117,8 @@ public class HBase implements Database{
         List list = new ArrayList();     
         Delete del = new Delete(rowKey.getBytes());     
         list.add(del);     
-        table.delete(list);     
+        table.delete(list);
+        table.close();
         System.out.println("del recored " + rowKey + " ok.");     
     }     
 
@@ -134,6 +139,7 @@ public class HBase implements Database{
             System.out.print(kv.getTimestamp() + " " );     
             System.out.println(new String(kv.getValue()));     
         }
+        table.close();
         return rs;
     }     
 
@@ -154,6 +160,7 @@ public class HBase implements Database{
                 System.out.println(new String(kv.getValue()));     
              }     
          }     
+         table.close();
          return ss;        
     }     
 
@@ -187,7 +194,7 @@ public class HBase implements Database{
     			outputStream.write( optionArray[i].toBytes().array());
     		}
     		byte[] optionCollectionBytes = outputStream.toByteArray( );
-    		
+    		outputStream.close();
     		//add 'tex_id/Collection<Option>'
     		HBase.addRecord("TxnRecords",txn_id,"options","", optionCollectionBytes);
     	}catch (Exception e) {     
@@ -245,7 +252,6 @@ public class HBase implements Database{
 	        }
 			return rec;
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return rec;
 		}
@@ -289,6 +295,7 @@ public class HBase implements Database{
 		            }
                 }     
             }
+            table.close();
             return db.values();
        } catch (IOException e){     
            e.printStackTrace();  
@@ -356,7 +363,6 @@ public class HBase implements Database{
 	        }
 			return rec;
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return rec;
 		}

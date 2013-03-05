@@ -56,11 +56,16 @@ public class Option {
 	    	outputStream.write( value.array() );
 	    	outputStream.write( oldVersionBytes );
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     	byte[] concatenated = outputStream.toByteArray( );
     	serialized = ByteBuffer.wrap(concatenated);
+    	try {
+			outputStream.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     	return serialized;    
     }
     
