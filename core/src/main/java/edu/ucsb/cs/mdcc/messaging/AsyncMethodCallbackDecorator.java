@@ -13,9 +13,15 @@ public class AsyncMethodCallbackDecorator implements AsyncMethodCallback {
         this.transport = transport;
     }
 
+    public AsyncMethodCallbackDecorator(TTransport transport) {
+        this.transport = transport;
+    }
+
     public void onComplete(Object o) {
         try {
-            callback.onComplete(o);
+            if (callback != null) {
+                callback.onComplete(o);
+            }
         } finally {
             transport.close();
         }
@@ -23,7 +29,9 @@ public class AsyncMethodCallbackDecorator implements AsyncMethodCallback {
 
     public void onError(Exception e) {
         try {
-            callback.onError(e);
+            if (callback != null) {
+                callback.onError(e);
+            }
         } finally {
             transport.close();
         }

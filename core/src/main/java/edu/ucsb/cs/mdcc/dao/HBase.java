@@ -72,31 +72,30 @@ public class HBase implements Database {
     /**
      * create table   
      */    
-    public static void createTable(String tableName, String[] familys) throws Exception {     
+    private void createTableIfNotExists(String tableName, String[] families) throws Exception {
         HBaseAdmin admin = new HBaseAdmin(conf);     
         if (admin.tableExists(tableName)) {     
-            System.out.println("table already exists!");     
+            log.debug("table already exists!");
         } else {     
             HTableDescriptor tableDesc = new HTableDescriptor(tableName);     
-            for (int i=0; i<familys.length; i++){
-                tableDesc.addFamily(new HColumnDescriptor(familys[i]));     
+            for (int i=0; i<families.length; i++){
+                tableDesc.addFamily(new HColumnDescriptor(families[i]));
             }     
             admin.createTable(tableDesc);     
-            System.out.println("create table " + tableName + " ok.");     
+            log.info("create table " + tableName + " ok.");
         }      
         admin.close();
     }
 
-    /**
-     * implements Database.java
-     */ 
-
     public void onStartup() {
-    	String[] record_familys= {VALUE, VERSION, PREPARED, CLASSIC_END_VERSION, BALLOT_NUMBER, OUTSTANDING};
-    	String[] txn_familys= {COMPLETE, OPTIONS};
+    	String[] recordFamilies = {
+                VALUE, VERSION, PREPARED, CLASSIC_END_VERSION,
+                BALLOT_NUMBER, OUTSTANDING
+        };
+    	String[] transactionFamilies = { COMPLETE, OPTIONS };
     	try {
-			createTable(RECORDS_TABLE, record_familys);			
-	    	createTable(TRANSACTIONS_TABLE, txn_familys);
+			createTableIfNotExists(RECORDS_TABLE, recordFamilies);
+	    	createTableIfNotExists(TRANSACTIONS_TABLE, transactionFamilies);
 		} catch (Exception e) {
 			handleException("Error while creating tables", e);
 		}    

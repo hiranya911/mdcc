@@ -17,6 +17,10 @@ public class InMemoryDatabase implements Database {
         return record;
     }
 
+    public void onStartup() {
+
+    }
+
     public Collection<Record> getAll() {
         return db.values();
     }

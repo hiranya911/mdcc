@@ -6,10 +6,7 @@ import java.util.*;
 import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import edu.ucsb.cs.mdcc.config.Member;
-import edu.ucsb.cs.mdcc.dao.Database;
-import edu.ucsb.cs.mdcc.dao.InMemoryDatabase;
-import edu.ucsb.cs.mdcc.dao.Record;
-import edu.ucsb.cs.mdcc.dao.TransactionRecord;
+import edu.ucsb.cs.mdcc.dao.*;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicator;
 
 import edu.ucsb.cs.mdcc.messaging.ReadValue;
@@ -20,7 +17,7 @@ public class StorageNode extends Agent {
 
     private static final Log log = LogFactory.getLog(StorageNode.class);
 
-    private Database db = new InMemoryDatabase();
+    private Database db = new CachedHBase();
 	private MDCCConfiguration config;
 
     private MDCCCommunicator communicator;
@@ -33,6 +30,7 @@ public class StorageNode extends Agent {
     @Override
     public void start() {
         super.start();
+        db.onStartup();
         int port = config.getLocalMember().getPort();
         communicator.startListener(this, port);
 
@@ -285,7 +283,6 @@ public class StorageNode extends Agent {
                 }
             }
         }
-
     }
 
 }

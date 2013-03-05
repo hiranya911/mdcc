@@ -56,7 +56,7 @@ public class AppServer {
         
         success = voteListener.getAccepts() == options.size();
         for (Member member : members) {
-            communicator.sendDecide(member, txnId, success);
+            communicator.sendDecideAsync(member, txnId, success);
         }
         return success;
 	}

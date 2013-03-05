@@ -163,21 +163,26 @@ public class MDCCCommunicator {
 		}
 	}
 	
-	public boolean sendDecide(Member member, String transaction, boolean commit) {
-        String host = member.getHostName();
-        int port = member.getPort();
-        TTransport transport = new TFramedTransport(new TSocket(host, port));
+	public boolean sendDecideAsync(Member member, String transaction, boolean commit) {
+        AsyncMethodCallbackDecorator callback = null;
         try {
-            MDCCCommunicationService.Client client = getClient(transport);
-            client.decide(transaction, commit);
-            return true;
-        } catch (TException e) {
-            handleException(host, e);
-            return false;
-        } finally {
-            close(transport);
+            TNonblockingSocket socket = new TNonblockingSocket(member.getHostName(),
+                    member.getPort());
+            callback = new AsyncMethodCallbackDecorator(socket);
+            TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
+            TAsyncClientManager clientManager = new TAsyncClientManager();
+            MDCCCommunicationService.AsyncClient client =
+                    new MDCCCommunicationService.AsyncClient(protocolFactory,
+                            clientManager, socket);
+            client.decide(transaction, commit, callback);;
+        } catch (Exception e) {
+            if (callback != null) {
+                callback.onError(e);
+            }
+            handleException(member.getHostName(), e);
         }
-	}
+        return true;
+    }
 	
 	public ReadValue get(Member member, String key) {
         String host = member.getHostName();
