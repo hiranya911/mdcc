@@ -4,8 +4,8 @@ import edu.ucsb.cs.mdcc.util.LRUCache;
 
 public class CachedHBase extends HBase {
 
-    private LRUCache<String,Record> records = new LRUCache<String, Record>(1000);
-    private LRUCache<String,TransactionRecord> transactions =
+    private final LRUCache<String,Record> records = new LRUCache<String, Record>(1000);
+    private final LRUCache<String,TransactionRecord> transactions =
             new LRUCache<String,TransactionRecord>(100);
 
     @Override
@@ -18,8 +18,13 @@ public class CachedHBase extends HBase {
     public Record get(String key) {
         Record record = records.get(key);
         if (record == null) {
-            record = super.get(key);
-            records.put(key, record);
+            synchronized (records) {
+                record = records.get(key);
+                if (record == null) {
+                    record = super.get(key);
+                    records.put(key, record);
+                }
+            }
         }
         return record;
     }
@@ -34,8 +39,13 @@ public class CachedHBase extends HBase {
     public TransactionRecord getTransactionRecord(String transactionId) {
         TransactionRecord record = transactions.get(transactionId);
         if (record == null) {
-            record = super.getTransactionRecord(transactionId);
-            transactions.put(transactionId, record);
+            synchronized (transactions) {
+                record = transactions.get(transactionId);
+                if (record == null) {
+                    record = super.getTransactionRecord(transactionId);
+                    transactions.put(transactionId, record);
+                }
+            }
         }
         return record;
     }

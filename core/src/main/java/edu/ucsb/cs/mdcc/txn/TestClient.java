@@ -31,7 +31,7 @@ public class TestClient {
                 LocalTransaction txn2 = new LocalTransaction();
                 try {
                     txn2.begin();
-                    txn2.write("Y", ByteBuffer.wrap("2".getBytes()));
+                    txn2.write("X", ByteBuffer.wrap("2".getBytes()));
                     txn2.commit();
                     System.out.println("Txn 2 committed");
                 } catch (TransactionException e) {

@@ -1,13 +1,13 @@
 package edu.ucsb.cs.mdcc.dao;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class InMemoryDatabase implements Database {
 
-    private Map<String,Record> db = new HashMap<String, Record>();
-    private Map<String,TransactionRecord> transactions = new HashMap<String, TransactionRecord>();
+    private Map<String,Record> db = new ConcurrentHashMap<String, Record>();
+    private Map<String,TransactionRecord> transactions = new ConcurrentHashMap<String, TransactionRecord>();
 
     public Record get(String key) {
         Record record = db.get(key);
