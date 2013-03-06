@@ -12,7 +12,7 @@ public class TestClient {
 
     public static void main(String[] args) {
         ExecutorService exec = Executors.newFixedThreadPool(2);
-        /*Runnable r1 = new Runnable() {
+        Runnable r1 = new Runnable() {
             public void run() {
                 LocalTransaction txn1 = new LocalTransaction();
                 try {
@@ -22,7 +22,6 @@ public class TestClient {
                     System.out.println("Txn 1 committed");
                 } catch (TransactionException e) {
                     e.printStackTrace();
-                    System.exit(1);
                 }
             }
         };
@@ -32,18 +31,17 @@ public class TestClient {
                 LocalTransaction txn2 = new LocalTransaction();
                 try {
                     txn2.begin();
-                    txn2.write("X", ByteBuffer.wrap("2".getBytes()));
+                    txn2.write("Y", ByteBuffer.wrap("2".getBytes()));
                     txn2.commit();
                     System.out.println("Txn 2 committed");
                 } catch (TransactionException e) {
                     e.printStackTrace();
-                    System.exit(1);
                 }
             }
         };
 
         exec.submit(r1);
-        exec.submit(r2);*/
+        exec.submit(r2);
 
         exec.shutdown();
         try {
@@ -53,7 +51,7 @@ public class TestClient {
         }
 
 
-        LocalTransaction txn1 = new LocalTransaction();
+        /*LocalTransaction txn1 = new LocalTransaction();
         try {
             txn1.begin();
             txn1.write("foo", ByteBuffer.wrap("Foo 09876".getBytes()));
@@ -91,6 +89,6 @@ public class TestClient {
             System.out.println("Txn 3 committed");
         } catch (TransactionException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 }

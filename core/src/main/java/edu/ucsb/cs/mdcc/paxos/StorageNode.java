@@ -122,32 +122,33 @@ public class StorageNode extends Agent {
 	}
 
 	public void onDecide(String transaction, boolean commit) {
-		if (commit) {
-			log.info("Received Commit decision on transaction id: " + transaction);
-        } else {
-			log.info("Received Abort on transaction id: " + transaction);
-        }
+		TransactionRecord txnRecord = db.getTransactionRecord(transaction);
 
-        TransactionRecord txnRecord = db.getTransactionRecord(transaction);
         if (commit) {
+            log.info("Received Commit decision on transaction id: " + transaction);
             for (Option option : txnRecord.getOptions()) {
-                Record record = db.get(option.getKey());
-                if (record.getVersion() <= option.getOldVersion()) {
-                    record.setVersion(option.getOldVersion() + 1);
-                    record.setValue(option.getValue());
-                    record.setOutstanding(null);
-                    db.put(record);
+                synchronized (option.getKey().intern()) {
+                    Record record = db.get(option.getKey());
+                    if (record.getVersion() <= option.getOldVersion()) {
+                        record.setVersion(option.getOldVersion() + 1);
+                        record.setValue(option.getValue());
+                        record.setOutstanding(null);
+                        db.put(record);
+                    }
+                    log.info("[COMMIT] Saved option to DB");
                 }
-                log.info("[COMMIT] Saved option to DB");
             }
 		} else {
+            log.info("Received Abort on transaction id: " + transaction);
             for (Option option : txnRecord.getOptions()) {
-                Record record = db.get(option.getKey());
-                if (transaction.equals(record.getOutstanding())) {
-                    record.setOutstanding(null);
+                synchronized (option.getKey().intern()) {
+                    Record record = db.get(option.getKey());
+                    if (transaction.equals(record.getOutstanding())) {
+                        record.setOutstanding(null);
+                    }
+                    db.put(record);
+                    log.info("[ABORT] Not saving option to DB");
                 }
-                db.put(record);
-                log.info("[ABORT] Not saving option to DB");
             }
         }
 
@@ -217,8 +218,9 @@ public class StorageNode extends Agent {
             Option option = new Option(key, value, oldVersion, true);
 
             if (leader.isLocal()) {
-                Record record = db.get(key);
+                Record record;
                 synchronized (this) {
+                    record = db.get(key);
                     if (record.getOutstanding() != null) {
                         if (!transaction.equals(record.getOutstanding())) {
                             log.info("Outstanding (classic) option found for: " + key);

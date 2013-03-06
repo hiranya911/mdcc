@@ -43,7 +43,7 @@ public class FastPaxosVoteListener implements VoteResultListener {
                 }
             } else {
                 if (log.isDebugEnabled()) {
-                    log.info("Already in classic mode for key: " + option.getKey());
+                    log.debug("Already in classic mode for key: " + option.getKey());
                 }
                 boolean done = false;
                 ClassicPaxosResultObserver observer = new ClassicPaxosResultObserver(option, this);

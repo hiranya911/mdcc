@@ -4,7 +4,7 @@ import edu.ucsb.cs.mdcc.util.LRUCache;
 
 public class CachedHBase extends HBase {
 
-    private LRUCache<String,Record> records = new LRUCache<String, Record>(100);
+    private LRUCache<String,Record> records = new LRUCache<String, Record>(1000);
     private LRUCache<String,TransactionRecord> transactions = new LRUCache<String,TransactionRecord>(100);
 
     @Override
