@@ -48,6 +48,7 @@ public class HBase implements Database {
     private static final String NULL = "NULL";
 	
     private Configuration conf = null;
+    private Map<String,HTable> tables = new HashMap<String, HTable>();
 
     public HBase() {
         try {
@@ -73,6 +74,7 @@ public class HBase implements Database {
                     conf.set(name, properties.getProperty(key));
                 }
             }
+
         } catch (IOException e) {
             handleException("Error while initializing HBase client configuration", e);
         }
@@ -94,6 +96,9 @@ public class HBase implements Database {
             log.info("create table " + tableName + " ok.");
         }      
         admin.close();
+
+        tables.put(tableName, new HTable(conf,  tableName));
+        log.info("Opened table: " + tableName);
     }
 
     public void onStartup() {
@@ -109,10 +114,22 @@ public class HBase implements Database {
 			handleException("Error while creating tables", e);
 		}    
     }
-    
+
+    public void onShutdown() {
+        for (HTable table : tables.values()) {
+            try {
+                table.close();
+            } catch (IOException e) {
+                log.warn("Error while closing table: " +
+                        Bytes.toString(table.getTableName()), e);
+            }
+        }
+        tables.clear();
+    }
+
     public void put(Record record){
         try {
-            HTable table = new HTable(conf, RECORDS_TABLE);
+            HTable table = tables.get(RECORDS_TABLE);
             Put put = new Put(record.getKey().getBytes());
             put.add(Bytes.toBytes(VALUE),Bytes.toBytes(""),
                     Bytes.toBytes(record.getValue()));
@@ -132,9 +149,8 @@ public class HBase implements Database {
                         Bytes.toBytes(NULL));
             }
             table.put(put);
-            table.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            handleException("Error while accessing HBase", e);
         }
     }
     
@@ -143,14 +159,13 @@ public class HBase implements Database {
     		Collection<Option> options = record.getOptions();
     		byte[] optionCollectionBytes = Utils.serialize(options);
     		
-    		HTable table = new HTable(conf, TRANSACTIONS_TABLE);
+    		HTable table = tables.get(TRANSACTIONS_TABLE);
             Put put = new Put(record.getTransactionId().getBytes());    		
     		put.add(Bytes.toBytes(COMPLETE),Bytes.toBytes(""),
                     Bytes.toBytes(record.isComplete()));
     		put.add(Bytes.toBytes(OPTIONS),Bytes.toBytes(""),
     				optionCollectionBytes);
             table.put(put);
-            table.close();
     	} catch (Exception e) {
             handleException("Error while accessing HBase", e);
         } 	
@@ -159,13 +174,12 @@ public class HBase implements Database {
     public Record get(String key){
 		Record rec = new Record(key);
 		try {
-			HTable table = new HTable(conf, RECORDS_TABLE);
+            HTable table = tables.get(RECORDS_TABLE);
 	        Get get = new Get(key.getBytes());     
 	        Result rs = table.get(get);
 			if (!rs.isEmpty()){
                 populateRecord(rec, rs);
             }
-            table.close();
 		} catch (IOException e) {
 			handleException("Error while accessing HBase", e);
 		}
@@ -199,8 +213,8 @@ public class HBase implements Database {
 
     public Collection<Record> getAll(){
     	Map<String,Record> db = new HashMap<String, Record>();
-    	try{     
-            HTable table = new HTable(conf, RECORDS_TABLE);
+    	try{
+            HTable table = tables.get(RECORDS_TABLE);
             Scan scanner = new Scan();
             ResultScanner resultScanner = table.getScanner(scanner);
             for (Result result : resultScanner){
@@ -214,7 +228,6 @@ public class HBase implements Database {
                     populateRecord(record, result);
                 }     
             }
-            table.close();
             return db.values();
        } catch (IOException e){     
             handleException("Error while accessing HBase", e);
@@ -225,10 +238,9 @@ public class HBase implements Database {
     public TransactionRecord getTransactionRecord(String transactionId){
         TransactionRecord record = new TransactionRecord(transactionId);
     	try {
-            HTable table = new HTable(conf, TRANSACTIONS_TABLE);
+            HTable table = tables.get(TRANSACTIONS_TABLE);
             Get get = new Get(transactionId.getBytes());
             Result rs = table.get(get);
-            table.close();
 			if (rs.isEmpty()){
                 return record;
 	        }

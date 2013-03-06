@@ -14,7 +14,11 @@ public class BallotNumber implements Comparable<BallotNumber> {
         str = str.substring(1, str.lastIndexOf(']'));
         String[] segments = str.split(":");
         this.number = Long.parseLong(segments[0]);
-        this.processId = segments[1];
+        if (segments.length == 2) {
+            this.processId = segments[1];
+        } else {
+            this.processId = "";
+        }
     }
 
     public long getNumber() {

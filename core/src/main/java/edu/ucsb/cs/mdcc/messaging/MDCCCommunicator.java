@@ -214,7 +214,7 @@ public class MDCCCommunicator {
 
     private void handleException(String target, Exception e) {
         String msg = "Error contacting the remote member: " + target;
-        log.debug(msg, e);
+        log.warn(msg, e);
     }
 
 }

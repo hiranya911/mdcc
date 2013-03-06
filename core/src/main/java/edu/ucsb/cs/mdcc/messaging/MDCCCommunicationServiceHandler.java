@@ -43,7 +43,7 @@ public class MDCCCommunicationServiceHandler implements Iface {
 	public boolean accept(String transaction, String key, long oldVersion,
 			BallotNumber ballot, ByteBuffer newValue) throws TException {
         Accept accept = new Accept(transaction, toPaxosBallot(ballot), key,
-                oldVersion, newValue);
+                oldVersion, newValue.slice());
 		return agent.onAccept(accept);
 	}
 

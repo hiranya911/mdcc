@@ -6,6 +6,8 @@ public interface Database {
 
     public void onStartup();
 
+    public void onShutdown();
+
     public Record get(String key);
 
     public Collection<Record> getAll();

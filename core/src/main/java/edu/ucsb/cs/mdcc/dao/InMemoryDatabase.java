@@ -21,6 +21,10 @@ public class InMemoryDatabase implements Database {
 
     }
 
+    public void onShutdown() {
+
+    }
+
     public Collection<Record> getAll() {
         return db.values();
     }

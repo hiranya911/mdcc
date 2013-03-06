@@ -73,6 +73,7 @@ public class StorageNode extends Agent {
 
     @Override
     public void stop() {
+        db.onShutdown();
         super.stop();
         communicator.stopListener();
     }
