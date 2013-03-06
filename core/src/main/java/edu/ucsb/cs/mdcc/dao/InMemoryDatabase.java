@@ -17,11 +17,11 @@ public class InMemoryDatabase implements Database {
         return record;
     }
 
-    public void onStartup() {
+    public void init() {
 
     }
 
-    public void onShutdown() {
+    public void shutdown() {
 
     }
 

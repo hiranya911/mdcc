@@ -101,7 +101,7 @@ public class HBase implements Database {
         log.info("Opened table: " + tableName);
     }
 
-    public void onStartup() {
+    public void init() {
     	String[] recordFamilies = {
                 VALUE, VERSION, PREPARED, CLASSIC_END_VERSION,
                 BALLOT_NUMBER, OUTSTANDING
@@ -115,7 +115,7 @@ public class HBase implements Database {
 		}    
     }
 
-    public void onShutdown() {
+    public void shutdown() {
         for (HTable table : tables.values()) {
             try {
                 table.close();

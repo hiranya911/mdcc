@@ -4,9 +4,9 @@ import java.util.Collection;
 
 public interface Database {
 
-    public void onStartup();
+    public void init();
 
-    public void onShutdown();
+    public void shutdown();
 
     public Record get(String key);
 

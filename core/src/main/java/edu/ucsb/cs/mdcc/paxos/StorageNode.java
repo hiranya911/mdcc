@@ -30,7 +30,7 @@ public class StorageNode extends Agent {
     @Override
     public void start() {
         super.start();
-        db.onStartup();
+        db.init();
         int port = config.getLocalMember().getPort();
         communicator.startListener(this, port);
 
@@ -73,7 +73,7 @@ public class StorageNode extends Agent {
 
     @Override
     public void stop() {
-        db.onShutdown();
+        db.shutdown();
         super.stop();
         communicator.stopListener();
     }

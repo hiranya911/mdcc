@@ -1,6 +1,5 @@
 package edu.ucsb.cs.mdcc.util;
 
-import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.util.Strings;
@@ -14,16 +13,14 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerMain;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.UnknownHostException;
 import java.util.*;
 
 /*
- * Code borrowed from HBase 0.94.5 tag (with thanks)
+ * Code borrowed from HBase 0.94.5 tag with thanks
  */
 public class HQuorumPeer implements Runnable {
 
@@ -61,7 +58,7 @@ public class HQuorumPeer implements Runnable {
         }
     }
 
-    private static void runZKServer(QuorumPeerConfig zkConfig) throws UnknownHostException, IOException {
+    private static void runZKServer(QuorumPeerConfig zkConfig) throws IOException {
         if (zkConfig.isDistributed()) {
             QuorumPeerMain qp = new QuorumPeerMain();
             qp.runFromConfig(zkConfig);
