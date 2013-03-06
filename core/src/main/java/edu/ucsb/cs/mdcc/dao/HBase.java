@@ -10,7 +10,8 @@ import java.util.Map;
 import java.util.Properties;
 
 import edu.ucsb.cs.mdcc.MDCCException;
-import org.apache.commons.io.output.ByteArrayOutputStream;
+import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
+import edu.ucsb.cs.mdcc.util.Utils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -43,8 +44,10 @@ public class HBase implements Database {
 
     public static final String COMPLETE = "complete";
     public static final String OPTIONS = "options";
+
+    private static final String NULL = "NULL";
 	
-    private static Configuration conf =null;
+    private Configuration conf = null;
 
     public HBase() {
         try {
@@ -53,7 +56,13 @@ public class HBase implements Database {
             String hbasePath = System.getProperty("mdcc.hbase.dir", "hbase");
             File configFile = new File(configPath, "hbase.properties");
             properties.load(new FileInputStream(configFile));
+            int myId = MDCCConfiguration.getConfiguration().getMyId();
+            Utils.incrementPort(properties, "clientPort", myId);
+            Utils.incrementPort(properties, HConstants.MASTER_PORT, myId);
+            Utils.incrementPort(properties, HConstants.REGIONSERVER_PORT, myId);
+            Utils.rewriteQuorumPorts(properties, myId);
             conf = HBaseConfiguration.create();
+
             File hbaseDir = new File(hbasePath, "data");
             conf.set(HConstants.HBASE_DIR, hbaseDir.getAbsolutePath());
             for (String key : properties.stringPropertyNames()) {
@@ -115,8 +124,13 @@ public class HBase implements Database {
                     Bytes.toBytes(record.getBallot().toString()));
             put.add(Bytes.toBytes(PREPARED),Bytes.toBytes(""),
                     Bytes.toBytes(record.isPrepared()));
-            put.add(Bytes.toBytes(OUTSTANDING),Bytes.toBytes(""),
-                    Bytes.toBytes(record.getOutstanding()));
+            if (record.getOutstanding() != null) {
+                put.add(Bytes.toBytes(OUTSTANDING),Bytes.toBytes(""),
+                        Bytes.toBytes(record.getOutstanding()));
+            } else {
+                put.add(Bytes.toBytes(OUTSTANDING),Bytes.toBytes(""),
+                        Bytes.toBytes(NULL));
+            }
             table.put(put);
             table.close();
         } catch (IOException e) {
@@ -125,18 +139,9 @@ public class HBase implements Database {
     }
     
     public void putTransactionRecord(TransactionRecord record){    	
-    	try{    		
+    	try {
     		Collection<Option> options = record.getOptions();
-    		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    		for (Option option : options){
-                ByteBuffer byteBuffer = option.toBytes();
-                int optionBytesLength = byteBuffer.array().length;
-    			byte[] optionBytesLengthBytes = Bytes.toBytes(optionBytesLength);
-    			outputStream.write(optionBytesLengthBytes);
-    			outputStream.write(byteBuffer.array());
-    		}
-    		byte[] optionCollectionBytes = outputStream.toByteArray();
-    		outputStream.close();
+    		byte[] optionCollectionBytes = Utils.serialize(options);
     		
     		HTable table = new HTable(conf, TRANSACTIONS_TABLE);
             Put put = new Put(record.getTransactionId().getBytes());    		
@@ -146,8 +151,8 @@ public class HBase implements Database {
     				optionCollectionBytes);
             table.put(put);
             table.close();
-    	}catch (Exception e) {     
-            e.printStackTrace();     
+    	} catch (Exception e) {
+            handleException("Error while accessing HBase", e);
         } 	
     }
     
@@ -182,7 +187,12 @@ public class HBase implements Database {
             } else if (PREPARED.equals(familyName)) {
                 rec.setPrepared(Bytes.toBoolean(columnValue));
             } else if (OUTSTANDING.equals(familyName)) {
-                rec.setOutstanding(Bytes.toString(columnValue));
+                String outstanding = Bytes.toString(columnValue);
+                if (NULL.equals(outstanding)) {
+                    rec.setOutstanding(null);
+                } else {
+                    rec.setOutstanding(outstanding);
+                }
             }
         }
     }
@@ -229,35 +239,9 @@ public class HBase implements Database {
                     record.finish(Boolean.valueOf(columnValue));
                 } else if(OPTIONS.equals(familyName)){
                     byte[] valueBytes =  kv.getValue();
-                    boolean isLength = true;
-                    int optionBytesLength = 0;
-                    byte[] optionBytesLengthBytes = new byte[4];
-                    int lengthCount = 0;
-                    int optionBytesCount = 0;
-                    byte[] optionBytes = null;
-                    for (int i = 0; i < valueBytes.length ; i++) {
-                        if (isLength){
-                            lengthCount++;
-                            if (lengthCount < 4){
-                                optionBytesLengthBytes[lengthCount] = valueBytes[i];
-                            } else {
-                                optionBytesLength = Bytes.toInt(optionBytesLengthBytes);
-                                optionBytes = new byte[optionBytesLength];
-                                lengthCount = 0;
-                                isLength = false;
-                            }
-                        } else {
-                            optionBytesCount++;
-                            if (optionBytesCount < optionBytesLength){
-                                optionBytes[optionBytesCount] = valueBytes[i];
-                            } else {
-                                ByteBuffer serialized = ByteBuffer.wrap(optionBytes);
-                                Option newOption = new Option(serialized);
-                                record.addOption(newOption);
-                                optionBytesCount = 0;
-                                isLength = true;
-                            }
-                        }
+                    Collection<Option> options = Utils.deserialize(valueBytes);
+                    for (Option option : options) {
+                        record.addOption(option);
                     }
                 }
             }

@@ -12,7 +12,7 @@ public class TestClient {
 
     public static void main(String[] args) {
         ExecutorService exec = Executors.newFixedThreadPool(2);
-        Runnable r1 = new Runnable() {
+        /*Runnable r1 = new Runnable() {
             public void run() {
                 LocalTransaction txn1 = new LocalTransaction();
                 try {
@@ -43,7 +43,7 @@ public class TestClient {
         };
 
         exec.submit(r1);
-        exec.submit(r2);
+        exec.submit(r2);*/
 
         exec.shutdown();
         try {
@@ -53,7 +53,7 @@ public class TestClient {
         }
 
 
-        /*LocalTransaction txn1 = new LocalTransaction();
+        LocalTransaction txn1 = new LocalTransaction();
         try {
             txn1.begin();
             txn1.write("foo", ByteBuffer.wrap("Foo 1".getBytes()));
@@ -72,7 +72,7 @@ public class TestClient {
             ByteBuffer object2 = txn2.read("bar");
             System.out.println("Foo = " + new String(object1.array()));
             System.out.println("Bar = " + new String(object2.array()));
-            txn2.write("bar", ByteBuffer.wrap("Bar Value 3".getBytes()));
+            txn2.write("bar", ByteBuffer.wrap("Bar Value 4".getBytes()));
             txn2.commit();
             System.out.println("Txn 2 committed");
         } catch (TransactionException e) {
@@ -91,6 +91,6 @@ public class TestClient {
             System.out.println("Txn 3 committed");
         } catch (TransactionException e) {
             e.printStackTrace();
-        }*/
+        }
     }
 }
