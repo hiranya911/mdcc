@@ -1,10 +1,10 @@
 package edu.ucsb.cs.mdcc.messaging;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
-import edu.ucsb.cs.mdcc.paxos.Accept;
-import edu.ucsb.cs.mdcc.paxos.Prepare;
 import org.apache.thrift.TException;
 
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService.Iface;
@@ -26,7 +26,7 @@ public class MDCCCommunicationServiceHandler implements Iface {
 
 	public boolean prepare(String key, BallotNumber ballot, long classicEndVersion)
 			throws TException {
-        Prepare prepare = new Prepare(key, toPaxosBallot(ballot), classicEndVersion);
+		edu.ucsb.cs.mdcc.paxos.Prepare prepare = new edu.ucsb.cs.mdcc.paxos.Prepare(key, toPaxosBallot(ballot), classicEndVersion);
 		return agent.onPrepare(prepare);
 	}
 
@@ -40,11 +40,18 @@ public class MDCCCommunicationServiceHandler implements Iface {
 		return agent.onRead(key);
 	}
 
-	public boolean accept(String transaction, String key, long oldVersion,
-			BallotNumber ballot, ByteBuffer newValue) throws TException {
-        Accept accept = new Accept(transaction, toPaxosBallot(ballot), key,
-                oldVersion, newValue.slice());
+	public boolean accept(Accept a) throws TException {
+		edu.ucsb.cs.mdcc.paxos.Accept accept = toPaxosAccept(a);
 		return agent.onAccept(accept);
+	}
+	
+	public List<Boolean> bulkAccept(
+			List<Accept> accepts) throws TException {
+		List<Boolean> responses = new ArrayList<Boolean>(accepts.size());
+		for(Accept accept : accepts) {
+			responses.add(agent.onAccept(toPaxosAccept(accept)));
+		}
+		return responses;
 	}
 
 	public Map<String, ReadValue> recover(Map<String, Long> versions)
@@ -59,5 +66,9 @@ public class MDCCCommunicationServiceHandler implements Iface {
 
     private edu.ucsb.cs.mdcc.paxos.BallotNumber toPaxosBallot(BallotNumber b) {
         return new edu.ucsb.cs.mdcc.paxos.BallotNumber(b.getNumber(), b.getProcessId());
+    }
+    
+    private edu.ucsb.cs.mdcc.paxos.Accept toPaxosAccept(Accept a) {
+    	return new edu.ucsb.cs.mdcc.paxos.Accept(a.getTransactionId(), toPaxosBallot(a.getBallot()), a.getKey(), a.getOldVersion(), ByteBuffer.wrap(a.getNewValue()));
     }
 }
