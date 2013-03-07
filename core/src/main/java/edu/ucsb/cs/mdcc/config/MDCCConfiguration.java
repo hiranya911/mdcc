@@ -19,10 +19,13 @@ public class MDCCConfiguration {
 
 	private static volatile MDCCConfiguration config = null;
 	
-	private Member[] members;
+	private Properties properties;
+    private Member[] members;
     private int myId = 0;
 	
 	private MDCCConfiguration(Properties properties) {
+        this.properties = properties;
+
         String myIdValue = System.getProperty("mdcc.my.id");
         if (myIdValue != null) {
             myId = Integer.parseInt(myIdValue);
@@ -78,6 +81,27 @@ public class MDCCConfiguration {
     public Member[] getMembers() {
         return members;
     }
+
+    public boolean reorderMembers(String primary) {
+        try {
+            getMember(primary);
+        } catch (Exception e) {
+            return false;
+        }
+
+        Member[] temp = new Member[members.length];
+        int index = 1;
+        for (Member member : members) {
+            if (member.getProcessId().equals(primary)) {
+                temp[0] = member;
+            } else {
+                temp[index] = member;
+                index++;
+            }
+        }
+        this.members = temp;
+        return true;
+    }
     
     public Member getLocalMember() {
         for (Member member : members) {
@@ -99,6 +123,10 @@ public class MDCCConfiguration {
 
     public int getMyId() {
         return myId;
+    }
+
+    public String getAppServerUrl() {
+        return properties.getProperty("mdcc.app.server");
     }
 
 }

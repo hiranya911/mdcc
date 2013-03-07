@@ -30,12 +30,19 @@ public abstract class Transaction {
             if (result.isDeleted()) {
                 throw new TransactionException("No object exists by the key: " + key);
             }
+            if (result.getVersion() == 0) {
+                throw new TransactionException("No object exists by the key: " + key);
+            }
             return result.getValue();
         } else {
             Result result = doRead(key);
             if (result != null) {
                 readSet.put(result.getKey(), result);
                 if (result.isDeleted()) {
+                    throw new TransactionException("No object exists by the key: " + key);
+                }
+
+                if (result.getVersion() == 0) {
                     throw new TransactionException("No object exists by the key: " + key);
                 }
                 return result.getValue();
