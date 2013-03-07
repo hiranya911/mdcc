@@ -21,7 +21,7 @@ public class TestClient {
                     txn1.commit();
                     System.out.println("Txn 1 committed");
                 } catch (TransactionException e) {
-                    e.printStackTrace();
+                	System.out.println("Txn 1 Aborted");
                 }
             }
         };
@@ -35,7 +35,7 @@ public class TestClient {
                     txn2.commit();
                     System.out.println("Txn 2 committed");
                 } catch (TransactionException e) {
-                    e.printStackTrace();
+                	System.out.println("Txn 2 Aborted");
                 }
             }
         };

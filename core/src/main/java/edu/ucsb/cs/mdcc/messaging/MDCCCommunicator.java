@@ -3,6 +3,7 @@ package edu.ucsb.cs.mdcc.messaging;
 import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.config.Member;
 import edu.ucsb.cs.mdcc.paxos.*;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.TException;
@@ -20,6 +21,8 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.server.TNonblockingServer;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -91,7 +94,7 @@ public class MDCCCommunicator {
         }
     }
 	
-	public void sendAcceptAsync(Member member, Accept accept, PaxosVoteCounter voting) {
+	public void sendAcceptAsync(Member member, edu.ucsb.cs.mdcc.paxos.Accept accept, PaxosVoteCounter voting) {
         AsyncMethodCallbackDecorator callback = null;
 		try {
             TNonblockingSocket socket = new TNonblockingSocket(
@@ -105,17 +108,41 @@ public class MDCCCommunicator {
                             protocolFactory,
                             clientManager,
                             socket);
-            client.accept(
-                    accept.getTransactionId(),
-                    accept.getKey(),
-                    accept.getOldVersion(),
-                    toThriftBallot(accept.getBallotNumber()),
-                    accept.getValue(), callback);
+            client.accept( toThriftAccept(accept), callback);
         } catch (Exception e) {
             if (callback != null) {
                 callback.onError(e);
             } else {
                 voting.onError(e);
+            }
+            handleException(member.getHostName(), e);
+        }
+	}
+	
+	public void sendBulkAcceptAsync(Member member, List<edu.ucsb.cs.mdcc.paxos.Accept> fastAccepts, PaxosBulkVoteCounter fastCallback) {
+        AsyncMethodCallbackDecorator callback = null;
+		try {
+            TNonblockingSocket socket = new TNonblockingSocket(
+                    member.getHostName(),
+                    member.getPort());
+            callback = new AsyncMethodCallbackDecorator(fastCallback, socket);
+            TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
+            TAsyncClientManager clientManager = new TAsyncClientManager();
+            MDCCCommunicationService.AsyncClient client =
+                    new MDCCCommunicationService.AsyncClient(
+                            protocolFactory,
+                            clientManager,
+                            socket);
+            ArrayList<edu.ucsb.cs.mdcc.messaging.Accept> tAccepts = new ArrayList<Accept>(fastAccepts.size());
+            for(edu.ucsb.cs.mdcc.paxos.Accept accept : fastAccepts) {
+            	tAccepts.add(toThriftAccept(accept));
+            }
+            client.bulkAccept( tAccepts, callback);
+        } catch (Exception e) {
+            if (callback != null) {
+                callback.onError(e);
+            } else {
+                fastCallback.onError(e);
             }
             handleException(member.getHostName(), e);
         }
@@ -146,6 +173,10 @@ public class MDCCCommunicator {
 
     private BallotNumber toThriftBallot(edu.ucsb.cs.mdcc.paxos.BallotNumber b) {
         return new BallotNumber(b.getNumber(), b.getProcessId());
+    }
+    
+    private Accept toThriftAccept(edu.ucsb.cs.mdcc.paxos.Accept accept) {
+    	return new Accept(accept.getTransactionId(), toThriftBallot(accept.getBallotNumber()), accept.getKey(), accept.getOldVersion(), accept.getValue());
     }
 	
 	public void sendRecoverAsync(Member member, Map<String,Long> versions, RecoverySet callback) {

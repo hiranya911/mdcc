@@ -9,7 +9,7 @@ public class BallotNumber implements Comparable<BallotNumber> {
         this.number = number;
         this.processId = processId;
     }
-
+    
     public BallotNumber(String str) {
         str = str.substring(1, str.lastIndexOf(']'));
         String[] segments = str.split(":");

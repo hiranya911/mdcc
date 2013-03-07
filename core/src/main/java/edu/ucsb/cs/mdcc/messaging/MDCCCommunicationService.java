@@ -38,7 +38,9 @@ public class MDCCCommunicationService {
 
     public boolean prepare(String key, BallotNumber ballot, long classicEndVersion) throws org.apache.thrift.TException;
 
-    public boolean accept(String transaction, String key, long oldVersion, BallotNumber ballot, ByteBuffer newValue) throws org.apache.thrift.TException;
+    public boolean accept(Accept accept) throws org.apache.thrift.TException;
+
+    public List<Boolean> bulkAccept(List<Accept> accepts) throws org.apache.thrift.TException;
 
     public boolean runClassic(String transaction, String key, long oldVersion, ByteBuffer newValue) throws org.apache.thrift.TException;
 
@@ -56,7 +58,9 @@ public class MDCCCommunicationService {
 
     public void prepare(String key, BallotNumber ballot, long classicEndVersion, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.prepare_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void accept(String transaction, String key, long oldVersion, BallotNumber ballot, ByteBuffer newValue, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.accept_call> resultHandler) throws org.apache.thrift.TException;
+    public void accept(Accept accept, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.accept_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void bulkAccept(List<Accept> accepts, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.bulkAccept_call> resultHandler) throws org.apache.thrift.TException;
 
     public void runClassic(String transaction, String key, long oldVersion, ByteBuffer newValue, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.runClassic_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -135,20 +139,16 @@ public class MDCCCommunicationService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "prepare failed: unknown result");
     }
 
-    public boolean accept(String transaction, String key, long oldVersion, BallotNumber ballot, ByteBuffer newValue) throws org.apache.thrift.TException
+    public boolean accept(Accept accept) throws org.apache.thrift.TException
     {
-      send_accept(transaction, key, oldVersion, ballot, newValue);
+      send_accept(accept);
       return recv_accept();
     }
 
-    public void send_accept(String transaction, String key, long oldVersion, BallotNumber ballot, ByteBuffer newValue) throws org.apache.thrift.TException
+    public void send_accept(Accept accept) throws org.apache.thrift.TException
     {
       accept_args args = new accept_args();
-      args.setTransaction(transaction);
-      args.setKey(key);
-      args.setOldVersion(oldVersion);
-      args.setBallot(ballot);
-      args.setNewValue(newValue);
+      args.setAccept(accept);
       sendBase("accept", args);
     }
 
@@ -160,6 +160,29 @@ public class MDCCCommunicationService {
         return result.success;
       }
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "accept failed: unknown result");
+    }
+
+    public List<Boolean> bulkAccept(List<Accept> accepts) throws org.apache.thrift.TException
+    {
+      send_bulkAccept(accepts);
+      return recv_bulkAccept();
+    }
+
+    public void send_bulkAccept(List<Accept> accepts) throws org.apache.thrift.TException
+    {
+      bulkAccept_args args = new bulkAccept_args();
+      args.setAccepts(accepts);
+      sendBase("bulkAccept", args);
+    }
+
+    public List<Boolean> recv_bulkAccept() throws org.apache.thrift.TException
+    {
+      bulkAccept_result result = new bulkAccept_result();
+      receiveBase(result, "bulkAccept");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "bulkAccept failed: unknown result");
     }
 
     public boolean runClassic(String transaction, String key, long oldVersion, ByteBuffer newValue) throws org.apache.thrift.TException
@@ -340,36 +363,24 @@ public class MDCCCommunicationService {
       }
     }
 
-    public void accept(String transaction, String key, long oldVersion, BallotNumber ballot, ByteBuffer newValue, org.apache.thrift.async.AsyncMethodCallback<accept_call> resultHandler) throws org.apache.thrift.TException {
+    public void accept(Accept accept, org.apache.thrift.async.AsyncMethodCallback<accept_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      accept_call method_call = new accept_call(transaction, key, oldVersion, ballot, newValue, resultHandler, this, ___protocolFactory, ___transport);
+      accept_call method_call = new accept_call(accept, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
     public static class accept_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private String transaction;
-      private String key;
-      private long oldVersion;
-      private BallotNumber ballot;
-      private ByteBuffer newValue;
-      public accept_call(String transaction, String key, long oldVersion, BallotNumber ballot, ByteBuffer newValue, org.apache.thrift.async.AsyncMethodCallback<accept_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private Accept accept;
+      public accept_call(Accept accept, org.apache.thrift.async.AsyncMethodCallback<accept_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
-        this.transaction = transaction;
-        this.key = key;
-        this.oldVersion = oldVersion;
-        this.ballot = ballot;
-        this.newValue = newValue;
+        this.accept = accept;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
         prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("accept", org.apache.thrift.protocol.TMessageType.CALL, 0));
         accept_args args = new accept_args();
-        args.setTransaction(transaction);
-        args.setKey(key);
-        args.setOldVersion(oldVersion);
-        args.setBallot(ballot);
-        args.setNewValue(newValue);
+        args.setAccept(accept);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -381,6 +392,38 @@ public class MDCCCommunicationService {
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
         return (new Client(prot)).recv_accept();
+      }
+    }
+
+    public void bulkAccept(List<Accept> accepts, org.apache.thrift.async.AsyncMethodCallback<bulkAccept_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      bulkAccept_call method_call = new bulkAccept_call(accepts, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class bulkAccept_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private List<Accept> accepts;
+      public bulkAccept_call(List<Accept> accepts, org.apache.thrift.async.AsyncMethodCallback<bulkAccept_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.accepts = accepts;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("bulkAccept", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        bulkAccept_args args = new bulkAccept_args();
+        args.setAccepts(accepts);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<Boolean> getResult() throws org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_bulkAccept();
       }
     }
 
@@ -540,6 +583,7 @@ public class MDCCCommunicationService {
       processMap.put("ping", new ping());
       processMap.put("prepare", new prepare());
       processMap.put("accept", new accept());
+      processMap.put("bulkAccept", new bulkAccept());
       processMap.put("runClassic", new runClassic());
       processMap.put("decide", new decide());
       processMap.put("read", new read());
@@ -604,8 +648,28 @@ public class MDCCCommunicationService {
 
       public accept_result getResult(I iface, accept_args args) throws org.apache.thrift.TException {
         accept_result result = new accept_result();
-        result.success = iface.accept(args.transaction, args.key, args.oldVersion, args.ballot, args.newValue);
+        result.success = iface.accept(args.accept);
         result.setSuccessIsSet(true);
+        return result;
+      }
+    }
+
+    public static class bulkAccept<I extends Iface> extends org.apache.thrift.ProcessFunction<I, bulkAccept_args> {
+      public bulkAccept() {
+        super("bulkAccept");
+      }
+
+      public bulkAccept_args getEmptyArgsInstance() {
+        return new bulkAccept_args();
+      }
+
+      protected boolean isOneway() {
+        return false;
+      }
+
+      public bulkAccept_result getResult(I iface, bulkAccept_args args) throws org.apache.thrift.TException {
+        bulkAccept_result result = new bulkAccept_result();
+        result.success = iface.bulkAccept(args.accepts);
         return result;
       }
     }
@@ -2207,11 +2271,7 @@ public class MDCCCommunicationService {
   public static class accept_args implements org.apache.thrift.TBase<accept_args, accept_args._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("accept_args");
 
-    private static final org.apache.thrift.protocol.TField TRANSACTION_FIELD_DESC = new org.apache.thrift.protocol.TField("transaction", org.apache.thrift.protocol.TType.STRING, (short)1);
-    private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)2);
-    private static final org.apache.thrift.protocol.TField OLD_VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("oldVersion", org.apache.thrift.protocol.TType.I64, (short)3);
-    private static final org.apache.thrift.protocol.TField BALLOT_FIELD_DESC = new org.apache.thrift.protocol.TField("ballot", org.apache.thrift.protocol.TType.STRUCT, (short)4);
-    private static final org.apache.thrift.protocol.TField NEW_VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("newValue", org.apache.thrift.protocol.TType.STRING, (short)5);
+    private static final org.apache.thrift.protocol.TField ACCEPT_FIELD_DESC = new org.apache.thrift.protocol.TField("accept", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -2219,19 +2279,11 @@ public class MDCCCommunicationService {
       schemes.put(TupleScheme.class, new accept_argsTupleSchemeFactory());
     }
 
-    public String transaction; // required
-    public String key; // required
-    public long oldVersion; // required
-    public BallotNumber ballot; // required
-    public ByteBuffer newValue; // required
+    public Accept accept; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      TRANSACTION((short)1, "transaction"),
-      KEY((short)2, "key"),
-      OLD_VERSION((short)3, "oldVersion"),
-      BALLOT((short)4, "ballot"),
-      NEW_VALUE((short)5, "newValue");
+      ACCEPT((short)1, "accept");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -2246,16 +2298,8 @@ public class MDCCCommunicationService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // TRANSACTION
-            return TRANSACTION;
-          case 2: // KEY
-            return KEY;
-          case 3: // OLD_VERSION
-            return OLD_VERSION;
-          case 4: // BALLOT
-            return BALLOT;
-          case 5: // NEW_VALUE
-            return NEW_VALUE;
+          case 1: // ACCEPT
+            return ACCEPT;
           default:
             return null;
         }
@@ -2296,21 +2340,11 @@ public class MDCCCommunicationService {
     }
 
     // isset id assignments
-    private static final int __OLDVERSION_ISSET_ID = 0;
-    private byte __isset_bitfield = 0;
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.TRANSACTION, new org.apache.thrift.meta_data.FieldMetaData("transaction", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-      tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-      tmpMap.put(_Fields.OLD_VERSION, new org.apache.thrift.meta_data.FieldMetaData("oldVersion", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
-      tmpMap.put(_Fields.BALLOT, new org.apache.thrift.meta_data.FieldMetaData("ballot", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, BallotNumber.class)));
-      tmpMap.put(_Fields.NEW_VALUE, new org.apache.thrift.meta_data.FieldMetaData("newValue", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING          , true)));
+      tmpMap.put(_Fields.ACCEPT, new org.apache.thrift.meta_data.FieldMetaData("accept", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Accept.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(accept_args.class, metaDataMap);
     }
@@ -2319,39 +2353,18 @@ public class MDCCCommunicationService {
     }
 
     public accept_args(
-      String transaction,
-      String key,
-      long oldVersion,
-      BallotNumber ballot,
-      ByteBuffer newValue)
+      Accept accept)
     {
       this();
-      this.transaction = transaction;
-      this.key = key;
-      this.oldVersion = oldVersion;
-      setOldVersionIsSet(true);
-      this.ballot = ballot;
-      this.newValue = newValue;
+      this.accept = accept;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public accept_args(accept_args other) {
-      __isset_bitfield = other.__isset_bitfield;
-      if (other.isSetTransaction()) {
-        this.transaction = other.transaction;
-      }
-      if (other.isSetKey()) {
-        this.key = other.key;
-      }
-      this.oldVersion = other.oldVersion;
-      if (other.isSetBallot()) {
-        this.ballot = new BallotNumber(other.ballot);
-      }
-      if (other.isSetNewValue()) {
-        this.newValue = org.apache.thrift.TBaseHelper.copyBinary(other.newValue);
-;
+      if (other.isSetAccept()) {
+        this.accept = new Accept(other.accept);
       }
     }
 
@@ -2361,182 +2374,40 @@ public class MDCCCommunicationService {
 
     @Override
     public void clear() {
-      this.transaction = null;
-      this.key = null;
-      setOldVersionIsSet(false);
-      this.oldVersion = 0;
-      this.ballot = null;
-      this.newValue = null;
+      this.accept = null;
     }
 
-    public String getTransaction() {
-      return this.transaction;
+    public Accept getAccept() {
+      return this.accept;
     }
 
-    public accept_args setTransaction(String transaction) {
-      this.transaction = transaction;
+    public accept_args setAccept(Accept accept) {
+      this.accept = accept;
       return this;
     }
 
-    public void unsetTransaction() {
-      this.transaction = null;
+    public void unsetAccept() {
+      this.accept = null;
     }
 
-    /** Returns true if field transaction is set (has been assigned a value) and false otherwise */
-    public boolean isSetTransaction() {
-      return this.transaction != null;
+    /** Returns true if field accept is set (has been assigned a value) and false otherwise */
+    public boolean isSetAccept() {
+      return this.accept != null;
     }
 
-    public void setTransactionIsSet(boolean value) {
+    public void setAcceptIsSet(boolean value) {
       if (!value) {
-        this.transaction = null;
-      }
-    }
-
-    public String getKey() {
-      return this.key;
-    }
-
-    public accept_args setKey(String key) {
-      this.key = key;
-      return this;
-    }
-
-    public void unsetKey() {
-      this.key = null;
-    }
-
-    /** Returns true if field key is set (has been assigned a value) and false otherwise */
-    public boolean isSetKey() {
-      return this.key != null;
-    }
-
-    public void setKeyIsSet(boolean value) {
-      if (!value) {
-        this.key = null;
-      }
-    }
-
-    public long getOldVersion() {
-      return this.oldVersion;
-    }
-
-    public accept_args setOldVersion(long oldVersion) {
-      this.oldVersion = oldVersion;
-      setOldVersionIsSet(true);
-      return this;
-    }
-
-    public void unsetOldVersion() {
-      __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __OLDVERSION_ISSET_ID);
-    }
-
-    /** Returns true if field oldVersion is set (has been assigned a value) and false otherwise */
-    public boolean isSetOldVersion() {
-      return EncodingUtils.testBit(__isset_bitfield, __OLDVERSION_ISSET_ID);
-    }
-
-    public void setOldVersionIsSet(boolean value) {
-      __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __OLDVERSION_ISSET_ID, value);
-    }
-
-    public BallotNumber getBallot() {
-      return this.ballot;
-    }
-
-    public accept_args setBallot(BallotNumber ballot) {
-      this.ballot = ballot;
-      return this;
-    }
-
-    public void unsetBallot() {
-      this.ballot = null;
-    }
-
-    /** Returns true if field ballot is set (has been assigned a value) and false otherwise */
-    public boolean isSetBallot() {
-      return this.ballot != null;
-    }
-
-    public void setBallotIsSet(boolean value) {
-      if (!value) {
-        this.ballot = null;
-      }
-    }
-
-    public byte[] getNewValue() {
-      setNewValue(org.apache.thrift.TBaseHelper.rightSize(newValue));
-      return newValue == null ? null : newValue.array();
-    }
-
-    public ByteBuffer bufferForNewValue() {
-      return newValue;
-    }
-
-    public accept_args setNewValue(byte[] newValue) {
-      setNewValue(newValue == null ? (ByteBuffer)null : ByteBuffer.wrap(newValue));
-      return this;
-    }
-
-    public accept_args setNewValue(ByteBuffer newValue) {
-      this.newValue = newValue;
-      return this;
-    }
-
-    public void unsetNewValue() {
-      this.newValue = null;
-    }
-
-    /** Returns true if field newValue is set (has been assigned a value) and false otherwise */
-    public boolean isSetNewValue() {
-      return this.newValue != null;
-    }
-
-    public void setNewValueIsSet(boolean value) {
-      if (!value) {
-        this.newValue = null;
+        this.accept = null;
       }
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case TRANSACTION:
+      case ACCEPT:
         if (value == null) {
-          unsetTransaction();
+          unsetAccept();
         } else {
-          setTransaction((String)value);
-        }
-        break;
-
-      case KEY:
-        if (value == null) {
-          unsetKey();
-        } else {
-          setKey((String)value);
-        }
-        break;
-
-      case OLD_VERSION:
-        if (value == null) {
-          unsetOldVersion();
-        } else {
-          setOldVersion((Long)value);
-        }
-        break;
-
-      case BALLOT:
-        if (value == null) {
-          unsetBallot();
-        } else {
-          setBallot((BallotNumber)value);
-        }
-        break;
-
-      case NEW_VALUE:
-        if (value == null) {
-          unsetNewValue();
-        } else {
-          setNewValue((ByteBuffer)value);
+          setAccept((Accept)value);
         }
         break;
 
@@ -2545,20 +2416,8 @@ public class MDCCCommunicationService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case TRANSACTION:
-        return getTransaction();
-
-      case KEY:
-        return getKey();
-
-      case OLD_VERSION:
-        return Long.valueOf(getOldVersion());
-
-      case BALLOT:
-        return getBallot();
-
-      case NEW_VALUE:
-        return getNewValue();
+      case ACCEPT:
+        return getAccept();
 
       }
       throw new IllegalStateException();
@@ -2571,16 +2430,8 @@ public class MDCCCommunicationService {
       }
 
       switch (field) {
-      case TRANSACTION:
-        return isSetTransaction();
-      case KEY:
-        return isSetKey();
-      case OLD_VERSION:
-        return isSetOldVersion();
-      case BALLOT:
-        return isSetBallot();
-      case NEW_VALUE:
-        return isSetNewValue();
+      case ACCEPT:
+        return isSetAccept();
       }
       throw new IllegalStateException();
     }
@@ -2598,48 +2449,12 @@ public class MDCCCommunicationService {
       if (that == null)
         return false;
 
-      boolean this_present_transaction = true && this.isSetTransaction();
-      boolean that_present_transaction = true && that.isSetTransaction();
-      if (this_present_transaction || that_present_transaction) {
-        if (!(this_present_transaction && that_present_transaction))
+      boolean this_present_accept = true && this.isSetAccept();
+      boolean that_present_accept = true && that.isSetAccept();
+      if (this_present_accept || that_present_accept) {
+        if (!(this_present_accept && that_present_accept))
           return false;
-        if (!this.transaction.equals(that.transaction))
-          return false;
-      }
-
-      boolean this_present_key = true && this.isSetKey();
-      boolean that_present_key = true && that.isSetKey();
-      if (this_present_key || that_present_key) {
-        if (!(this_present_key && that_present_key))
-          return false;
-        if (!this.key.equals(that.key))
-          return false;
-      }
-
-      boolean this_present_oldVersion = true;
-      boolean that_present_oldVersion = true;
-      if (this_present_oldVersion || that_present_oldVersion) {
-        if (!(this_present_oldVersion && that_present_oldVersion))
-          return false;
-        if (this.oldVersion != that.oldVersion)
-          return false;
-      }
-
-      boolean this_present_ballot = true && this.isSetBallot();
-      boolean that_present_ballot = true && that.isSetBallot();
-      if (this_present_ballot || that_present_ballot) {
-        if (!(this_present_ballot && that_present_ballot))
-          return false;
-        if (!this.ballot.equals(that.ballot))
-          return false;
-      }
-
-      boolean this_present_newValue = true && this.isSetNewValue();
-      boolean that_present_newValue = true && that.isSetNewValue();
-      if (this_present_newValue || that_present_newValue) {
-        if (!(this_present_newValue && that_present_newValue))
-          return false;
-        if (!this.newValue.equals(that.newValue))
+        if (!this.accept.equals(that.accept))
           return false;
       }
 
@@ -2659,52 +2474,12 @@ public class MDCCCommunicationService {
       int lastComparison = 0;
       accept_args typedOther = (accept_args)other;
 
-      lastComparison = Boolean.valueOf(isSetTransaction()).compareTo(typedOther.isSetTransaction());
+      lastComparison = Boolean.valueOf(isSetAccept()).compareTo(typedOther.isSetAccept());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTransaction()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.transaction, typedOther.transaction);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      lastComparison = Boolean.valueOf(isSetKey()).compareTo(typedOther.isSetKey());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetKey()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.key, typedOther.key);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      lastComparison = Boolean.valueOf(isSetOldVersion()).compareTo(typedOther.isSetOldVersion());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetOldVersion()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.oldVersion, typedOther.oldVersion);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      lastComparison = Boolean.valueOf(isSetBallot()).compareTo(typedOther.isSetBallot());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetBallot()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ballot, typedOther.ballot);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      lastComparison = Boolean.valueOf(isSetNewValue()).compareTo(typedOther.isSetNewValue());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetNewValue()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.newValue, typedOther.newValue);
+      if (isSetAccept()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.accept, typedOther.accept);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -2729,39 +2504,11 @@ public class MDCCCommunicationService {
       StringBuilder sb = new StringBuilder("accept_args(");
       boolean first = true;
 
-      sb.append("transaction:");
-      if (this.transaction == null) {
+      sb.append("accept:");
+      if (this.accept == null) {
         sb.append("null");
       } else {
-        sb.append(this.transaction);
-      }
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("key:");
-      if (this.key == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.key);
-      }
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("oldVersion:");
-      sb.append(this.oldVersion);
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("ballot:");
-      if (this.ballot == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.ballot);
-      }
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("newValue:");
-      if (this.newValue == null) {
-        sb.append("null");
-      } else {
-        org.apache.thrift.TBaseHelper.toString(this.newValue, sb);
+        sb.append(this.accept);
       }
       first = false;
       sb.append(")");
@@ -2771,8 +2518,8 @@ public class MDCCCommunicationService {
     public void validate() throws org.apache.thrift.TException {
       // check for required fields
       // check for sub-struct validity
-      if (ballot != null) {
-        ballot.validate();
+      if (accept != null) {
+        accept.validate();
       }
     }
 
@@ -2786,8 +2533,6 @@ public class MDCCCommunicationService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bitfield = 0;
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -2812,43 +2557,11 @@ public class MDCCCommunicationService {
             break;
           }
           switch (schemeField.id) {
-            case 1: // TRANSACTION
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.transaction = iprot.readString();
-                struct.setTransactionIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            case 2: // KEY
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.key = iprot.readString();
-                struct.setKeyIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            case 3: // OLD_VERSION
-              if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
-                struct.oldVersion = iprot.readI64();
-                struct.setOldVersionIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            case 4: // BALLOT
+            case 1: // ACCEPT
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.ballot = new BallotNumber();
-                struct.ballot.read(iprot);
-                struct.setBallotIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            case 5: // NEW_VALUE
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.newValue = iprot.readBinary();
-                struct.setNewValueIsSet(true);
+                struct.accept = new Accept();
+                struct.accept.read(iprot);
+                struct.setAcceptIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
@@ -2868,27 +2581,9 @@ public class MDCCCommunicationService {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.transaction != null) {
-          oprot.writeFieldBegin(TRANSACTION_FIELD_DESC);
-          oprot.writeString(struct.transaction);
-          oprot.writeFieldEnd();
-        }
-        if (struct.key != null) {
-          oprot.writeFieldBegin(KEY_FIELD_DESC);
-          oprot.writeString(struct.key);
-          oprot.writeFieldEnd();
-        }
-        oprot.writeFieldBegin(OLD_VERSION_FIELD_DESC);
-        oprot.writeI64(struct.oldVersion);
-        oprot.writeFieldEnd();
-        if (struct.ballot != null) {
-          oprot.writeFieldBegin(BALLOT_FIELD_DESC);
-          struct.ballot.write(oprot);
-          oprot.writeFieldEnd();
-        }
-        if (struct.newValue != null) {
-          oprot.writeFieldBegin(NEW_VALUE_FIELD_DESC);
-          oprot.writeBinary(struct.newValue);
+        if (struct.accept != null) {
+          oprot.writeFieldBegin(ACCEPT_FIELD_DESC);
+          struct.accept.write(oprot);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -2909,63 +2604,23 @@ public class MDCCCommunicationService {
       public void write(org.apache.thrift.protocol.TProtocol prot, accept_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
-        if (struct.isSetTransaction()) {
+        if (struct.isSetAccept()) {
           optionals.set(0);
         }
-        if (struct.isSetKey()) {
-          optionals.set(1);
-        }
-        if (struct.isSetOldVersion()) {
-          optionals.set(2);
-        }
-        if (struct.isSetBallot()) {
-          optionals.set(3);
-        }
-        if (struct.isSetNewValue()) {
-          optionals.set(4);
-        }
-        oprot.writeBitSet(optionals, 5);
-        if (struct.isSetTransaction()) {
-          oprot.writeString(struct.transaction);
-        }
-        if (struct.isSetKey()) {
-          oprot.writeString(struct.key);
-        }
-        if (struct.isSetOldVersion()) {
-          oprot.writeI64(struct.oldVersion);
-        }
-        if (struct.isSetBallot()) {
-          struct.ballot.write(oprot);
-        }
-        if (struct.isSetNewValue()) {
-          oprot.writeBinary(struct.newValue);
+        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetAccept()) {
+          struct.accept.write(oprot);
         }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, accept_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(5);
+        BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.transaction = iprot.readString();
-          struct.setTransactionIsSet(true);
-        }
-        if (incoming.get(1)) {
-          struct.key = iprot.readString();
-          struct.setKeyIsSet(true);
-        }
-        if (incoming.get(2)) {
-          struct.oldVersion = iprot.readI64();
-          struct.setOldVersionIsSet(true);
-        }
-        if (incoming.get(3)) {
-          struct.ballot = new BallotNumber();
-          struct.ballot.read(iprot);
-          struct.setBallotIsSet(true);
-        }
-        if (incoming.get(4)) {
-          struct.newValue = iprot.readBinary();
-          struct.setNewValueIsSet(true);
+          struct.accept = new Accept();
+          struct.accept.read(iprot);
+          struct.setAcceptIsSet(true);
         }
       }
     }
@@ -3319,6 +2974,820 @@ public class MDCCCommunicationService {
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
           struct.success = iprot.readBool();
+          struct.setSuccessIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class bulkAccept_args implements org.apache.thrift.TBase<bulkAccept_args, bulkAccept_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("bulkAccept_args");
+
+    private static final org.apache.thrift.protocol.TField ACCEPTS_FIELD_DESC = new org.apache.thrift.protocol.TField("accepts", org.apache.thrift.protocol.TType.LIST, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new bulkAccept_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new bulkAccept_argsTupleSchemeFactory());
+    }
+
+    public List<Accept> accepts; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      ACCEPTS((short)1, "accepts");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // ACCEPTS
+            return ACCEPTS;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.ACCEPTS, new org.apache.thrift.meta_data.FieldMetaData("accepts", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Accept.class))));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(bulkAccept_args.class, metaDataMap);
+    }
+
+    public bulkAccept_args() {
+    }
+
+    public bulkAccept_args(
+      List<Accept> accepts)
+    {
+      this();
+      this.accepts = accepts;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public bulkAccept_args(bulkAccept_args other) {
+      if (other.isSetAccepts()) {
+        List<Accept> __this__accepts = new ArrayList<Accept>();
+        for (Accept other_element : other.accepts) {
+          __this__accepts.add(new Accept(other_element));
+        }
+        this.accepts = __this__accepts;
+      }
+    }
+
+    public bulkAccept_args deepCopy() {
+      return new bulkAccept_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.accepts = null;
+    }
+
+    public int getAcceptsSize() {
+      return (this.accepts == null) ? 0 : this.accepts.size();
+    }
+
+    public java.util.Iterator<Accept> getAcceptsIterator() {
+      return (this.accepts == null) ? null : this.accepts.iterator();
+    }
+
+    public void addToAccepts(Accept elem) {
+      if (this.accepts == null) {
+        this.accepts = new ArrayList<Accept>();
+      }
+      this.accepts.add(elem);
+    }
+
+    public List<Accept> getAccepts() {
+      return this.accepts;
+    }
+
+    public bulkAccept_args setAccepts(List<Accept> accepts) {
+      this.accepts = accepts;
+      return this;
+    }
+
+    public void unsetAccepts() {
+      this.accepts = null;
+    }
+
+    /** Returns true if field accepts is set (has been assigned a value) and false otherwise */
+    public boolean isSetAccepts() {
+      return this.accepts != null;
+    }
+
+    public void setAcceptsIsSet(boolean value) {
+      if (!value) {
+        this.accepts = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case ACCEPTS:
+        if (value == null) {
+          unsetAccepts();
+        } else {
+          setAccepts((List<Accept>)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case ACCEPTS:
+        return getAccepts();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case ACCEPTS:
+        return isSetAccepts();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof bulkAccept_args)
+        return this.equals((bulkAccept_args)that);
+      return false;
+    }
+
+    public boolean equals(bulkAccept_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_accepts = true && this.isSetAccepts();
+      boolean that_present_accepts = true && that.isSetAccepts();
+      if (this_present_accepts || that_present_accepts) {
+        if (!(this_present_accepts && that_present_accepts))
+          return false;
+        if (!this.accepts.equals(that.accepts))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(bulkAccept_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      bulkAccept_args typedOther = (bulkAccept_args)other;
+
+      lastComparison = Boolean.valueOf(isSetAccepts()).compareTo(typedOther.isSetAccepts());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetAccepts()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.accepts, typedOther.accepts);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("bulkAccept_args(");
+      boolean first = true;
+
+      sb.append("accepts:");
+      if (this.accepts == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.accepts);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+      // check for sub-struct validity
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class bulkAccept_argsStandardSchemeFactory implements SchemeFactory {
+      public bulkAccept_argsStandardScheme getScheme() {
+        return new bulkAccept_argsStandardScheme();
+      }
+    }
+
+    private static class bulkAccept_argsStandardScheme extends StandardScheme<bulkAccept_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, bulkAccept_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // ACCEPTS
+              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+                {
+                  org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
+                  struct.accepts = new ArrayList<Accept>(_list0.size);
+                  for (int _i1 = 0; _i1 < _list0.size; ++_i1)
+                  {
+                    Accept _elem2; // required
+                    _elem2 = new Accept();
+                    _elem2.read(iprot);
+                    struct.accepts.add(_elem2);
+                  }
+                  iprot.readListEnd();
+                }
+                struct.setAcceptsIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, bulkAccept_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.accepts != null) {
+          oprot.writeFieldBegin(ACCEPTS_FIELD_DESC);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.accepts.size()));
+            for (Accept _iter3 : struct.accepts)
+            {
+              _iter3.write(oprot);
+            }
+            oprot.writeListEnd();
+          }
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class bulkAccept_argsTupleSchemeFactory implements SchemeFactory {
+      public bulkAccept_argsTupleScheme getScheme() {
+        return new bulkAccept_argsTupleScheme();
+      }
+    }
+
+    private static class bulkAccept_argsTupleScheme extends TupleScheme<bulkAccept_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, bulkAccept_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetAccepts()) {
+          optionals.set(0);
+        }
+        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetAccepts()) {
+          {
+            oprot.writeI32(struct.accepts.size());
+            for (Accept _iter4 : struct.accepts)
+            {
+              _iter4.write(oprot);
+            }
+          }
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, bulkAccept_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(1);
+        if (incoming.get(0)) {
+          {
+            org.apache.thrift.protocol.TList _list5 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.accepts = new ArrayList<Accept>(_list5.size);
+            for (int _i6 = 0; _i6 < _list5.size; ++_i6)
+            {
+              Accept _elem7; // required
+              _elem7 = new Accept();
+              _elem7.read(iprot);
+              struct.accepts.add(_elem7);
+            }
+          }
+          struct.setAcceptsIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class bulkAccept_result implements org.apache.thrift.TBase<bulkAccept_result, bulkAccept_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("bulkAccept_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.LIST, (short)0);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new bulkAccept_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new bulkAccept_resultTupleSchemeFactory());
+    }
+
+    public List<Boolean> success; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+              new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL))));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(bulkAccept_result.class, metaDataMap);
+    }
+
+    public bulkAccept_result() {
+    }
+
+    public bulkAccept_result(
+      List<Boolean> success)
+    {
+      this();
+      this.success = success;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public bulkAccept_result(bulkAccept_result other) {
+      if (other.isSetSuccess()) {
+        List<Boolean> __this__success = new ArrayList<Boolean>();
+        for (Boolean other_element : other.success) {
+          __this__success.add(other_element);
+        }
+        this.success = __this__success;
+      }
+    }
+
+    public bulkAccept_result deepCopy() {
+      return new bulkAccept_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+    }
+
+    public int getSuccessSize() {
+      return (this.success == null) ? 0 : this.success.size();
+    }
+
+    public java.util.Iterator<Boolean> getSuccessIterator() {
+      return (this.success == null) ? null : this.success.iterator();
+    }
+
+    public void addToSuccess(boolean elem) {
+      if (this.success == null) {
+        this.success = new ArrayList<Boolean>();
+      }
+      this.success.add(elem);
+    }
+
+    public List<Boolean> getSuccess() {
+      return this.success;
+    }
+
+    public bulkAccept_result setSuccess(List<Boolean> success) {
+      this.success = success;
+      return this;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((List<Boolean>)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof bulkAccept_result)
+        return this.equals((bulkAccept_result)that);
+      return false;
+    }
+
+    public boolean equals(bulkAccept_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(bulkAccept_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      bulkAccept_result typedOther = (bulkAccept_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("bulkAccept_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+      // check for sub-struct validity
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class bulkAccept_resultStandardSchemeFactory implements SchemeFactory {
+      public bulkAccept_resultStandardScheme getScheme() {
+        return new bulkAccept_resultStandardScheme();
+      }
+    }
+
+    private static class bulkAccept_resultStandardScheme extends StandardScheme<bulkAccept_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, bulkAccept_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+                {
+                  org.apache.thrift.protocol.TList _list8 = iprot.readListBegin();
+                  struct.success = new ArrayList<Boolean>(_list8.size);
+                  for (int _i9 = 0; _i9 < _list8.size; ++_i9)
+                  {
+                    boolean _elem10; // required
+                    _elem10 = iprot.readBool();
+                    struct.success.add(_elem10);
+                  }
+                  iprot.readListEnd();
+                }
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, bulkAccept_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.success != null) {
+          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.BOOL, struct.success.size()));
+            for (boolean _iter11 : struct.success)
+            {
+              oprot.writeBool(_iter11);
+            }
+            oprot.writeListEnd();
+          }
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class bulkAccept_resultTupleSchemeFactory implements SchemeFactory {
+      public bulkAccept_resultTupleScheme getScheme() {
+        return new bulkAccept_resultTupleScheme();
+      }
+    }
+
+    private static class bulkAccept_resultTupleScheme extends TupleScheme<bulkAccept_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, bulkAccept_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetSuccess()) {
+          {
+            oprot.writeI32(struct.success.size());
+            for (boolean _iter12 : struct.success)
+            {
+              oprot.writeBool(_iter12);
+            }
+          }
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, bulkAccept_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(1);
+        if (incoming.get(0)) {
+          {
+            org.apache.thrift.protocol.TList _list13 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.BOOL, iprot.readI32());
+            struct.success = new ArrayList<Boolean>(_list13.size);
+            for (int _i14 = 0; _i14 < _list13.size; ++_i14)
+            {
+              boolean _elem15; // required
+              _elem15 = iprot.readBool();
+              struct.success.add(_elem15);
+            }
+          }
           struct.setSuccessIsSet(true);
         }
       }
@@ -6068,15 +6537,15 @@ public class MDCCCommunicationService {
             case 1: // VERSIONS
               if (schemeField.type == org.apache.thrift.protocol.TType.MAP) {
                 {
-                  org.apache.thrift.protocol.TMap _map0 = iprot.readMapBegin();
-                  struct.versions = new HashMap<String,Long>(2*_map0.size);
-                  for (int _i1 = 0; _i1 < _map0.size; ++_i1)
+                  org.apache.thrift.protocol.TMap _map16 = iprot.readMapBegin();
+                  struct.versions = new HashMap<String,Long>(2*_map16.size);
+                  for (int _i17 = 0; _i17 < _map16.size; ++_i17)
                   {
-                    String _key2; // required
-                    long _val3; // required
-                    _key2 = iprot.readString();
-                    _val3 = iprot.readI64();
-                    struct.versions.put(_key2, _val3);
+                    String _key18; // required
+                    long _val19; // required
+                    _key18 = iprot.readString();
+                    _val19 = iprot.readI64();
+                    struct.versions.put(_key18, _val19);
                   }
                   iprot.readMapEnd();
                 }
@@ -6104,10 +6573,10 @@ public class MDCCCommunicationService {
           oprot.writeFieldBegin(VERSIONS_FIELD_DESC);
           {
             oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.I64, struct.versions.size()));
-            for (Map.Entry<String, Long> _iter4 : struct.versions.entrySet())
+            for (Map.Entry<String, Long> _iter20 : struct.versions.entrySet())
             {
-              oprot.writeString(_iter4.getKey());
-              oprot.writeI64(_iter4.getValue());
+              oprot.writeString(_iter20.getKey());
+              oprot.writeI64(_iter20.getValue());
             }
             oprot.writeMapEnd();
           }
@@ -6138,10 +6607,10 @@ public class MDCCCommunicationService {
         if (struct.isSetVersions()) {
           {
             oprot.writeI32(struct.versions.size());
-            for (Map.Entry<String, Long> _iter5 : struct.versions.entrySet())
+            for (Map.Entry<String, Long> _iter21 : struct.versions.entrySet())
             {
-              oprot.writeString(_iter5.getKey());
-              oprot.writeI64(_iter5.getValue());
+              oprot.writeString(_iter21.getKey());
+              oprot.writeI64(_iter21.getValue());
             }
           }
         }
@@ -6153,15 +6622,15 @@ public class MDCCCommunicationService {
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TMap _map6 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.I64, iprot.readI32());
-            struct.versions = new HashMap<String,Long>(2*_map6.size);
-            for (int _i7 = 0; _i7 < _map6.size; ++_i7)
+            org.apache.thrift.protocol.TMap _map22 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.I64, iprot.readI32());
+            struct.versions = new HashMap<String,Long>(2*_map22.size);
+            for (int _i23 = 0; _i23 < _map22.size; ++_i23)
             {
-              String _key8; // required
-              long _val9; // required
-              _key8 = iprot.readString();
-              _val9 = iprot.readI64();
-              struct.versions.put(_key8, _val9);
+              String _key24; // required
+              long _val25; // required
+              _key24 = iprot.readString();
+              _val25 = iprot.readI64();
+              struct.versions.put(_key24, _val25);
             }
           }
           struct.setVersionsIsSet(true);
@@ -6485,16 +6954,16 @@ public class MDCCCommunicationService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.MAP) {
                 {
-                  org.apache.thrift.protocol.TMap _map10 = iprot.readMapBegin();
-                  struct.success = new HashMap<String,ReadValue>(2*_map10.size);
-                  for (int _i11 = 0; _i11 < _map10.size; ++_i11)
+                  org.apache.thrift.protocol.TMap _map26 = iprot.readMapBegin();
+                  struct.success = new HashMap<String,ReadValue>(2*_map26.size);
+                  for (int _i27 = 0; _i27 < _map26.size; ++_i27)
                   {
-                    String _key12; // required
-                    ReadValue _val13; // required
-                    _key12 = iprot.readString();
-                    _val13 = new ReadValue();
-                    _val13.read(iprot);
-                    struct.success.put(_key12, _val13);
+                    String _key28; // required
+                    ReadValue _val29; // required
+                    _key28 = iprot.readString();
+                    _val29 = new ReadValue();
+                    _val29.read(iprot);
+                    struct.success.put(_key28, _val29);
                   }
                   iprot.readMapEnd();
                 }
@@ -6522,10 +6991,10 @@ public class MDCCCommunicationService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Map.Entry<String, ReadValue> _iter14 : struct.success.entrySet())
+            for (Map.Entry<String, ReadValue> _iter30 : struct.success.entrySet())
             {
-              oprot.writeString(_iter14.getKey());
-              _iter14.getValue().write(oprot);
+              oprot.writeString(_iter30.getKey());
+              _iter30.getValue().write(oprot);
             }
             oprot.writeMapEnd();
           }
@@ -6556,10 +7025,10 @@ public class MDCCCommunicationService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Map.Entry<String, ReadValue> _iter15 : struct.success.entrySet())
+            for (Map.Entry<String, ReadValue> _iter31 : struct.success.entrySet())
             {
-              oprot.writeString(_iter15.getKey());
-              _iter15.getValue().write(oprot);
+              oprot.writeString(_iter31.getKey());
+              _iter31.getValue().write(oprot);
             }
           }
         }
@@ -6571,16 +7040,16 @@ public class MDCCCommunicationService {
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TMap _map16 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new HashMap<String,ReadValue>(2*_map16.size);
-            for (int _i17 = 0; _i17 < _map16.size; ++_i17)
+            org.apache.thrift.protocol.TMap _map32 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new HashMap<String,ReadValue>(2*_map32.size);
+            for (int _i33 = 0; _i33 < _map32.size; ++_i33)
             {
-              String _key18; // required
-              ReadValue _val19; // required
-              _key18 = iprot.readString();
-              _val19 = new ReadValue();
-              _val19.read(iprot);
-              struct.success.put(_key18, _val19);
+              String _key34; // required
+              ReadValue _val35; // required
+              _key34 = iprot.readString();
+              _val35 = new ReadValue();
+              _val35.read(iprot);
+              struct.success.put(_key34, _val35);
             }
           }
           struct.setSuccessIsSet(true);

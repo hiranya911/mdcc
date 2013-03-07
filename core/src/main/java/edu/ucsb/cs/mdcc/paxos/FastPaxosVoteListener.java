@@ -1,6 +1,8 @@
 package edu.ucsb.cs.mdcc.paxos;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -32,32 +34,45 @@ public class FastPaxosVoteListener implements VoteResultListener {
 
     public void start() {
         Member[] members = MDCCConfiguration.getConfiguration().getMembers();
-        for (Option option : options) {
-            if (!option.isClassic()) {
-                log.debug("Running fast mode");
-                PaxosVoteCounter optionVoteCounter = new PaxosVoteCounter(option, this);
-                BallotNumber ballot = new BallotNumber(-1, DEFAULT_SERVER_ID);
-                Accept accept = new Accept(txnId, ballot, option);
-                for (Member member : members) {
-                    communicator.sendAcceptAsync(member, accept, optionVoteCounter);
-                }
-            } else {
-                if (log.isDebugEnabled()) {
-                    log.debug("Already in classic mode for key: " + option.getKey());
-                }
-                boolean done = false;
-                ClassicPaxosResultObserver observer = new ClassicPaxosResultObserver(option, this);
-                for (Member member : members) {
-                    if (communicator.runClassicPaxos(member, txnId,
-                            option, observer)) {
-                        done = true;
-                        break;
-                    }
-                }
+        List<Option> fastOptions = new ArrayList<Option>();
+        List<Option> classicOptions = new ArrayList<Option>();
+        List<Accept> fastAccepts = new ArrayList<Accept>();
+        BallotNumber fastBallot = new BallotNumber(-1, DEFAULT_SERVER_ID);
 
-                if (!done) {
-                    notifyOutcome(option, false);
+        for (Option option : options) {
+        	if (!option.isClassic()) {
+        		log.info("Running fast accept on: " + option.getKey());
+        		fastOptions.add(option);
+        		fastAccepts.add(new Accept(txnId, fastBallot, option));
+        	} else {
+        		classicOptions.add(option);
+        	}
+        }
+        
+        PaxosBulkVoteCounter fastCallback = new PaxosBulkVoteCounter(fastOptions, this);
+        if (fastAccepts.size() > 0) {
+	        for (Member member : members) {
+	            communicator.sendBulkAcceptAsync(member, fastAccepts, fastCallback);
+	        }
+        }
+        
+        
+        for (Option option : classicOptions) {
+            if (log.isDebugEnabled()) {
+                log.debug("Already in classic mode for key: " + option.getKey());
+            }
+            boolean done = false;
+            ClassicPaxosResultObserver observer = new ClassicPaxosResultObserver(option, this);
+            for (Member member : members) {
+                if (communicator.runClassicPaxos(member, txnId,
+                        option, observer)) {
+                    done = true;
+                    break;
                 }
+            }
+
+            if (!done) {
+                notifyOutcome(option, false);
             }
         }
     }
