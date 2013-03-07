@@ -8,6 +8,7 @@ public class Result {
     private ByteBuffer value;
     private long version;
     private boolean classic;
+    private boolean deleted;
 
     public Result(String key, ByteBuffer value, long version, boolean classic) {
         this.key = key;
@@ -34,5 +35,13 @@ public class Result {
 
     public boolean isClassic() {
         return classic;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
     }
 }

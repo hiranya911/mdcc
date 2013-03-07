@@ -89,7 +89,7 @@ public class HBase implements Database {
             log.debug("table already exists!");
         } else {     
             HTableDescriptor tableDesc = new HTableDescriptor(tableName);     
-            for (int i=0; i<families.length; i++){
+            for (int i = 0; i < families.length; i++){
                 tableDesc.addFamily(new HColumnDescriptor(families[i]));
             }     
             admin.createTable(tableDesc);     

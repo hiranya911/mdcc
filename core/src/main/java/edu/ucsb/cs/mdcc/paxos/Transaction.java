@@ -2,6 +2,7 @@ package edu.ucsb.cs.mdcc.paxos;
 
 import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.Result;
+import edu.ucsb.cs.mdcc.dao.Database;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
@@ -25,16 +26,55 @@ public abstract class Transaction {
         assertState();
 
         if (readSet.containsKey(key)) {
-            return readSet.get(key).getValue();
+            Result result = readSet.get(key);
+            if (result.isDeleted()) {
+                throw new TransactionException("No object exists by the key: " + key);
+            }
+            return result.getValue();
         } else {
             Result result = doRead(key);
             if (result != null) {
                 readSet.put(result.getKey(), result);
+                if (result.isDeleted()) {
+                    throw new TransactionException("No object exists by the key: " + key);
+                }
                 return result.getValue();
             } else {
                 throw new TransactionException("No object exists by the key: " + key);
             }
         }
+    }
+
+    public synchronized void delete(String key) throws TransactionException {
+        assertState();
+
+        Option option;
+        Result result = readSet.get(key);
+        if (result != null) {
+            // We have already read this object.
+            // Update the value in the read-set so future reads can see this write.
+            if (result.isDeleted()) {
+                throw new TransactionException("Object already deleted: " + key);
+            }
+            result.setDeleted(true);
+            option = new Option(key, ByteBuffer.wrap(Database.DELETE_VALUE.getBytes()),
+                    result.getVersion(), result.isClassic());
+        } else {
+            result = doRead(key);
+            if (result == null) {
+                // Object doesn't exist in the DB - Error!
+                throw new TransactionException("Unable to delete non existing object: " + key);
+            } else {
+                // Object exists in the DB.
+                // Update the value and add to the read-set so future reads can
+                // see this write.
+                result.setDeleted(true);
+            }
+            option = new Option(key, ByteBuffer.wrap(Database.DELETE_VALUE.getBytes()),
+                    result.getVersion(), result.isClassic());
+            readSet.put(result.getKey(), result);
+        }
+        writeSet.put(key, option);
     }
 
     public synchronized void write(String key, ByteBuffer value) throws TransactionException {

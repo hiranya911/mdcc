@@ -69,4 +69,9 @@ public class Record {
     public void setValue(ByteBuffer value) {
         this.value = value;
     }
+
+    public boolean isDelete() {
+        String valueString = new String(this.value.array());
+        return Database.DELETE_VALUE.equals(valueString);
+    }
 }

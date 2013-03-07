@@ -7,6 +7,7 @@ import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.Result;
 import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import edu.ucsb.cs.mdcc.config.Member;
+import edu.ucsb.cs.mdcc.dao.Database;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicator;
 import edu.ucsb.cs.mdcc.messaging.ReadValue;
 
@@ -32,7 +33,13 @@ public class AppServer {
 			return null;
         } else {
             boolean classic = r.getClassicEndVersion() >= r.getVersion();
-			return new Result(key, ByteBuffer.wrap(r.getValue()), r.getVersion(), classic);
+			Result result = new Result(key, ByteBuffer.wrap(r.getValue()),
+                    r.getVersion(), classic);
+            String value = new String(r.getValue());
+            if (Database.DELETE_VALUE.equals(value)) {
+                result.setDeleted(true);
+            }
+            return result;
 		}
 	}
 	
@@ -40,7 +47,8 @@ public class AppServer {
 		boolean success;
         Member[] members = configuration.getMembers();
         
-        FastPaxosVoteListener voteListener = new FastPaxosVoteListener(options, communicator, txnId);
+        FastPaxosVoteListener voteListener = new FastPaxosVoteListener(options,
+                communicator, txnId);
         voteListener.start();
 
         int loopCount = 0;
