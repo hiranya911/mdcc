@@ -12,9 +12,7 @@ import org.apache.thrift.TException;
 import org.apache.thrift.async.AsyncMethodCallback;
 
 import edu.ucsb.cs.mdcc.Option;
-import edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService.AsyncClient.accept_call;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService.AsyncClient.bulkAccept_call;
-import edu.ucsb.cs.mdcc.messaging.MDCCCommunicationService.AsyncClient.prepare_call;
 
 public class PaxosBulkVoteCounter implements AsyncMethodCallback {
 
@@ -40,7 +38,7 @@ public class PaxosBulkVoteCounter implements AsyncMethodCallback {
 		accepts = new ArrayList<AtomicInteger>();
 		rejects = new ArrayList<AtomicInteger>();
 		outcomeFlags = new ArrayList<AtomicBoolean>();
-		for(int i = 0; i < options.size(); i++) {
+		for (int i = 0; i < options.size(); i++) {
 			accepts.add(new AtomicInteger(0));
 			rejects.add(new AtomicInteger(0));
 			outcomeFlags.add(new AtomicBoolean(false));
@@ -59,13 +57,10 @@ public class PaxosBulkVoteCounter implements AsyncMethodCallback {
                 	}
                 }
             } catch (TException e) {
-            	for(int i = 0; i < myOptions.size(); i++) {
+            	for (int i = 0; i < myOptions.size(); i++) {
             		onReject(i);
             	}
-                return;
             }
-        } else {
-            return;
         }
 	}
 

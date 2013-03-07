@@ -50,12 +50,11 @@ public class TestClient {
 
         }
 
-
         /*LocalTransaction txn1 = new LocalTransaction();
         try {
             txn1.begin();
-            txn1.write("foo", ByteBuffer.wrap("Foo 09876".getBytes()));
-            txn1.write("bar", ByteBuffer.wrap("Bar 1".getBytes()));
+            txn1.write("foo", ByteBuffer.wrap("Foo 12345".getBytes()));
+            txn1.write("bar", ByteBuffer.wrap("Bar 67890".getBytes()));
             txn1.commit();
             System.out.println("Txn 1 committed");
         } catch (TransactionException e) {

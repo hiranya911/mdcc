@@ -41,7 +41,9 @@ public class FastPaxosVoteListener implements VoteResultListener {
 
         for (Option option : options) {
         	if (!option.isClassic()) {
-        		log.info("Running fast accept on: " + option.getKey());
+                if (log.isDebugEnabled()) {
+                    log.debug("Running fast accept on: " + option.getKey());
+                }
         		fastOptions.add(option);
         		fastAccepts.add(new Accept(txnId, fastBallot, option));
         	} else {

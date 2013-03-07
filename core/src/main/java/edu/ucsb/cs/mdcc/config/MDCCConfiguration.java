@@ -31,7 +31,9 @@ public class MDCCConfiguration {
 		File zkDir = new File(System.getProperty("mdcc.zk.dir"));
         File myIdFile = new File(zkDir, "myid");
         try {
-            log.info("Writing out my id value to: " + myId);
+            if (log.isDebugEnabled()) {
+                log.debug("Writing out my id value to: " + myId);
+            }
             FileUtils.write(myIdFile, String.valueOf(myId));
         } catch (IOException e) {
             throw new MDCCException("Unable to write the ZK myid file", e);

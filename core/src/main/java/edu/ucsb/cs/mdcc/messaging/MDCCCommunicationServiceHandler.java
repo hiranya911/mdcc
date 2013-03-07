@@ -19,7 +19,6 @@ public class MDCCCommunicationServiceHandler implements Iface {
     }
 
 	public boolean ping() throws TException {
-		// TODO Auto-generated method stub
 		System.out.println("received ping");
 		return true;
 	}
@@ -31,12 +30,10 @@ public class MDCCCommunicationServiceHandler implements Iface {
 	}
 
 	public void decide(String transaction, boolean commit) throws TException {
-		// TODO Auto-generated method stub
 		agent.onDecide(transaction, commit);
 	}
 
 	public ReadValue read(String key) throws TException {
-		// TODO Auto-generated method stub
 		return agent.onRead(key);
 	}
 
@@ -45,10 +42,9 @@ public class MDCCCommunicationServiceHandler implements Iface {
 		return agent.onAccept(accept);
 	}
 	
-	public List<Boolean> bulkAccept(
-			List<Accept> accepts) throws TException {
+	public List<Boolean> bulkAccept(List<Accept> accepts) throws TException {
 		List<Boolean> responses = new ArrayList<Boolean>(accepts.size());
-		for(Accept accept : accepts) {
+		for (Accept accept : accepts) {
 			responses.add(agent.onAccept(toPaxosAccept(accept)));
 		}
 		return responses;
