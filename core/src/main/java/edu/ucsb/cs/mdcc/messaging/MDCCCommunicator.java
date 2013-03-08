@@ -23,6 +23,7 @@ import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.server.TNonblockingServer;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -99,8 +100,9 @@ public class MDCCCommunicator {
             MDCCCommunicationService.AsyncClient client =
                     new MDCCCommunicationService.AsyncClient(protocolFactory,
                             clientManager, socket);
+            ByteBuffer value = ByteBuffer.wrap(option.getValue());
             client.runClassic(transaction, option.getKey(), option.getOldVersion(),
-                    option.getValue(), voting);
+                    value, voting);
             return true;
         } catch (Exception e) {
             handleException(member.getHostName(), e);
@@ -254,6 +256,8 @@ public class MDCCCommunicator {
     }
     
     private Accept toThriftAccept(edu.ucsb.cs.mdcc.paxos.Accept accept) {
-    	return new Accept(accept.getTransactionId(), toThriftBallot(accept.getBallotNumber()), accept.getKey(), accept.getOldVersion(), accept.getValue());
+        ByteBuffer value = ByteBuffer.wrap(accept.getValue());
+    	return new Accept(accept.getTransactionId(), toThriftBallot(accept.getBallotNumber()),
+                accept.getKey(), accept.getOldVersion(), value);
     }
 }

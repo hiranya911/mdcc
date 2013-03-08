@@ -3,7 +3,6 @@ package edu.ucsb.cs.mdcc.dao;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.Collection;   
 import java.util.HashMap;
 import java.util.Map;
@@ -131,8 +130,7 @@ public class HBase implements Database {
         try {
             HTable table = tables.get(RECORDS_TABLE);
             Put put = new Put(record.getKey().getBytes());
-            put.add(Bytes.toBytes(VALUE),Bytes.toBytes(""),
-                    Bytes.toBytes(record.getValue()));
+            put.add(Bytes.toBytes(VALUE),Bytes.toBytes(""), record.getValue());
             put.add(Bytes.toBytes(VERSION),Bytes.toBytes(""),
                     Bytes.toBytes(record.getVersion()));
             put.add(Bytes.toBytes(CLASSIC_END_VERSION),Bytes.toBytes(""),
@@ -191,7 +189,7 @@ public class HBase implements Database {
             String familyName = Bytes.toString(kv.getFamily());
             byte[] columnValue = kv.getValue();
             if (VALUE.equals(familyName)) {
-                rec.setValue(ByteBuffer.wrap(columnValue));
+                rec.setValue(columnValue);
             } else if (VERSION.equals(familyName)) {
                 rec.setVersion(Bytes.toLong(columnValue));
             } else if (CLASSIC_END_VERSION.equals(familyName)) {

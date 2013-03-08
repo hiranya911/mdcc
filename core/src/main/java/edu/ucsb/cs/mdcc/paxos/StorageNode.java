@@ -62,7 +62,7 @@ public class StorageNode extends Agent {
                         (entry.getValue().getVersion() > record.getVersion())) {
                     log.info("Recovered value for '" + entry.getKey() + "'");
                     ReadValue readValue = entry.getValue();
-                    record.setValue(ByteBuffer.wrap(readValue.getValue()));
+                    record.setValue(readValue.getValue());
                     record.setVersion(readValue.getVersion());
                     record.setClassicEndVersion(readValue.getClassicEndVersion());
                     db.put(record);
@@ -86,7 +86,7 @@ public class StorageNode extends Agent {
         BallotNumber ballot = accept.getBallotNumber();
         String transaction = accept.getTransactionId();
         long oldVersion = accept.getOldVersion();
-        ByteBuffer value = accept.getValue();
+        byte[] value = accept.getValue();
 
         synchronized (accept.getKey().intern()) {
             Record record = db.get(key);
@@ -162,7 +162,7 @@ public class StorageNode extends Agent {
 	public ReadValue onRead(String key) {
         Record record = db.get(key);
         return new ReadValue(record.getVersion(), record.getClassicEndVersion(),
-                record.getValue());
+                ByteBuffer.wrap(record.getValue()));
 	}
 
 	public static void main(String[] args) {
@@ -201,7 +201,7 @@ public class StorageNode extends Agent {
             if (!versions.containsKey(record.getKey()) ||
                     (record.getVersion() > versions.get(record.getKey()))) {
                 ReadValue readValue = new ReadValue(record.getVersion(),
-                        record.getClassicEndVersion(), record.getValue());
+                        record.getClassicEndVersion(), ByteBuffer.wrap(record.getValue()));
                 newVersions.put(record.getKey(), readValue);
             }
         }
@@ -209,7 +209,7 @@ public class StorageNode extends Agent {
 	}
 
 	public boolean runClassic(String transaction, String key,
-			long oldVersion, ByteBuffer value) {
+			long oldVersion, byte[] value) {
         log.info("Requested classic paxos on key: " + key);
         boolean forceElection = false;
         while (true) {

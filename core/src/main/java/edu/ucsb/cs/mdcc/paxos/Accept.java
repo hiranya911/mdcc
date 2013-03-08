@@ -10,7 +10,7 @@ public class Accept {
     private BallotNumber ballotNumber;
     private String key;
     private long oldVersion;
-    private ByteBuffer value;
+    private byte[] value;
 
     public Accept(String transactionId, BallotNumber ballotNumber, Option option) {
         this.transactionId = transactionId;
@@ -21,7 +21,7 @@ public class Accept {
     }
 
     public Accept(String transactionId, BallotNumber ballotNumber, String key,
-                  long oldVersion, ByteBuffer value) {
+                  long oldVersion, byte[] value) {
         this.transactionId = transactionId;
         this.ballotNumber = ballotNumber;
         this.key = key;
@@ -53,7 +53,7 @@ public class Accept {
         return oldVersion;
     }
 
-    public ByteBuffer getValue() {
+    public byte[] getValue() {
         return value;
     }
 

@@ -25,7 +25,8 @@ public class MDCCCommunicationServiceHandler implements Iface {
 
 	public boolean prepare(String key, BallotNumber ballot, long classicEndVersion)
 			throws TException {
-		edu.ucsb.cs.mdcc.paxos.Prepare prepare = new edu.ucsb.cs.mdcc.paxos.Prepare(key, toPaxosBallot(ballot), classicEndVersion);
+		edu.ucsb.cs.mdcc.paxos.Prepare prepare = new edu.ucsb.cs.mdcc.paxos.Prepare(
+                key, toPaxosBallot(ballot), classicEndVersion);
 		return agent.onPrepare(prepare);
 	}
 
@@ -57,7 +58,10 @@ public class MDCCCommunicationServiceHandler implements Iface {
 
 	public boolean runClassic(String transaction, String key, long oldVersion,
 			ByteBuffer newValue) throws TException {
-		return agent.runClassic(transaction, key, oldVersion, newValue);
+        ByteBuffer slice = newValue.slice();
+        byte[] data = new byte[slice.limit()];
+        slice.get(data);
+		return agent.runClassic(transaction, key, oldVersion, data);
 	}
 
     private edu.ucsb.cs.mdcc.paxos.BallotNumber toPaxosBallot(BallotNumber b) {
@@ -65,6 +69,8 @@ public class MDCCCommunicationServiceHandler implements Iface {
     }
     
     private edu.ucsb.cs.mdcc.paxos.Accept toPaxosAccept(Accept a) {
-    	return new edu.ucsb.cs.mdcc.paxos.Accept(a.getTransactionId(), toPaxosBallot(a.getBallot()), a.getKey(), a.getOldVersion(), ByteBuffer.wrap(a.getNewValue()));
+    	return new edu.ucsb.cs.mdcc.paxos.Accept(a.getTransactionId(),
+                toPaxosBallot(a.getBallot()), a.getKey(), a.getOldVersion(),
+                a.getNewValue());
     }
 }

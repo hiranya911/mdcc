@@ -4,7 +4,6 @@ import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.Result;
 import edu.ucsb.cs.mdcc.dao.Database;
 
-import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -64,7 +63,7 @@ public abstract class Transaction {
                 throw new TransactionException("Object already deleted: " + key);
             }
             result.setDeleted(true);
-            option = new Option(key, ByteBuffer.wrap(Database.DELETE_VALUE.getBytes()),
+            option = new Option(key, Database.DELETE_VALUE.getBytes(),
                     result.getVersion(), result.isClassic());
         } else {
             result = doRead(key);
@@ -77,7 +76,7 @@ public abstract class Transaction {
                 // see this write.
                 result.setDeleted(true);
             }
-            option = new Option(key, ByteBuffer.wrap(Database.DELETE_VALUE.getBytes()),
+            option = new Option(key, Database.DELETE_VALUE.getBytes(),
                     result.getVersion(), result.isClassic());
             readSet.put(result.getKey(), result);
         }
@@ -89,26 +88,25 @@ public abstract class Transaction {
 
         Option option;
         Result result = readSet.get(key);
-        ByteBuffer value = ByteBuffer.wrap(data);
         if (result != null) {
             // We have already read this object.
             // Update the value in the read-set so future reads can see this write.
-            option = new Option(key, value, result.getVersion(), result.isClassic());
-            result.setValue(value);
+            option = new Option(key, data, result.getVersion(), result.isClassic());
+            result.setValue(data);
         } else {
             // We haven't read this object before (blind write).
             // Do an implicit read from the database.
             result = doRead(key);
             if (result == null) {
                 // Object doesn't exist in the DB - Insert (version = 0)
-                result = new Result(key, value, (long) 0, false);
+                result = new Result(key, data, (long) 0, false);
             } else {
                 // Object exists in the DB.
                 // Update the value and add to the read-set so future reads can
                 // see this write.
-                result.setValue(value);
+                result.setValue(data);
             }
-            option = new Option(key, value, result.getVersion(), result.isClassic());
+            option = new Option(key, data, result.getVersion(), result.isClassic());
             readSet.put(result.getKey(), result);
         }
         writeSet.put(key, option);

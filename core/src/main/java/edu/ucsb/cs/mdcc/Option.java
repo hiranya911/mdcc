@@ -1,6 +1,5 @@
 package edu.ucsb.cs.mdcc;
 
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -14,11 +13,11 @@ public class Option {
     private static final Log log = LogFactory.getLog(Option.class);
 
     private String key;
-    private ByteBuffer value;
+    private byte[] value;
     private long oldVersion;
     private boolean classic;
 
-    public Option(String key, ByteBuffer value, long oldVersion, boolean classic) {
+    public Option(String key, byte[] value, long oldVersion, boolean classic) {
         this.key = key;
         this.value = value;
         this.oldVersion = oldVersion;
@@ -41,9 +40,8 @@ public class Option {
         offset += 4;
 
         //parse the value
-        byte[] temp = new byte[valueLength];
-        System.arraycopy(concatenated, offset, temp, 0, valueLength);
-        this.value = ByteBuffer.wrap(temp);
+        this.value = new byte[valueLength];
+        System.arraycopy(concatenated, offset, value, 0, valueLength);
         offset += valueLength;
 
         this.oldVersion = Bytes.toLong(concatenated, offset, 8);
@@ -54,7 +52,7 @@ public class Option {
         return key;
     }
 
-    public ByteBuffer getValue() {
+    public byte[] getValue() {
         return value;
     }
 
@@ -73,16 +71,16 @@ public class Option {
     public ByteBuffer toBytes(){
     	byte[] keyBytes = Bytes.toBytes(key);
     	byte[] keyLengthBytes = Bytes.toBytes(keyBytes.length);
-    	byte[] valueLengthBytes = Bytes.toBytes(value.array().length);
+    	byte[] valueLengthBytes = Bytes.toBytes(value.length);
     	byte[] oldVersionBytes = Bytes.toBytes(oldVersion);
     	
     	ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
     	try {
-			outputStream.write( keyLengthBytes);
-	    	outputStream.write( keyBytes );
-	    	outputStream.write( valueLengthBytes );
-	    	outputStream.write( value.array() );
-	    	outputStream.write( oldVersionBytes );
+			outputStream.write(keyLengthBytes);
+	    	outputStream.write(keyBytes);
+	    	outputStream.write(valueLengthBytes);
+	    	outputStream.write(value);
+	    	outputStream.write(oldVersionBytes);
 		} catch (IOException e) {
 			log.error("Unexpected error while serializing an option", e);
 		}

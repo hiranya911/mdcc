@@ -43,6 +43,7 @@ public class AppServerServiceHandler implements Iface {
 	}
 	
 	private static edu.ucsb.cs.mdcc.Option toPaxosOption(Option o) {
-		return new edu.ucsb.cs.mdcc.Option(o.getKey(), ByteBuffer.wrap(o.getValue()), o.getOldVersion(), o.isClassic());
+		return new edu.ucsb.cs.mdcc.Option(o.getKey(), o.getValue(),
+                o.getOldVersion(), o.isClassic());
 	}
 }

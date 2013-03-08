@@ -3,6 +3,7 @@ package edu.ucsb.cs.mdcc.txn;
 import edu.ucsb.cs.mdcc.MDCCException;
 import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import edu.ucsb.cs.mdcc.config.Member;
+import edu.ucsb.cs.mdcc.dao.Database;
 import edu.ucsb.cs.mdcc.paxos.Transaction;
 import edu.ucsb.cs.mdcc.paxos.TransactionException;
 import org.apache.commons.cli.*;
@@ -127,6 +128,14 @@ public class MDCCClient {
                 }
                 randomBlindWriteTransactions(fac, concurrency, num, keysPerWorker, total);
                 silent.compareAndSet(true, false);
+            } else if ("delete".equals(cmdArgs[0])) {
+                if (cmd.hasOption("k")) {
+                    key = cmd.getOptionValue("k");
+                } else {
+                    System.out.println("Object key unspecified");
+                    continue;
+                }
+                blindWriteTransaction(fac, key, Database.DELETE_VALUE);
             } else if ("primary".equals(cmdArgs[0])) {
                 if (cmdArgs.length == 2 && fac.isLocal()) {
                     if (!config.reorderMembers(cmdArgs[1])) {
@@ -154,7 +163,7 @@ public class MDCCClient {
                         System.out.println();
                     }
                 } else {
-                    System.out.print("App Server: " + config.getAppServerUrl());
+                    System.out.println("App Server: " + config.getAppServerUrl());
                 }
             } else if ("quit".equals(cmdArgs[0])) {
                 break;
@@ -265,7 +274,11 @@ public class MDCCClient {
         try {
             txn.begin();
             txn.write(key, value.getBytes());
-            System.out.println(key + ": " + value);
+            if (Database.DELETE_VALUE.equals(value)) {
+                System.out.println("Key " + key + " deleted");
+            } else {
+                System.out.println(key + ": " + value);
+            }
             txn.commit();
         } catch (TransactionException e) {
             System.out.println("Error: " + e.getMessage());

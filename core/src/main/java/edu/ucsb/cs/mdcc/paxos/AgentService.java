@@ -2,7 +2,6 @@ package edu.ucsb.cs.mdcc.paxos;
 
 import edu.ucsb.cs.mdcc.messaging.ReadValue;
 
-import java.nio.ByteBuffer;
 import java.util.Map;
 
 public interface AgentService {
@@ -11,7 +10,8 @@ public interface AgentService {
     
     public boolean onAccept(Accept accept);
     
-    public boolean runClassic(String transaction, String object, long oldVersion, ByteBuffer value);
+    public boolean runClassic(String transaction, String object,
+                              long oldVersion, byte[] value);
     
     public void onDecide(String transaction, boolean commit);
     

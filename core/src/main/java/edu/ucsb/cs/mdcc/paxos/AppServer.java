@@ -37,7 +37,7 @@ public class AppServer implements AppServerService {
 	}
 
     public void stop() {
-        communicator.stop();
+        communicator.stopSender();
     }
     
 	public Result read(String key) {
@@ -52,8 +52,7 @@ public class AppServer implements AppServerService {
 			return null;
         } else {
             boolean classic = r.getClassicEndVersion() >= r.getVersion();
-			Result result = new Result(key, ByteBuffer.wrap(r.getValue()),
-                    r.getVersion(), classic);
+			Result result = new Result(key, r.getValue(), r.getVersion(), classic);
             String value = new String(r.getValue());
             if (Database.DELETE_VALUE.equals(value)) {
                 result.setDeleted(true);

@@ -2,12 +2,10 @@ package edu.ucsb.cs.mdcc.dao;
 
 import edu.ucsb.cs.mdcc.paxos.BallotNumber;
 
-import java.nio.ByteBuffer;
-
 public class Record {
 
     private String key;
-    private ByteBuffer value = ByteBuffer.wrap("".getBytes());
+    private byte[] value = new byte[]{};
     private long version = 0;
     private long classicEndVersion = -1;
     private BallotNumber ballot = new BallotNumber(0, "");
@@ -46,7 +44,7 @@ public class Record {
         this.ballot = ballot;
     }
 
-    public ByteBuffer getValue() {
+    public byte[] getValue() {
         return value;
     }
 
@@ -66,12 +64,7 @@ public class Record {
         this.version = version;
     }
 
-    public void setValue(ByteBuffer value) {
+    public void setValue(byte[] value) {
         this.value = value;
-    }
-
-    public boolean isDelete() {
-        String valueString = new String(this.value.array());
-        return Database.DELETE_VALUE.equals(valueString);
     }
 }

@@ -101,12 +101,13 @@ public class RemoteAppServer implements edu.ucsb.cs.mdcc.paxos.AppServerService 
     }
 	
 	private static Result toPaxosResult(String key, ReadValue r) {
-		return new Result(key, ByteBuffer.wrap(r.getValue()), r.getVersion(),
+		return new Result(key, r.getValue(), r.getVersion(),
                 r.classicEndVersion >= r.getVersion());
 	}
 	
 	private static Option toThriftOption(edu.ucsb.cs.mdcc.Option o) {
-		return new Option(o.getKey(), o.getOldVersion(), o.getValue(), o.isClassic());
+		return new Option(o.getKey(), o.getOldVersion(),
+                ByteBuffer.wrap(o.getValue()), o.isClassic());
 	}
 	
 }

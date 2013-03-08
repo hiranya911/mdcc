@@ -17,6 +17,13 @@ public class Result {
         this.classic = classic;
     }
 
+    public Result(String key, byte[] value, long version, boolean classic) {
+        this.key = key;
+        this.value = ByteBuffer.wrap(value);
+        this.version = version;
+        this.classic = classic;
+    }
+
     public String getKey() {
         return key;
     }
@@ -31,6 +38,10 @@ public class Result {
 
     public void setValue(ByteBuffer value) {
         this.value = value;
+    }
+
+    public void setValue(byte[] value) {
+        this.value = ByteBuffer.wrap(value);
     }
 
     public boolean isClassic() {
