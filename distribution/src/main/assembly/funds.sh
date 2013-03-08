@@ -26,10 +26,4 @@ done
 
 MDCC_CLASSPATH=$MDCC_CLASSPATH:$MDCC_HOME/lib
 
-MYID=0
-if [ ! -z "$1" ];then
-    MYID=$1
-    shift
-fi
-
-java -Duser.dir=$MDCC_HOME -Dmdcc.my.id=$MYID -Dmdcc.config.dir=$MDCC_HOME/conf -Dmdcc.zk.dir=$MDCC_HOME/db/zk -classpath $MDCC_CLASSPATH edu.ucsb.cs.mdcc.txn.FundsTransferTest $*
+java -Duser.dir=$MDCC_HOME -Dmdcc.my.id=0 -Dmdcc.config.dir=$MDCC_HOME/conf -Dmdcc.zk.dir=$MDCC_HOME/db/zk -classpath $MDCC_CLASSPATH edu.ucsb.cs.mdcc.txn.FundsTransferTest $*

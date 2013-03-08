@@ -10,8 +10,12 @@ import edu.ucsb.cs.mdcc.config.Member;
 import edu.ucsb.cs.mdcc.dao.Database;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicator;
 import edu.ucsb.cs.mdcc.messaging.ReadValue;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class AppServer {
+
+    private static final Log log = LogFactory.getLog(AppServer.class);
 
 	private MDCCConfiguration configuration;
     private MDCCCommunicator communicator;
@@ -55,14 +59,18 @@ public class AppServer {
                 communicator, txnId);
         voteListener.start();
 
-        int loopCount = 0;
         synchronized (voteListener) {
-        	while (voteListener.getTotal() < options.size() && loopCount < 10) {
-        		try {
+            long start = System.currentTimeMillis();
+        	while (voteListener.getTotal() < options.size()) {
+                try {
 					voteListener.wait(5000);
 				} catch (InterruptedException ignored) {
 				}
-        		loopCount++;
+
+                if (System.currentTimeMillis() - start > 60000) {
+                    log.warn("Transaction " + txnId + " timed out");
+                    break;
+                }
         	}
         }
         
@@ -72,6 +80,11 @@ public class AppServer {
             for (Member member : members) {
                 communicator.sendDecideAsync(member, txnId, success);
             }
+        }
+
+        if (!success && log.isDebugEnabled()) {
+            log.debug("Expected accepts: " + options.size() +
+                    "; Received accepts: " + voteListener.getAccepts());
         }
         return success;
 	}

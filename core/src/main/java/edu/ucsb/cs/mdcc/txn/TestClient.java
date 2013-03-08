@@ -80,7 +80,7 @@ public class TestClient {
             System.exit(1);
         }
 
-        LocalTransaction txn3 = new LocalTransaction(appServer);
+        /*LocalTransaction txn3 = new LocalTransaction(appServer);
         try {
             txn3.begin();
             ByteBuffer object2 = txn3.read("bar");
@@ -91,7 +91,7 @@ public class TestClient {
             System.out.println("Txn 3 committed");
         } catch (TransactionException e) {
             e.printStackTrace();
-        }
+        }*/
 
         appServer.stop();
     }

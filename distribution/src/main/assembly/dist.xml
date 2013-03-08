@@ -27,6 +27,11 @@
             <fileMode>775</fileMode>
         </file>
         <file>
+            <source>src/main/assembly/cleanup.sh</source>
+            <outputDirectory>mdcc-${project.version}/bin</outputDirectory>
+            <fileMode>775</fileMode>
+        </file>
+        <file>
             <source>src/main/assembly/mdcc.properties</source>
             <outputDirectory>mdcc-${project.version}/conf</outputDirectory>
         </file>
