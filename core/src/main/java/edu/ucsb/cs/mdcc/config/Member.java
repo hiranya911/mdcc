@@ -1,5 +1,7 @@
 package edu.ucsb.cs.mdcc.config;
 
+import edu.ucsb.cs.mdcc.MDCCException;
+
 public class Member {
 	private String hostName;
 	private int port;
@@ -9,6 +11,17 @@ public class Member {
 	public Member(String hostName, int port, String processId, boolean local) {
 		this.hostName = hostName;
 		this.setPort(port);
+		this.setProcessId(processId);
+		this.local = local;
+	}
+	
+	public Member(String url, String processId, boolean local) throws MDCCException {
+		int index = url.indexOf(':');
+		if (index < 0) {
+			throw new MDCCException("Invalid Member URL");
+		}
+		this.hostName = url.substring(0, index);
+		this.setPort(Integer.parseInt(url.substring(index + 1)));
 		this.setProcessId(processId);
 		this.local = local;
 	}

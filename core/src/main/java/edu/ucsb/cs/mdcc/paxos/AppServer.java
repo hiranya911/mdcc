@@ -2,18 +2,28 @@ package edu.ucsb.cs.mdcc.paxos;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.Result;
 import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import edu.ucsb.cs.mdcc.config.Member;
 import edu.ucsb.cs.mdcc.dao.Database;
+import edu.ucsb.cs.mdcc.messaging.AppServerServiceHandler;
+import edu.ucsb.cs.mdcc.messaging.MDCCAppServerService;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicator;
 import edu.ucsb.cs.mdcc.messaging.ReadValue;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.thrift.server.TNonblockingServer;
+import org.apache.thrift.server.TServer;
+import org.apache.thrift.transport.TNonblockingServerSocket;
+import org.apache.thrift.transport.TNonblockingServerTransport;
+import org.apache.thrift.transport.TTransportException;
 
-public class AppServer {
+public class AppServer implements AppServerService {
 
     private static final Log log = LogFactory.getLog(AppServer.class);
 
@@ -87,6 +97,56 @@ public class AppServer {
                     "; Received accepts: " + voteListener.getAccepts());
         }
         return success;
+	}
+	
+    private TServer server;
+    private ExecutorService exec;
+    
+	//start listener to handle incoming calls
+    public void startListener() {
+        exec = Executors.newSingleThreadExecutor();
+        final AppServer appServer = this;
+        String appServerURL = configuration.getAppServerUrl();
+        if (appServerURL == null) {
+        	log.error("AppServerURL not specified");
+        	return;
+        }
+        final int port = Integer.parseInt(appServerURL.substring(appServerURL.indexOf(':') + 1));
+        exec.submit(new Runnable() {
+            public void run() {
+                try {
+                    TNonblockingServerTransport serverTransport = new TNonblockingServerSocket(port);
+                    MDCCAppServerService.Processor processor = new MDCCAppServerService.Processor(
+                            new AppServerServiceHandler(appServer));
+                    server = new TNonblockingServer(new TNonblockingServer.Args(serverTransport).
+                            processor(processor));
+                    log.info("Starting server on port: " + port);
+                    server.serve();
+                } catch (TTransportException e) {
+                    log.error("Error while initializing the Thrift service", e);
+                }
+            }
+        });
+    }
+
+    public void stopListener() {
+    	if (server != null) {
+    		server.stop();
+    	}
+        exec.shutdownNow();
+    }
+	
+	public static void main(String[] args) {
+		final AppServer server = new AppServer();
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+            	log.info("Shutting Down AppServer");
+            	server.stop();
+            	server.stopListener();
+            }
+		});
+		server.startListener();
 	}
 
 }

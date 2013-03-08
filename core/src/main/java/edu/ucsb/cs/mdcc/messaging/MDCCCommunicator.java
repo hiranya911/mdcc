@@ -182,14 +182,6 @@ public class MDCCCommunicator {
         }
     }
 
-    private BallotNumber toThriftBallot(edu.ucsb.cs.mdcc.paxos.BallotNumber b) {
-        return new BallotNumber(b.getNumber(), b.getProcessId());
-    }
-    
-    private Accept toThriftAccept(edu.ucsb.cs.mdcc.paxos.Accept accept) {
-    	return new Accept(accept.getTransactionId(), toThriftBallot(accept.getBallotNumber()), accept.getKey(), accept.getOldVersion(), accept.getValue());
-    }
-	
 	public void sendRecoverAsync(Member member, Map<String,Long> versions, RecoverySet callback) {
 		try {
 			TNonblockingSocket socket = new TNonblockingSocket(member.getHostName(),
@@ -256,5 +248,12 @@ public class MDCCCommunicator {
         String msg = "Error contacting the remote member: " + target;
         log.warn(msg, e);
     }
-
+    
+    private BallotNumber toThriftBallot(edu.ucsb.cs.mdcc.paxos.BallotNumber b) {
+        return new BallotNumber(b.getNumber(), b.getProcessId());
+    }
+    
+    private Accept toThriftAccept(edu.ucsb.cs.mdcc.paxos.Accept accept) {
+    	return new Accept(accept.getTransactionId(), toThriftBallot(accept.getBallotNumber()), accept.getKey(), accept.getOldVersion(), accept.getValue());
+    }
 }
