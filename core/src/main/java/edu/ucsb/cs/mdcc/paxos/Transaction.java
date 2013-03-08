@@ -119,7 +119,9 @@ public abstract class Transaction {
     public synchronized void commit() throws TransactionException {
         assertState();
         try {
-            doCommit(transactionId, writeSet.values());
+            if (writeSet.size() > 0) {
+                doCommit(transactionId, writeSet.values());
+            }
         } finally {
             this.complete = true;
         }

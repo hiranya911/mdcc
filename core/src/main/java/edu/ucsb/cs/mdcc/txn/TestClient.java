@@ -78,7 +78,6 @@ public class TestClient {
             System.exit(1);
         }
 
-        Transaction txn3 = fac.create();
         Transaction txn3 = factory.create();
         try {
             txn3.begin();

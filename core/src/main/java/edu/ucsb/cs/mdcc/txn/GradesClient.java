@@ -3,7 +3,6 @@ package edu.ucsb.cs.mdcc.txn;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.apache.hadoop.hbase.util.Bytes;
@@ -12,6 +11,7 @@ import edu.ucsb.cs.mdcc.paxos.Transaction;
 import edu.ucsb.cs.mdcc.paxos.TransactionException;
 
 public class GradesClient {
+
     private static boolean verbose = false;
     private static TransactionFactory fac = null;
     
@@ -24,6 +24,7 @@ public class GradesClient {
         if (fac == null) {
             fac = new TransactionFactory();
         }
+        init();
         System.out.println("Welcome to the MDCC Grades System Client");
         System.out.println("Enter 'help' to see a list of supported commands...\n");
 
@@ -113,49 +114,22 @@ public class GradesClient {
         fac = null;
     }
 
-    /*private static void setPrimary(List<Member> list, String primary) {
-        int index = -1;
-        for (int i = 0; i < list.size(); i++) {
-            if (list.get(i).getProcessId().equals(primary)) {
-                index = i;
-                break;
+    private static void init() {
+        Transaction txn = fac.create();
+        txn.begin();
+        try {
+            txn.read(LINES);
+            txn.commit();
+        } catch (TransactionException ignored) {
+            try {
+                txn.write(LINES, "0".getBytes());
+                txn.commit();
+            } catch (TransactionException e) {
+                System.out.println("Failed to initialize the system");
+                System.exit(1);
             }
-        }
-
-        if (index == -1) {
-            System.out.println("No endpoint found with process ID: " + primary);
-        } else if (index == 0) {
-            System.out.println(primary + " is already the primary");
-        } else {
-            Member member = list.remove(index);
-            list.add(0, member);
-            printEndpoints();
         }
     }
-
-    private static void printEndpoints() {
-        System.out.println("Current endpoint priorities");
-        boolean first = true;
-        for (Member member : gradeServers) {
-            if (!first) {
-                System.out.print(", ");
-            }
-            System.out.print(member.getProcessId());
-            first = false;
-        }
-
-        System.out.println();
-
-        first = true;
-        for (Member member : statServers) {
-            if (!first) {
-                System.out.print(", ");
-            }
-            System.out.print(member.getProcessId());
-            first = false;
-        }
-        System.out.println();
-    }*/
 
     private static void read(boolean silent) {
         Transaction txn = fac.create();
@@ -301,10 +275,6 @@ public class GradesClient {
         try {
         	txn.begin();
         	lineCount = Integer.parseInt(Bytes.toString(txn.read(LINES)));
-        } catch (TransactionException ignored) {
-        }
-        
-        try {
         	txn.write(GRADES_LINE + lineCount, gradesString.getBytes());
         	txn.write(STATS_LINE + lineCount, statsString.getBytes());
         	txn.write(LINES, String.valueOf(lineCount + 1).getBytes());
@@ -312,6 +282,7 @@ public class GradesClient {
         } catch (TransactionException e) {    	
         	success = false;
         }
+
         if (success) {
         	log("line " + lineCount + ": " + gradesString + "; " + statsString, false);
         } else {
