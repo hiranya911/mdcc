@@ -80,7 +80,9 @@ public class StorageNode extends Agent {
     }
 
     public boolean onAccept(Accept accept) {
-		log.info("Received accept message: " + accept);
+        if (log.isDebugEnabled()) {
+            log.debug("Received accept message: " + accept);
+        }
 
         String key = accept.getKey();
         BallotNumber ballot = accept.getBallotNumber();
@@ -110,9 +112,9 @@ public class StorageNode extends Agent {
             if (success) {
                 record.setOutstanding(transaction);
                 db.put(record);
-                log.info("option accepted");
+                log.debug("option accepted");
             } else {
-				log.warn("option denied");
+				log.debug("option denied");
             }
 
             TransactionRecord txnRecord = db.getTransactionRecord(transaction);
@@ -126,7 +128,7 @@ public class StorageNode extends Agent {
 		TransactionRecord txnRecord = db.getTransactionRecord(transaction);
 
         if (commit) {
-            log.info("Received Commit decision on transaction id: " + transaction);
+            log.debug("Received Commit decision on transaction id: " + transaction);
             for (Option option : txnRecord.getOptions()) {
                 synchronized (option.getKey().intern()) {
                     Record record = db.get(option.getKey());
@@ -136,7 +138,7 @@ public class StorageNode extends Agent {
                         record.setOutstanding(null);
                         db.put(record);
                     }
-                    log.info("[COMMIT] Saved option to DB");
+                    log.debug("[COMMIT] Saved option to DB");
                 }
             }
 		} else {
@@ -148,7 +150,7 @@ public class StorageNode extends Agent {
                         record.setOutstanding(null);
                     }
                     db.put(record);
-                    log.info("[ABORT] Not saving option to DB");
+                    log.debug("[ABORT] Not saving option to DB");
                 }
             }
         }
@@ -210,12 +212,14 @@ public class StorageNode extends Agent {
 
 	public boolean runClassic(String transaction, String key,
 			long oldVersion, byte[] value) {
-        log.info("Requested classic paxos on key: " + key);
+        log.debug("Requested classic paxos on key: " + key);
         boolean forceElection = false;
         while (true) {
             Member leader = findLeader(key, forceElection);
             forceElection = true;
-            log.info("Found leader (for key = " + key + ") : " + leader.getProcessId());
+            if (log.isDebugEnabled()) {
+                log.debug("Found leader (for key = " + key + ") : " + leader.getProcessId());
+            }
             Option option = new Option(key, value, oldVersion, true);
 
             if (leader.isLocal()) {
@@ -224,7 +228,7 @@ public class StorageNode extends Agent {
                     record = db.get(key);
                     if (record.getOutstanding() != null) {
                         if (!transaction.equals(record.getOutstanding())) {
-                            log.info("Outstanding (classic) option found for: " + key);
+                            log.warn("Outstanding (classic) option found for: " + key);
                             return false;
                         }
                     } else {
@@ -237,7 +241,7 @@ public class StorageNode extends Agent {
                 BallotNumber ballot = record.getBallot();
                 if (!record.isPrepared()) {
                     // run prepare
-                    log.info("Running prepare phase");
+                    log.info("Running classic Paxos prepare phase on: " + record.getKey());
                     ballot = new BallotNumber(ballot.getNumber() + 1, leader.getProcessId());
                     record.setBallot(ballot);
                     record.setClassicEndVersion(record.getVersion() + 4);
@@ -262,7 +266,7 @@ public class StorageNode extends Agent {
 
                 ClassicPaxosVoteListener listener = new ClassicPaxosVoteListener();
                 PaxosVoteCounter voteCounter = new PaxosVoteCounter(option, listener);
-                log.info("Running accept phase");
+                log.debug("Running accept phase");
                 Accept accept = new Accept(transaction, ballot, option);
                 for (Member member : members) {
                     if (!member.isLocal()) {
