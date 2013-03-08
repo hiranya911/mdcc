@@ -19,6 +19,13 @@ struct Accept {
   5:binary newValue
 }
 
+struct Option {
+  1:string key
+  2:i64 oldVersion
+  3:binary value
+  4:bool classic
+}
+
 service MDCCCommunicationService {
 
   bool ping(),

@@ -49,7 +49,7 @@ public class TestClient {
         } catch (InterruptedException ignored) {
         }
 
-        LocalTransaction txn1 = new LocalTransaction(appServer);
+        MDCCTransaction txn1 = new MDCCTransaction(appServer);
         try {
             txn1.begin();
             txn1.write("foo", "Foo 12345".getBytes());
@@ -61,7 +61,7 @@ public class TestClient {
             System.exit(1);
         }
 
-        LocalTransaction txn2 = new LocalTransaction(appServer);
+        MDCCTransaction txn2 = new MDCCTransaction(appServer);
         try {
             txn2.begin();
             byte[] object1 = txn2.read("foo");

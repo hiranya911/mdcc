@@ -8,11 +8,11 @@ import edu.ucsb.cs.mdcc.paxos.*;
 import java.util.Collection;
 import java.util.Properties;
 
-public class LocalTransaction extends Transaction {
+public class MDCCTransaction extends Transaction {
 
-    private AppServer appServer;
+    private AppServerService appServer;
 
-    public LocalTransaction(AppServer appServer) {
+    public MDCCTransaction(AppServerService appServer) {
         super();
         this.appServer = appServer;
     }
