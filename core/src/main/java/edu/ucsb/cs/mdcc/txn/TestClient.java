@@ -5,12 +5,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import edu.ucsb.cs.mdcc.paxos.AppServer;
+import edu.ucsb.cs.mdcc.paxos.Transaction;
 import edu.ucsb.cs.mdcc.paxos.TransactionException;
 
 public class TestClient {
 
     public static void main(String[] args) {
-        AppServer appServer = new AppServer();
+    	TransactionFactory fac = new TransactionFactory();
         ExecutorService exec = Executors.newFixedThreadPool(2);
         /*Runnable r1 = new Runnable() {
             public void run() {
@@ -49,7 +50,7 @@ public class TestClient {
         } catch (InterruptedException ignored) {
         }
 
-        MDCCTransaction txn1 = new MDCCTransaction(appServer);
+        Transaction txn1 = fac.create();
         try {
             txn1.begin();
             txn1.write("foo", "Foo 12345".getBytes());
@@ -61,7 +62,7 @@ public class TestClient {
             System.exit(1);
         }
 
-        MDCCTransaction txn2 = new MDCCTransaction(appServer);
+        Transaction txn2 = fac.create();
         try {
             txn2.begin();
             byte[] object1 = txn2.read("foo");
@@ -77,7 +78,7 @@ public class TestClient {
             System.exit(1);
         }
 
-        LocalTransaction txn3 = new LocalTransaction(appServer);
+        Transaction txn3 = fac.create();
         try {
             txn3.begin();
             byte[] object2 = txn3.read("bar");
@@ -89,7 +90,6 @@ public class TestClient {
         } catch (TransactionException e) {
             e.printStackTrace();
         }
-
-        appServer.stop();
+        fac.close();
     }
 }
