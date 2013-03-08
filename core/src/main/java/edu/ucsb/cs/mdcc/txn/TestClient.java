@@ -4,14 +4,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import edu.ucsb.cs.mdcc.paxos.AppServer;
 import edu.ucsb.cs.mdcc.paxos.Transaction;
 import edu.ucsb.cs.mdcc.paxos.TransactionException;
 
 public class TestClient {
 
     public static void main(String[] args) {
-    	TransactionFactory fac = new TransactionFactory();
+        TransactionFactory factory = new TransactionFactory();
+
         ExecutorService exec = Executors.newFixedThreadPool(2);
         /*Runnable r1 = new Runnable() {
             public void run() {
@@ -50,7 +50,7 @@ public class TestClient {
         } catch (InterruptedException ignored) {
         }
 
-        Transaction txn1 = fac.create();
+        Transaction txn1 = factory.create();
         try {
             txn1.begin();
             txn1.write("foo", "Foo 12345".getBytes());
@@ -62,7 +62,7 @@ public class TestClient {
             System.exit(1);
         }
 
-        Transaction txn2 = fac.create();
+        Transaction txn2 = factory.create();
         try {
             txn2.begin();
             byte[] object1 = txn2.read("foo");
@@ -79,6 +79,7 @@ public class TestClient {
         }
 
         Transaction txn3 = fac.create();
+        Transaction txn3 = factory.create();
         try {
             txn3.begin();
             byte[] object2 = txn3.read("bar");
@@ -90,6 +91,7 @@ public class TestClient {
         } catch (TransactionException e) {
             e.printStackTrace();
         }
-        fac.close();
+
+        factory.close();
     }
 }

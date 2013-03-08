@@ -76,7 +76,7 @@ public class StorageNode extends Agent {
         db.shutdown();
         super.stop();
         communicator.stopListener();
-        communicator.stop();
+        communicator.stopSender();
     }
 
     public boolean onAccept(Accept accept) {

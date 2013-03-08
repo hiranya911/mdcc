@@ -29,9 +29,6 @@ public class MDCCClient {
         TransactionFactory fac = new TransactionFactory();
 
         System.out.println("Welcome to MDCC Client");
-        if (!fac.isLocal()) {
-        	System.out.println("Using remote appserver: " + fac.getAppServerURL());
-        }
         System.out.println("Enter 'help' to see a list of supported commands...");
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
@@ -47,11 +44,14 @@ public class MDCCClient {
 
         CommandLineParser parser = new BasicParser();
         MDCCConfiguration config = MDCCConfiguration.getConfiguration();
+        if (config.getAppServerUrl() != null) {
+            System.out.println("Connecting to remote app server: " + config.getAppServerUrl());
+        }
 
         while (true) {
             CommandLine cmd;
-            String key = "DefaultKey";
-            String value = "DefaultValue";
+            String key;
+            String value;
             int concurrency = 1;
             int num = 1;
             int total = 1;
@@ -72,14 +72,23 @@ public class MDCCClient {
             } else if ("get".equals(cmdArgs[0])) {
                 if (cmd.hasOption("k")) {
                     key = cmd.getOptionValue("k");
+                } else {
+                    System.out.println("Object key unspecified");
+                    continue;
                 }
                 readOnlyTransaction(fac, key);
             } else if ("put".equals(cmdArgs[0])) {
                 if (cmd.hasOption("k")) {
                     key = cmd.getOptionValue("k");
+                } else {
+                    System.out.println("Object key unspecified");
+                    continue;
                 }
                 if (cmd.hasOption("v")) {
                     value = cmd.getOptionValue("v");
+                } else {
+                    System.out.println("Object value unspecified");
+                    continue;
                 }
                 blindWriteTransaction(fac, key, value);
             } else if ("getr".equals(cmdArgs[0])) {
@@ -119,7 +128,7 @@ public class MDCCClient {
                 randomBlindWriteTransactions(fac, concurrency, num, keysPerWorker, total);
                 silent.compareAndSet(true, false);
             } else if ("primary".equals(cmdArgs[0])) {
-                if (cmdArgs.length == 2) {
+                if (cmdArgs.length == 2 && fac.isLocal()) {
                     if (!config.reorderMembers(cmdArgs[1])) {
                         System.out.println("Invalid server ID: " + cmdArgs[1]);
                     }
