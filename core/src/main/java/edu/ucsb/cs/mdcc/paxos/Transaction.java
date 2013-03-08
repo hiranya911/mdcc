@@ -4,10 +4,7 @@ import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.Result;
 import edu.ucsb.cs.mdcc.dao.Database;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public abstract class Transaction {
 
@@ -32,11 +29,13 @@ public abstract class Transaction {
             if (result.getVersion() == 0) {
                 throw new TransactionException("No object exists by the key: " + key);
             }
-            return result.getValue().array();
+            return result.getValue();
         } else {
             Result result = doRead(key);
             if (result != null) {
+                result.setDeleted(isDeleted(result.getValue()));
                 readSet.put(result.getKey(), result);
+
                 if (result.isDeleted()) {
                     throw new TransactionException("No object exists by the key: " + key);
                 }
@@ -44,11 +43,16 @@ public abstract class Transaction {
                 if (result.getVersion() == 0) {
                     throw new TransactionException("No object exists by the key: " + key);
                 }
-                return result.getValue().array();
+                return result.getValue();
             } else {
                 throw new TransactionException("No object exists by the key: " + key);
             }
         }
+    }
+
+    private boolean isDeleted(byte[] data) {
+        return data.length == Database.DELETE_VALUE.length &&
+                Arrays.equals(data, Database.DELETE_VALUE);
     }
 
     public synchronized void delete(String key) throws TransactionException {
@@ -63,7 +67,7 @@ public abstract class Transaction {
                 throw new TransactionException("Object already deleted: " + key);
             }
             result.setDeleted(true);
-            option = new Option(key, Database.DELETE_VALUE.getBytes(),
+            option = new Option(key, Database.DELETE_VALUE,
                     result.getVersion(), result.isClassic());
         } else {
             result = doRead(key);
@@ -75,10 +79,10 @@ public abstract class Transaction {
                 // Update the value and add to the read-set so future reads can
                 // see this write.
                 result.setDeleted(true);
+                option = new Option(key, Database.DELETE_VALUE,
+                        result.getVersion(), result.isClassic());
+                readSet.put(result.getKey(), result);
             }
-            option = new Option(key, Database.DELETE_VALUE.getBytes(),
-                    result.getVersion(), result.isClassic());
-            readSet.put(result.getKey(), result);
         }
         writeSet.put(key, option);
     }

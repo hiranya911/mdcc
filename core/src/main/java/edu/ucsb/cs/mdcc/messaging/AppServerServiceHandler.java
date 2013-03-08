@@ -39,7 +39,8 @@ public class AppServerServiceHandler implements Iface {
 	private static ReadValue toThriftReadValue(Result r) {
 		//This does not return the correct classicEndVersion, but it does allow the client to determine classic mode
 		long classicEndVersion = (r.isClassic() ? r.getVersion() : r.getVersion() - 1);
-		return new ReadValue(r.getVersion(), classicEndVersion, r.getValue());
+		return new ReadValue(r.getVersion(), classicEndVersion,
+                ByteBuffer.wrap(r.getValue()));
 	}
 	
 	private static edu.ucsb.cs.mdcc.Option toPaxosOption(Option o) {

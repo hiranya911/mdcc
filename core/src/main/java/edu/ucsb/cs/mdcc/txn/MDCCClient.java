@@ -135,7 +135,7 @@ public class MDCCClient {
                     System.out.println("Object key unspecified");
                     continue;
                 }
-                blindWriteTransaction(fac, key, Database.DELETE_VALUE);
+                blindWriteTransaction(fac, key, Database.DELETE_VALUE_STRING);
             } else if ("primary".equals(cmdArgs[0])) {
                 if (cmdArgs.length == 2 && fac.isLocal()) {
                     if (!config.reorderMembers(cmdArgs[1])) {
@@ -174,6 +174,7 @@ public class MDCCClient {
                 System.out.println("                       Execute random read operations using multiple concurrent workers\n");
                 System.out.println("putr -c concur -n requests -t totalKeys -w keysPerWorker");
                 System.out.println("                       Execute random write operations using multiple concurrent workers\n");
+                System.out.println("delete -k key          Delete the specified object\n");
                 System.out.println("primary [serverId]     Display/Set the primary backend server\n");
                 System.out.println("servers                List all the backend servers\n");
                 System.out.println("help                   Display this help message\n");
@@ -274,7 +275,7 @@ public class MDCCClient {
         try {
             txn.begin();
             txn.write(key, value.getBytes());
-            if (Database.DELETE_VALUE.equals(value)) {
+            if (Database.DELETE_VALUE_STRING.equals(value)) {
                 System.out.println("Key " + key + " deleted");
             } else {
                 System.out.println(key + ": " + value);

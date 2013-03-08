@@ -45,6 +45,7 @@ public class HBase implements Database {
     public static final String OPTIONS = "options";
 
     private static final String NULL = "NULL";
+    private static final byte[] QUALIFIER = Bytes.toBytes("");
 	
     private Configuration conf = null;
     private Map<String,HTable> tables = new HashMap<String, HTable>();
@@ -87,12 +88,12 @@ public class HBase implements Database {
         if (admin.tableExists(tableName)) {     
             log.debug("table already exists!");
         } else {     
-            HTableDescriptor tableDesc = new HTableDescriptor(tableName);     
-            for (int i = 0; i < families.length; i++){
-                tableDesc.addFamily(new HColumnDescriptor(families[i]));
-            }     
-            admin.createTable(tableDesc);     
-            log.info("create table " + tableName + " ok.");
+            HTableDescriptor tableDesc = new HTableDescriptor(tableName);
+            for (String family : families) {
+                tableDesc.addFamily(new HColumnDescriptor(family));
+            }
+            admin.createTable(tableDesc);
+            log.info("Create table " + tableName + " ok.");
         }      
         admin.close();
 
@@ -130,20 +131,20 @@ public class HBase implements Database {
         try {
             HTable table = tables.get(RECORDS_TABLE);
             Put put = new Put(record.getKey().getBytes());
-            put.add(Bytes.toBytes(VALUE),Bytes.toBytes(""), record.getValue());
-            put.add(Bytes.toBytes(VERSION),Bytes.toBytes(""),
+            put.add(Bytes.toBytes(VALUE), QUALIFIER, record.getValue());
+            put.add(Bytes.toBytes(VERSION), QUALIFIER,
                     Bytes.toBytes(record.getVersion()));
-            put.add(Bytes.toBytes(CLASSIC_END_VERSION),Bytes.toBytes(""),
+            put.add(Bytes.toBytes(CLASSIC_END_VERSION), QUALIFIER,
                     Bytes.toBytes(record.getClassicEndVersion()));
-            put.add(Bytes.toBytes(BALLOT_NUMBER),Bytes.toBytes(""),
+            put.add(Bytes.toBytes(BALLOT_NUMBER), QUALIFIER,
                     Bytes.toBytes(record.getBallot().toString()));
-            put.add(Bytes.toBytes(PREPARED),Bytes.toBytes(""),
+            put.add(Bytes.toBytes(PREPARED), QUALIFIER,
                     Bytes.toBytes(record.isPrepared()));
             if (record.getOutstanding() != null) {
-                put.add(Bytes.toBytes(OUTSTANDING),Bytes.toBytes(""),
+                put.add(Bytes.toBytes(OUTSTANDING), QUALIFIER,
                         Bytes.toBytes(record.getOutstanding()));
             } else {
-                put.add(Bytes.toBytes(OUTSTANDING),Bytes.toBytes(""),
+                put.add(Bytes.toBytes(OUTSTANDING), QUALIFIER,
                         Bytes.toBytes(NULL));
             }
             table.put(put);
@@ -159,9 +160,9 @@ public class HBase implements Database {
     		
     		HTable table = tables.get(TRANSACTIONS_TABLE);
             Put put = new Put(record.getTransactionId().getBytes());    		
-    		put.add(Bytes.toBytes(COMPLETE),Bytes.toBytes(""),
+    		put.add(Bytes.toBytes(COMPLETE), QUALIFIER,
                     Bytes.toBytes(record.isComplete()));
-    		put.add(Bytes.toBytes(OPTIONS),Bytes.toBytes(""),
+    		put.add(Bytes.toBytes(OPTIONS), QUALIFIER,
     				optionCollectionBytes);
             table.put(put);
     	} catch (Exception e) {

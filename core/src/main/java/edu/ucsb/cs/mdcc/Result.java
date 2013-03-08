@@ -1,25 +1,16 @@
 package edu.ucsb.cs.mdcc;
 
-import java.nio.ByteBuffer;
-
 public class Result {
 
     private String key;
-    private ByteBuffer value;
+    private byte[] value;
     private long version;
     private boolean classic;
     private boolean deleted;
 
-    public Result(String key, ByteBuffer value, long version, boolean classic) {
-        this.key = key;
-        this.value = value;
-        this.version = version;
-        this.classic = classic;
-    }
-
     public Result(String key, byte[] value, long version, boolean classic) {
         this.key = key;
-        this.value = ByteBuffer.wrap(value);
+        this.value = value;
         this.version = version;
         this.classic = classic;
     }
@@ -28,7 +19,7 @@ public class Result {
         return key;
     }
 
-    public ByteBuffer getValue() {
+    public byte[] getValue() {
         return value;
     }
 
@@ -36,12 +27,8 @@ public class Result {
         return version;
     }
 
-    public void setValue(ByteBuffer value) {
-        this.value = value;
-    }
-
     public void setValue(byte[] value) {
-        this.value = ByteBuffer.wrap(value);
+        this.value = value;
     }
 
     public boolean isClassic() {

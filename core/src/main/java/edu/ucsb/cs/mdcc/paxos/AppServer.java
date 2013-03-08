@@ -1,6 +1,5 @@
 package edu.ucsb.cs.mdcc.paxos;
 
-import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -9,7 +8,6 @@ import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.Result;
 import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import edu.ucsb.cs.mdcc.config.Member;
-import edu.ucsb.cs.mdcc.dao.Database;
 import edu.ucsb.cs.mdcc.messaging.AppServerServiceHandler;
 import edu.ucsb.cs.mdcc.messaging.MDCCAppServerService;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicator;
@@ -52,12 +50,7 @@ public class AppServer implements AppServerService {
 			return null;
         } else {
             boolean classic = r.getClassicEndVersion() >= r.getVersion();
-			Result result = new Result(key, r.getValue(), r.getVersion(), classic);
-            String value = new String(r.getValue());
-            if (Database.DELETE_VALUE.equals(value)) {
-                result.setDeleted(true);
-            }
-            return result;
+			return new Result(key, r.getValue(), r.getVersion(), classic);
 		}
 	}
 	
