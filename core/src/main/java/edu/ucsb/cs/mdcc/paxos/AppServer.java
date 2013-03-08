@@ -4,7 +4,6 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.Result;
@@ -29,6 +28,8 @@ public class AppServer implements AppServerService {
 
 	private MDCCConfiguration configuration;
     private MDCCCommunicator communicator;
+    private TServer server;
+    private ExecutorService exec;
 
     public AppServer() {
         this.configuration = MDCCConfiguration.getConfiguration();
@@ -36,7 +37,7 @@ public class AppServer implements AppServerService {
 	}
 
     public void stop() {
-        this.communicator.stop();
+        communicator.stop();
     }
     
 	public Result read(String key) {
@@ -98,9 +99,6 @@ public class AppServer implements AppServerService {
         }
         return success;
 	}
-	
-    private TServer server;
-    private ExecutorService exec;
     
 	//start listener to handle incoming calls
     public void startListener() {

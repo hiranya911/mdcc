@@ -2,7 +2,7 @@ package edu.ucsb.cs.mdcc.txn;
 
 import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import edu.ucsb.cs.mdcc.config.Member;
-import edu.ucsb.cs.mdcc.messaging.AppServerCommunicator;
+import edu.ucsb.cs.mdcc.messaging.RemoteAppServer;
 import edu.ucsb.cs.mdcc.paxos.AppServer;
 import edu.ucsb.cs.mdcc.paxos.AppServerService;
 import edu.ucsb.cs.mdcc.paxos.Transaction;
@@ -10,7 +10,6 @@ import edu.ucsb.cs.mdcc.paxos.Transaction;
 public class TransactionFactory {
 
     private boolean local;
-    private String appServerURL = null;
     private AppServerService appServer;
 
     public TransactionFactory() {
@@ -19,9 +18,9 @@ public class TransactionFactory {
             this.local = true;
             this.appServer = new AppServer();
         } else {
-        	appServerURL = config.getAppServerUrl();
+        	String appServerURL = config.getAppServerUrl();
         	Member appServerMember = new Member(appServerURL, "AppServer", false);
-        	appServer = new AppServerCommunicator(appServerMember);
+        	this.appServer = new RemoteAppServer(appServerMember);
         }
     }
 
@@ -30,17 +29,10 @@ public class TransactionFactory {
     }
 
     public void close() {
-        if (appServer instanceof AppServer) {
-            ((AppServer)appServer).stop();
-        }
+        appServer.stop();
     }
 
     public boolean isLocal() {
         return local;
-    }
-    
-    public String getAppServerURL() {
-		return appServerURL;
-    	
     }
 }

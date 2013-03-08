@@ -45,7 +45,7 @@ public class MDCCCommunicator {
         }
     }
 
-    public void stop() {
+    public void stopSender() {
         clientManager.stop();
     }
 	

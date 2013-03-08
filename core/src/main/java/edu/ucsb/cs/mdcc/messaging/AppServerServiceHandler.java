@@ -11,7 +11,7 @@ import edu.ucsb.cs.mdcc.Result;
 import edu.ucsb.cs.mdcc.messaging.MDCCAppServerService.Iface;
 import edu.ucsb.cs.mdcc.paxos.AppServerService;
 
-public class AppServerServiceHandler implements Iface{
+public class AppServerServiceHandler implements Iface {
 	
 	private AppServerService appServer;
 
