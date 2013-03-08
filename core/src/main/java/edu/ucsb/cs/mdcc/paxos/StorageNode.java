@@ -76,6 +76,7 @@ public class StorageNode extends Agent {
         db.shutdown();
         super.stop();
         communicator.stopListener();
+        communicator.stop();
     }
 
     public boolean onAccept(Accept accept) {
@@ -92,7 +93,7 @@ public class StorageNode extends Agent {
             if (record.getOutstanding() != null &&
                     !transaction.equals(record.getOutstanding())) {
                 log.warn("Outstanding option detected on " + key +
-                        " - Denying the new option");
+                        " - Denying the new option (" + record.getOutstanding() + ")");
                 TransactionRecord txnRecord = db.getTransactionRecord(transaction);
                 txnRecord.addOption(new Option(key, value, record.getVersion(), false));
                 db.putTransactionRecord(txnRecord);

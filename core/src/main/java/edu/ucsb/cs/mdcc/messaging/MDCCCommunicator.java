@@ -1,5 +1,6 @@
 package edu.ucsb.cs.mdcc.messaging;
 
+import edu.ucsb.cs.mdcc.MDCCException;
 import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.config.Member;
 import edu.ucsb.cs.mdcc.paxos.*;
@@ -21,6 +22,7 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.server.TNonblockingServer;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +35,19 @@ public class MDCCCommunicator {
 
     private ExecutorService exec;
     private TServer server;
+    private TAsyncClientManager clientManager;
+
+    public MDCCCommunicator() {
+        try {
+            this.clientManager = new TAsyncClientManager();
+        } catch (IOException e) {
+            throw new MDCCException("Failed to initialize Thrift client manager");
+        }
+    }
+
+    public void stop() {
+        clientManager.stop();
+    }
 	
 	//start listener to handle incoming calls
     public void startListener(final AgentService agent, final int port) {
@@ -81,7 +96,6 @@ public class MDCCCommunicator {
             TNonblockingSocket socket = new TNonblockingSocket(member.getHostName(),
                     member.getPort());
             TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
-            TAsyncClientManager clientManager = new TAsyncClientManager();
             MDCCCommunicationService.AsyncClient client =
                     new MDCCCommunicationService.AsyncClient(protocolFactory,
                             clientManager, socket);
@@ -102,13 +116,12 @@ public class MDCCCommunicator {
                     member.getPort());
             callback = new AsyncMethodCallbackDecorator(voting, socket);
             TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
-            TAsyncClientManager clientManager = new TAsyncClientManager();
             MDCCCommunicationService.AsyncClient client =
                     new MDCCCommunicationService.AsyncClient(
                             protocolFactory,
                             clientManager,
                             socket);
-            client.accept( toThriftAccept(accept), callback);
+            client.accept(toThriftAccept(accept), callback);
         } catch (Exception e) {
             if (callback != null) {
                 callback.onError(e);
@@ -127,14 +140,13 @@ public class MDCCCommunicator {
                     member.getPort());
             callback = new AsyncMethodCallbackDecorator(fastCallback, socket);
             TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
-            TAsyncClientManager clientManager = new TAsyncClientManager();
             MDCCCommunicationService.AsyncClient client =
                     new MDCCCommunicationService.AsyncClient(
                             protocolFactory,
                             clientManager,
                             socket);
             ArrayList<edu.ucsb.cs.mdcc.messaging.Accept> tAccepts = new ArrayList<Accept>(fastAccepts.size());
-            for(edu.ucsb.cs.mdcc.paxos.Accept accept : fastAccepts) {
+            for (edu.ucsb.cs.mdcc.paxos.Accept accept : fastAccepts) {
             	tAccepts.add(toThriftAccept(accept));
             }
             client.bulkAccept( tAccepts, callback);
@@ -155,7 +167,6 @@ public class MDCCCommunicator {
                     member.getPort());
             callback = new AsyncMethodCallbackDecorator(voting, socket);
             TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
-            TAsyncClientManager clientManager = new TAsyncClientManager();
             MDCCCommunicationService.AsyncClient client =
                     new MDCCCommunicationService.AsyncClient(protocolFactory,
                             clientManager, socket);
@@ -184,7 +195,6 @@ public class MDCCCommunicator {
 			TNonblockingSocket socket = new TNonblockingSocket(member.getHostName(),
 			member.getPort());
 			TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
-			TAsyncClientManager clientManager = new TAsyncClientManager();
 			MDCCCommunicationService.AsyncClient client =
 			new MDCCCommunicationService.AsyncClient(protocolFactory,
 			        clientManager, socket);
@@ -201,11 +211,10 @@ public class MDCCCommunicator {
                     member.getPort());
             callback = new AsyncMethodCallbackDecorator(socket);
             TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
-            TAsyncClientManager clientManager = new TAsyncClientManager();
             MDCCCommunicationService.AsyncClient client =
                     new MDCCCommunicationService.AsyncClient(protocolFactory,
                             clientManager, socket);
-            client.decide(transaction, commit, callback);;
+            client.decide(transaction, commit, callback);
         } catch (Exception e) {
             if (callback != null) {
                 callback.onError(e);

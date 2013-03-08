@@ -12,9 +12,9 @@ public class LocalTransaction extends Transaction {
 
     private AppServer appServer;
 
-    public LocalTransaction() {
+    public LocalTransaction(AppServer appServer) {
         super();
-        this.appServer = new AppServer();
+        this.appServer = appServer;
     }
 
     protected Result doRead(String key) {

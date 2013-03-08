@@ -20,6 +20,10 @@ public class AppServer {
         this.configuration = MDCCConfiguration.getConfiguration();
         this.communicator = new MDCCCommunicator();
 	}
+
+    public void stop() {
+        this.communicator.stop();
+    }
     
 	public Result read(String key) {
         Member[] members = configuration.getMembers();
@@ -63,8 +67,11 @@ public class AppServer {
         }
         
         success = voteListener.getAccepts() == options.size();
-        for (Member member : members) {
-            communicator.sendDecideAsync(member, txnId, success);
+        // No need to call commit for read-only txns
+        if (options.size() > 0) {
+            for (Member member : members) {
+                communicator.sendDecideAsync(member, txnId, success);
+            }
         }
         return success;
 	}

@@ -18,9 +18,14 @@ import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MDCCClient {
+
+    private static final ExecutorService exec = Executors.newCachedThreadPool();
+
+    private static final AtomicBoolean silent = new AtomicBoolean(false);
 
     public static void main(String[] args) throws IOException {
         TransactionFactory fac = new TransactionFactory();
@@ -37,6 +42,7 @@ public class MDCCClient {
         options.addOption("n", true, "Number of transactions executed by each user");
         options.addOption("t", true, "Total number of unique keys");
         options.addOption("w", true, "Number of unique keys per worker");
+        options.addOption("silent", false, "Enable silent mode");
 
         CommandLineParser parser = new BasicParser();
         MDCCConfiguration config = MDCCConfiguration.getConfiguration();
@@ -50,7 +56,7 @@ public class MDCCClient {
             int total = 1;
             int keysPerWorker = 1;
 
-            System.out.print("\n> ");
+            System.out.print("> ");
             String command = reader.readLine();
             String[] cmdArgs = translateCommandline(command);
             try {
@@ -88,7 +94,11 @@ public class MDCCClient {
                 if (cmd.hasOption("w")) {
                     keysPerWorker = Integer.parseInt(cmd.getOptionValue("w"));
                 }
+                if (cmd.hasOption("silent")) {
+                    silent.compareAndSet(false, true);
+                }
                 randomReadOnlyTransactions(fac, concurrency, num, keysPerWorker, total);
+                silent.compareAndSet(true, false);
             } else if ("putr".equals(cmdArgs[0])) {
                 if (cmd.hasOption("c")) {
                     concurrency = Integer.parseInt(cmd.getOptionValue("c"));
@@ -102,7 +112,11 @@ public class MDCCClient {
                 if (cmd.hasOption("w")) {
                     keysPerWorker = Integer.parseInt(cmd.getOptionValue("w"));
                 }
+                if (cmd.hasOption("silent")) {
+                    silent.compareAndSet(false, true);
+                }
                 randomBlindWriteTransactions(fac, concurrency, num, keysPerWorker, total);
+                silent.compareAndSet(true, false);
             } else if ("primary".equals(cmdArgs[0])) {
                 if (cmdArgs.length == 2) {
                     if (!config.reorderMembers(cmdArgs[1])) {
@@ -149,6 +163,8 @@ public class MDCCClient {
                 System.out.println("Unrecognized command: " + command);
             }
         }
+        exec.shutdownNow();
+        fac.close();
     }
 
     private static void readOnlyTransaction(TransactionFactory fac, String key) {
@@ -164,7 +180,6 @@ public class MDCCClient {
     }
 
     private static void randomReadOnlyTransactions(final TransactionFactory fac, int c, int r, int k, int t) {
-        ExecutorService exec = Executors.newCachedThreadPool();
         List<Future> futures = new ArrayList<Future>();
 
         final List<String> keys = new ArrayList<String>();
@@ -172,11 +187,16 @@ public class MDCCClient {
             keys.add("KEY" + i);
         }
 
-        AtomicInteger success = new AtomicInteger(0);
-        AtomicInteger failure = new AtomicInteger(0);
+        int success = 0;
+        int failure = 0;
+        IndexedReadWorker[] workers = new IndexedReadWorker[c];
+        for (int i = 0; i < c; i++) {
+            workers[i] = new IndexedReadWorker(i, fac, r, k, keys);
+        }
+
         long start = System.currentTimeMillis();
         for (int i = 0; i < c; i++) {
-            futures.add(exec.submit(new IndexedReadWorker(i, fac, r, k, keys, success, failure)));
+            futures.add(exec.submit(workers[i]));
         }
 
         for (int i = 0; i < c; i++) {
@@ -184,17 +204,17 @@ public class MDCCClient {
                 futures.get(i).get();
             } catch (Exception ignored) {
             }
+            success += workers[i].success;
+            failure += workers[i].failure;
         }
         long end = System.currentTimeMillis();
-        int total = success.get() + failure.get();
-        System.out.println("\nSuccessful: " + success.get() + "/" + total);
-        System.out.println("Failed: " + failure.get() + "/" + total);
+        int total = success + failure;
+        System.out.println("\nSuccessful: " + success + "/" + total);
+        System.out.println("Failed: " + failure + "/" + total);
         System.out.println("Time elapsed: " + (end - start) + "ms");
-        exec.shutdownNow();
     }
 
     private static void randomBlindWriteTransactions(final TransactionFactory fac, int c, int r, int k, int t) {
-        ExecutorService exec = Executors.newCachedThreadPool();
         List<Future> futures = new ArrayList<Future>();
 
         final List<String> keys = new ArrayList<String>();
@@ -202,11 +222,16 @@ public class MDCCClient {
             keys.add("KEY" + i);
         }
 
-        AtomicInteger success = new AtomicInteger(0);
-        AtomicInteger failure = new AtomicInteger(0);
+        int success = 0;
+        int failure = 0;
+        IndexedWriteWorker[] workers = new IndexedWriteWorker[c];
+        for (int i = 0; i < c; i++) {
+            workers[i] = new IndexedWriteWorker(i, fac, r, k, keys);
+        }
+
         long start = System.currentTimeMillis();
         for (int i = 0; i < c; i++) {
-            futures.add(exec.submit(new IndexedWriteWorker(i, fac, r, k, keys, success, failure)));
+            futures.add(exec.submit(workers[i]));
         }
 
         for (int i = 0; i < c; i++) {
@@ -214,13 +239,15 @@ public class MDCCClient {
                 futures.get(i).get();
             } catch (Exception ignored) {
             }
+            success += workers[i].success;
+            failure += workers[i].failure;
         }
         long end = System.currentTimeMillis();
-        int total = success.get() + failure.get();
-        System.out.println("\nSuccessful: " + success.get() + "/" + total);
-        System.out.println("Failed: " + failure.get() + "/" + total);
+
+        int total = success + failure;
+        System.out.println("\nSuccessful: " + success + "/" + total);
+        System.out.println("Failed: " + failure + "/" + total);
         System.out.println("Time elapsed: " + (end - start) + "ms");
-        exec.shutdownNow();
     }
 
     private static void blindWriteTransaction(TransactionFactory fac, String key, String value) {
@@ -242,18 +269,18 @@ public class MDCCClient {
         int requests;
         int keyCount;
         List<String> keys;
-        AtomicInteger success;
-        AtomicInteger failure;
+        int success;
+        int failure;
 
         private IndexedReadWorker(int index, TransactionFactory fac, int requests,
-                                  int keyCount, List<String> keys, AtomicInteger success, AtomicInteger failure) {
+                                  int keyCount, List<String> keys) {
             this.index = index;
             this.fac = fac;
             this.requests = requests;
             this.keyCount = keyCount;
             this.keys = keys;
-            this.success = success;
-            this.failure = failure;
+            this.success = 0;
+            this.failure = 0;
         }
 
         public void run() {
@@ -266,11 +293,15 @@ public class MDCCClient {
                     txn.begin();
                     ByteBuffer value = txn.read(key);
                     txn.commit();
-                    System.out.println("[Thread-" + index + "] " + key + ": " + new String(value.array()));
-                    success.incrementAndGet();
-                } catch (TransactionException e) {
-                    System.out.println("[Thread-" + index + "] Error: " + e.getMessage());
-                    failure.incrementAndGet();
+                    if (!silent.get()) {
+                        System.out.println("[Thread-" + index + "] " + key + ": " + new String(value.array()));
+                    }
+                    success++;
+                } catch (Exception e) {
+                    if (!silent.get()) {
+                        System.out.println("[Thread-" + index + "] Error: " + e.getMessage());
+                    }
+                    failure++;
                 }
             }
         }
@@ -283,18 +314,18 @@ public class MDCCClient {
         int requests;
         int keyCount;
         List<String> keys;
-        AtomicInteger success;
-        AtomicInteger failure;
+        int success;
+        int failure;
 
         private IndexedWriteWorker(int index, TransactionFactory fac, int requests,
-                                   int keyCount, List<String> keys, AtomicInteger success, AtomicInteger failure) {
+                                   int keyCount, List<String> keys) {
             this.index = index;
             this.fac = fac;
             this.requests = requests;
             this.keyCount = keyCount;
             this.keys = keys;
-            this.success = success;
-            this.failure = failure;
+            this.success = 0;
+            this.failure = 0;
         }
 
         public void run() {
@@ -308,11 +339,15 @@ public class MDCCClient {
                     String value = "random_value_" + index + "_" + i + "_" + System.currentTimeMillis();
                     txn.write(key, ByteBuffer.wrap(value.getBytes()));
                     txn.commit();
-                    System.out.println("[Thread-" + index + "] " + key + ": " + value);
-                    success.incrementAndGet();
+                    if (!silent.get()) {
+                        System.out.println("[Thread-" + index + "] " + key + ": " + value);
+                    }
+                    success++;
                 } catch (TransactionException e) {
-                    System.out.println("[Thread-" + index + "] Error: " + e.getMessage());
-                    failure.incrementAndGet();
+                    if (!silent.get()) {
+                        System.out.println("[Thread-" + index + "] Error: " + e.getMessage());
+                    }
+                    failure++;
                 }
             }
         }

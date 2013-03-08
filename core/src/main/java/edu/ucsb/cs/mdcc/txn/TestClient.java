@@ -6,11 +6,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import edu.ucsb.cs.mdcc.paxos.AppServer;
 import edu.ucsb.cs.mdcc.paxos.TransactionException;
 
 public class TestClient {
 
     public static void main(String[] args) {
+        AppServer appServer = new AppServer();
         ExecutorService exec = Executors.newFixedThreadPool(2);
         /*Runnable r1 = new Runnable() {
             public void run() {
@@ -50,7 +52,7 @@ public class TestClient {
 
         }
 
-        LocalTransaction txn1 = new LocalTransaction();
+        LocalTransaction txn1 = new LocalTransaction(appServer);
         try {
             txn1.begin();
             txn1.write("foo", ByteBuffer.wrap("Foo 12345".getBytes()));
@@ -62,7 +64,7 @@ public class TestClient {
             System.exit(1);
         }
 
-        LocalTransaction txn2 = new LocalTransaction();
+        LocalTransaction txn2 = new LocalTransaction(appServer);
         try {
             txn2.begin();
             ByteBuffer object1 = txn2.read("foo");
@@ -78,7 +80,7 @@ public class TestClient {
             System.exit(1);
         }
 
-        LocalTransaction txn3 = new LocalTransaction();
+        LocalTransaction txn3 = new LocalTransaction(appServer);
         try {
             txn3.begin();
             ByteBuffer object2 = txn3.read("bar");
@@ -90,5 +92,7 @@ public class TestClient {
         } catch (TransactionException e) {
             e.printStackTrace();
         }
+
+        appServer.stop();
     }
 }
