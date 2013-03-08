@@ -17,6 +17,11 @@
             <fileMode>775</fileMode>
         </file>
         <file>
+            <source>src/main/assembly/app-server.sh</source>
+            <outputDirectory>mdcc-${project.version}/bin</outputDirectory>
+            <fileMode>775</fileMode>
+        </file>
+        <file>
             <source>src/main/assembly/mdcc-client.sh</source>
             <outputDirectory>mdcc-${project.version}/bin</outputDirectory>
             <fileMode>775</fileMode>

@@ -34,8 +34,9 @@ public class Option implements org.apache.thrift.TBase<Option, Option._Fields>, 
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("Option");
 
   private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)1);
-  private static final org.apache.thrift.protocol.TField OLD_VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("oldVersion", org.apache.thrift.protocol.TType.I64, (short)3);
-  private static final org.apache.thrift.protocol.TField NEW_VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("newValue", org.apache.thrift.protocol.TType.STRING, (short)4);
+  private static final org.apache.thrift.protocol.TField OLD_VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("oldVersion", org.apache.thrift.protocol.TType.I64, (short)2);
+  private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.STRING, (short)3);
+  private static final org.apache.thrift.protocol.TField CLASSIC_FIELD_DESC = new org.apache.thrift.protocol.TField("classic", org.apache.thrift.protocol.TType.BOOL, (short)4);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -45,13 +46,15 @@ public class Option implements org.apache.thrift.TBase<Option, Option._Fields>, 
 
   public String key; // required
   public long oldVersion; // required
-  public ByteBuffer newValue; // required
+  public ByteBuffer value; // required
+  public boolean classic; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     KEY((short)1, "key"),
-    OLD_VERSION((short)3, "oldVersion"),
-    NEW_VALUE((short)4, "newValue");
+    OLD_VERSION((short)2, "oldVersion"),
+    VALUE((short)3, "value"),
+    CLASSIC((short)4, "classic");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -68,10 +71,12 @@ public class Option implements org.apache.thrift.TBase<Option, Option._Fields>, 
       switch(fieldId) {
         case 1: // KEY
           return KEY;
-        case 3: // OLD_VERSION
+        case 2: // OLD_VERSION
           return OLD_VERSION;
-        case 4: // NEW_VALUE
-          return NEW_VALUE;
+        case 3: // VALUE
+          return VALUE;
+        case 4: // CLASSIC
+          return CLASSIC;
         default:
           return null;
       }
@@ -113,6 +118,7 @@ public class Option implements org.apache.thrift.TBase<Option, Option._Fields>, 
 
   // isset id assignments
   private static final int __OLDVERSION_ISSET_ID = 0;
+  private static final int __CLASSIC_ISSET_ID = 1;
   private byte __isset_bitfield = 0;
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
@@ -121,8 +127,10 @@ public class Option implements org.apache.thrift.TBase<Option, Option._Fields>, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.OLD_VERSION, new org.apache.thrift.meta_data.FieldMetaData("oldVersion", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
-    tmpMap.put(_Fields.NEW_VALUE, new org.apache.thrift.meta_data.FieldMetaData("newValue", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
+    tmpMap.put(_Fields.CLASSIC, new org.apache.thrift.meta_data.FieldMetaData("classic", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Option.class, metaDataMap);
   }
@@ -133,13 +141,16 @@ public class Option implements org.apache.thrift.TBase<Option, Option._Fields>, 
   public Option(
     String key,
     long oldVersion,
-    ByteBuffer newValue)
+    ByteBuffer value,
+    boolean classic)
   {
     this();
     this.key = key;
     this.oldVersion = oldVersion;
     setOldVersionIsSet(true);
-    this.newValue = newValue;
+    this.value = value;
+    this.classic = classic;
+    setClassicIsSet(true);
   }
 
   /**
@@ -151,10 +162,11 @@ public class Option implements org.apache.thrift.TBase<Option, Option._Fields>, 
       this.key = other.key;
     }
     this.oldVersion = other.oldVersion;
-    if (other.isSetNewValue()) {
-      this.newValue = org.apache.thrift.TBaseHelper.copyBinary(other.newValue);
+    if (other.isSetValue()) {
+      this.value = org.apache.thrift.TBaseHelper.copyBinary(other.value);
 ;
     }
+    this.classic = other.classic;
   }
 
   public Option deepCopy() {
@@ -166,7 +178,9 @@ public class Option implements org.apache.thrift.TBase<Option, Option._Fields>, 
     this.key = null;
     setOldVersionIsSet(false);
     this.oldVersion = 0;
-    this.newValue = null;
+    this.value = null;
+    setClassicIsSet(false);
+    this.classic = false;
   }
 
   public String getKey() {
@@ -216,38 +230,61 @@ public class Option implements org.apache.thrift.TBase<Option, Option._Fields>, 
     __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __OLDVERSION_ISSET_ID, value);
   }
 
-  public byte[] getNewValue() {
-    setNewValue(org.apache.thrift.TBaseHelper.rightSize(newValue));
-    return newValue == null ? null : newValue.array();
+  public byte[] getValue() {
+    setValue(org.apache.thrift.TBaseHelper.rightSize(value));
+    return value == null ? null : value.array();
   }
 
-  public ByteBuffer bufferForNewValue() {
-    return newValue;
+  public ByteBuffer bufferForValue() {
+    return value;
   }
 
-  public Option setNewValue(byte[] newValue) {
-    setNewValue(newValue == null ? (ByteBuffer)null : ByteBuffer.wrap(newValue));
+  public Option setValue(byte[] value) {
+    setValue(value == null ? (ByteBuffer)null : ByteBuffer.wrap(value));
     return this;
   }
 
-  public Option setNewValue(ByteBuffer newValue) {
-    this.newValue = newValue;
+  public Option setValue(ByteBuffer value) {
+    this.value = value;
     return this;
   }
 
-  public void unsetNewValue() {
-    this.newValue = null;
+  public void unsetValue() {
+    this.value = null;
   }
 
-  /** Returns true if field newValue is set (has been assigned a value) and false otherwise */
-  public boolean isSetNewValue() {
-    return this.newValue != null;
+  /** Returns true if field value is set (has been assigned a value) and false otherwise */
+  public boolean isSetValue() {
+    return this.value != null;
   }
 
-  public void setNewValueIsSet(boolean value) {
+  public void setValueIsSet(boolean value) {
     if (!value) {
-      this.newValue = null;
+      this.value = null;
     }
+  }
+
+  public boolean isClassic() {
+    return this.classic;
+  }
+
+  public Option setClassic(boolean classic) {
+    this.classic = classic;
+    setClassicIsSet(true);
+    return this;
+  }
+
+  public void unsetClassic() {
+    __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __CLASSIC_ISSET_ID);
+  }
+
+  /** Returns true if field classic is set (has been assigned a value) and false otherwise */
+  public boolean isSetClassic() {
+    return EncodingUtils.testBit(__isset_bitfield, __CLASSIC_ISSET_ID);
+  }
+
+  public void setClassicIsSet(boolean value) {
+    __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __CLASSIC_ISSET_ID, value);
   }
 
   public void setFieldValue(_Fields field, Object value) {
@@ -268,11 +305,19 @@ public class Option implements org.apache.thrift.TBase<Option, Option._Fields>, 
       }
       break;
 
-    case NEW_VALUE:
+    case VALUE:
       if (value == null) {
-        unsetNewValue();
+        unsetValue();
       } else {
-        setNewValue((ByteBuffer)value);
+        setValue((ByteBuffer)value);
+      }
+      break;
+
+    case CLASSIC:
+      if (value == null) {
+        unsetClassic();
+      } else {
+        setClassic((Boolean)value);
       }
       break;
 
@@ -287,8 +332,11 @@ public class Option implements org.apache.thrift.TBase<Option, Option._Fields>, 
     case OLD_VERSION:
       return Long.valueOf(getOldVersion());
 
-    case NEW_VALUE:
-      return getNewValue();
+    case VALUE:
+      return getValue();
+
+    case CLASSIC:
+      return Boolean.valueOf(isClassic());
 
     }
     throw new IllegalStateException();
@@ -305,8 +353,10 @@ public class Option implements org.apache.thrift.TBase<Option, Option._Fields>, 
       return isSetKey();
     case OLD_VERSION:
       return isSetOldVersion();
-    case NEW_VALUE:
-      return isSetNewValue();
+    case VALUE:
+      return isSetValue();
+    case CLASSIC:
+      return isSetClassic();
     }
     throw new IllegalStateException();
   }
@@ -342,12 +392,21 @@ public class Option implements org.apache.thrift.TBase<Option, Option._Fields>, 
         return false;
     }
 
-    boolean this_present_newValue = true && this.isSetNewValue();
-    boolean that_present_newValue = true && that.isSetNewValue();
-    if (this_present_newValue || that_present_newValue) {
-      if (!(this_present_newValue && that_present_newValue))
+    boolean this_present_value = true && this.isSetValue();
+    boolean that_present_value = true && that.isSetValue();
+    if (this_present_value || that_present_value) {
+      if (!(this_present_value && that_present_value))
         return false;
-      if (!this.newValue.equals(that.newValue))
+      if (!this.value.equals(that.value))
+        return false;
+    }
+
+    boolean this_present_classic = true;
+    boolean that_present_classic = true;
+    if (this_present_classic || that_present_classic) {
+      if (!(this_present_classic && that_present_classic))
+        return false;
+      if (this.classic != that.classic)
         return false;
     }
 
@@ -387,12 +446,22 @@ public class Option implements org.apache.thrift.TBase<Option, Option._Fields>, 
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetNewValue()).compareTo(typedOther.isSetNewValue());
+    lastComparison = Boolean.valueOf(isSetValue()).compareTo(typedOther.isSetValue());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetNewValue()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.newValue, typedOther.newValue);
+    if (isSetValue()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.value, typedOther.value);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetClassic()).compareTo(typedOther.isSetClassic());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetClassic()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.classic, typedOther.classic);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -429,12 +498,16 @@ public class Option implements org.apache.thrift.TBase<Option, Option._Fields>, 
     sb.append(this.oldVersion);
     first = false;
     if (!first) sb.append(", ");
-    sb.append("newValue:");
-    if (this.newValue == null) {
+    sb.append("value:");
+    if (this.value == null) {
       sb.append("null");
     } else {
-      org.apache.thrift.TBaseHelper.toString(this.newValue, sb);
+      org.apache.thrift.TBaseHelper.toString(this.value, sb);
     }
+    first = false;
+    if (!first) sb.append(", ");
+    sb.append("classic:");
+    sb.append(this.classic);
     first = false;
     sb.append(")");
     return sb.toString();
@@ -489,7 +562,7 @@ public class Option implements org.apache.thrift.TBase<Option, Option._Fields>, 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 3: // OLD_VERSION
+          case 2: // OLD_VERSION
             if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
               struct.oldVersion = iprot.readI64();
               struct.setOldVersionIsSet(true);
@@ -497,10 +570,18 @@ public class Option implements org.apache.thrift.TBase<Option, Option._Fields>, 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 4: // NEW_VALUE
+          case 3: // VALUE
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-              struct.newValue = iprot.readBinary();
-              struct.setNewValueIsSet(true);
+              struct.value = iprot.readBinary();
+              struct.setValueIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 4: // CLASSIC
+            if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+              struct.classic = iprot.readBool();
+              struct.setClassicIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -528,11 +609,14 @@ public class Option implements org.apache.thrift.TBase<Option, Option._Fields>, 
       oprot.writeFieldBegin(OLD_VERSION_FIELD_DESC);
       oprot.writeI64(struct.oldVersion);
       oprot.writeFieldEnd();
-      if (struct.newValue != null) {
-        oprot.writeFieldBegin(NEW_VALUE_FIELD_DESC);
-        oprot.writeBinary(struct.newValue);
+      if (struct.value != null) {
+        oprot.writeFieldBegin(VALUE_FIELD_DESC);
+        oprot.writeBinary(struct.value);
         oprot.writeFieldEnd();
       }
+      oprot.writeFieldBegin(CLASSIC_FIELD_DESC);
+      oprot.writeBool(struct.classic);
+      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -557,25 +641,31 @@ public class Option implements org.apache.thrift.TBase<Option, Option._Fields>, 
       if (struct.isSetOldVersion()) {
         optionals.set(1);
       }
-      if (struct.isSetNewValue()) {
+      if (struct.isSetValue()) {
         optionals.set(2);
       }
-      oprot.writeBitSet(optionals, 3);
+      if (struct.isSetClassic()) {
+        optionals.set(3);
+      }
+      oprot.writeBitSet(optionals, 4);
       if (struct.isSetKey()) {
         oprot.writeString(struct.key);
       }
       if (struct.isSetOldVersion()) {
         oprot.writeI64(struct.oldVersion);
       }
-      if (struct.isSetNewValue()) {
-        oprot.writeBinary(struct.newValue);
+      if (struct.isSetValue()) {
+        oprot.writeBinary(struct.value);
+      }
+      if (struct.isSetClassic()) {
+        oprot.writeBool(struct.classic);
       }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, Option struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(3);
+      BitSet incoming = iprot.readBitSet(4);
       if (incoming.get(0)) {
         struct.key = iprot.readString();
         struct.setKeyIsSet(true);
@@ -585,8 +675,12 @@ public class Option implements org.apache.thrift.TBase<Option, Option._Fields>, 
         struct.setOldVersionIsSet(true);
       }
       if (incoming.get(2)) {
-        struct.newValue = iprot.readBinary();
-        struct.setNewValueIsSet(true);
+        struct.value = iprot.readBinary();
+        struct.setValueIsSet(true);
+      }
+      if (incoming.get(3)) {
+        struct.classic = iprot.readBool();
+        struct.setClassicIsSet(true);
       }
     }
   }

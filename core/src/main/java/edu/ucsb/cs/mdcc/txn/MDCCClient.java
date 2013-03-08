@@ -29,6 +29,9 @@ public class MDCCClient {
         TransactionFactory fac = new TransactionFactory();
 
         System.out.println("Welcome to MDCC Client");
+        if (!fac.isLocal()) {
+        	System.out.println("Using remote appserver: " + fac.getAppServerURL());
+        }
         System.out.println("Enter 'help' to see a list of supported commands...");
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
