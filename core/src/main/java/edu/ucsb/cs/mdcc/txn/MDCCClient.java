@@ -10,7 +10,6 @@ import org.apache.commons.cli.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -19,7 +18,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class MDCCClient {
 
@@ -174,8 +172,8 @@ public class MDCCClient {
         Transaction txn = fac.create();
         try {
             txn.begin();
-            ByteBuffer value = txn.read(key);
-            System.out.println(key + ": " + new String(value.array()));
+            byte[] value = txn.read(key);
+            System.out.println(key + ": " + new String(value));
             txn.commit();
         } catch (TransactionException e) {
             System.out.println("Error: " + e.getMessage());
@@ -257,7 +255,7 @@ public class MDCCClient {
         Transaction txn = fac.create();
         try {
             txn.begin();
-            txn.write(key, ByteBuffer.wrap(value.getBytes()));
+            txn.write(key, value.getBytes());
             System.out.println(key + ": " + value);
             txn.commit();
         } catch (TransactionException e) {
@@ -294,10 +292,10 @@ public class MDCCClient {
                 Transaction txn = fac.create();
                 try {
                     txn.begin();
-                    ByteBuffer value = txn.read(key);
+                    byte[] value = txn.read(key);
                     txn.commit();
                     if (!silent.get()) {
-                        System.out.println("[Thread-" + index + "] " + key + ": " + new String(value.array()));
+                        System.out.println("[Thread-" + index + "] " + key + ": " + new String(value));
                     }
                     success++;
                 } catch (Exception e) {
@@ -340,7 +338,7 @@ public class MDCCClient {
                 try {
                     txn.begin();
                     String value = "random_value_" + index + "_" + i + "_" + System.currentTimeMillis();
-                    txn.write(key, ByteBuffer.wrap(value.getBytes()));
+                    txn.write(key, value.getBytes());
                     txn.commit();
                     if (!silent.get()) {
                         System.out.println("[Thread-" + index + "] " + key + ": " + value);
@@ -371,7 +369,7 @@ public class MDCCClient {
         final int inDoubleQuote = 2;
         int state = normal;
         StringTokenizer tok = new StringTokenizer(toProcess, "\"\' ", true);
-        Vector v = new Vector();
+        Vector<String> v = new Vector<String>();
         StringBuffer current = new StringBuffer();
         boolean lastTokenHasBeenQuoted = false;
 

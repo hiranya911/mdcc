@@ -1,7 +1,5 @@
 package edu.ucsb.cs.mdcc.txn;
 
-import java.nio.ByteBuffer;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -48,15 +46,14 @@ public class TestClient {
         exec.shutdown();
         try {
             exec.awaitTermination(5, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-
+        } catch (InterruptedException ignored) {
         }
 
         MDCCTransaction txn1 = new MDCCTransaction(appServer);
         try {
             txn1.begin();
-            txn1.write("foo", ByteBuffer.wrap("Foo 12345".getBytes()));
-            txn1.write("bar", ByteBuffer.wrap("Bar 67890".getBytes()));
+            txn1.write("foo", "Foo 12345".getBytes());
+            txn1.write("bar", "Bar 67890".getBytes());
             txn1.commit();
             System.out.println("Txn 1 committed");
         } catch (TransactionException e) {
@@ -67,12 +64,12 @@ public class TestClient {
         MDCCTransaction txn2 = new MDCCTransaction(appServer);
         try {
             txn2.begin();
-            ByteBuffer object1 = txn2.read("foo");
-            ByteBuffer object2 = txn2.read("bar");
-            System.out.println("Foo = " + new String(object1.array()));
-            System.out.println("Bar = " + new String(object2.array()));
+            byte[] object1 = txn2.read("foo");
+            byte[] object2 = txn2.read("bar");
+            System.out.println("Foo = " + new String(object1));
+            System.out.println("Bar = " + new String(object2));
             txn2.delete("foo");
-            txn2.write("bar", ByteBuffer.wrap("Bar Value 4".getBytes()));
+            txn2.write("bar", "Bar Value 4".getBytes());
             txn2.commit();
             System.out.println("Txn 2 committed");
         } catch (TransactionException e) {
@@ -80,18 +77,18 @@ public class TestClient {
             System.exit(1);
         }
 
-        /*LocalTransaction txn3 = new LocalTransaction(appServer);
+        LocalTransaction txn3 = new LocalTransaction(appServer);
         try {
             txn3.begin();
-            ByteBuffer object2 = txn3.read("bar");
-            System.out.println("Bar = " + new String(object2.array()));
-            ByteBuffer object1 = txn3.read("foo");
-            System.out.println("Foo = " + new String(object1.array()));
+            byte[] object2 = txn3.read("bar");
+            System.out.println("Bar = " + new String(object2));
+            byte[] object1 = txn3.read("foo");
+            System.out.println("Foo = " + new String(object1));
             txn3.commit();
             System.out.println("Txn 3 committed");
         } catch (TransactionException e) {
             e.printStackTrace();
-        }*/
+        }
 
         appServer.stop();
     }

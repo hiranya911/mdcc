@@ -22,7 +22,7 @@ public abstract class Transaction {
         this.transactionId = UUID.randomUUID().toString();
     }
 
-    public synchronized ByteBuffer read(String key) throws TransactionException {
+    public synchronized byte[] read(String key) throws TransactionException {
         assertState();
 
         if (readSet.containsKey(key)) {
@@ -33,7 +33,7 @@ public abstract class Transaction {
             if (result.getVersion() == 0) {
                 throw new TransactionException("No object exists by the key: " + key);
             }
-            return result.getValue();
+            return result.getValue().array();
         } else {
             Result result = doRead(key);
             if (result != null) {
@@ -45,7 +45,7 @@ public abstract class Transaction {
                 if (result.getVersion() == 0) {
                     throw new TransactionException("No object exists by the key: " + key);
                 }
-                return result.getValue();
+                return result.getValue().array();
             } else {
                 throw new TransactionException("No object exists by the key: " + key);
             }
@@ -84,11 +84,12 @@ public abstract class Transaction {
         writeSet.put(key, option);
     }
 
-    public synchronized void write(String key, ByteBuffer value) throws TransactionException {
+    public synchronized void write(String key, byte[] data) throws TransactionException {
         assertState();
 
         Option option;
         Result result = readSet.get(key);
+        ByteBuffer value = ByteBuffer.wrap(data);
         if (result != null) {
             // We have already read this object.
             // Update the value in the read-set so future reads can see this write.

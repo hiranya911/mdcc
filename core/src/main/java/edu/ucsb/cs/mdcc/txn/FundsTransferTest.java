@@ -3,7 +3,6 @@ package edu.ucsb.cs.mdcc.txn;
 import edu.ucsb.cs.mdcc.paxos.Transaction;
 import edu.ucsb.cs.mdcc.paxos.TransactionException;
 
-import java.nio.ByteBuffer;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -92,13 +91,13 @@ public class FundsTransferTest {
         System.out.println("FINAL TOTAL = " + total);
     }
 
-    private static ByteBuffer toBytes(int value) {
+    private static byte[] toBytes(int value) {
         String str = String.valueOf(value);
-        return ByteBuffer.wrap(str.getBytes());
+        return str.getBytes();
     }
 
-    private static int toInt(ByteBuffer value) {
-        String str = new String(value.array());
+    private static int toInt(byte[] value) {
+        String str = new String(value);
         return Integer.parseInt(str);
     }
 
