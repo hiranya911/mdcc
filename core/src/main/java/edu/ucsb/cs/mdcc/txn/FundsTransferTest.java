@@ -31,6 +31,12 @@ public class FundsTransferTest {
         System.out.println("Transaction 1 completed...");
         System.out.println("==========================================\n");
 
+        try {
+            System.out.println("Starting step 2 in 2 seconds...");
+            Thread.sleep(2000);
+        } catch (InterruptedException ignored) {
+        }
+
         System.out.println("Step 2: Distributing funds");
         Transaction t2 = fac.create();
         t2.begin();
@@ -53,6 +59,12 @@ public class FundsTransferTest {
         System.out.println("Transaction 2 completed...");
         System.out.println("==========================================\n");
 
+        try {
+            System.out.println("Starting step 3 in 2 seconds...");
+            Thread.sleep(2000);
+        } catch (InterruptedException ignored) {
+        }
+
         System.out.println("Step 3: Gathering funds");
         ExecutorService exec = Executors.newFixedThreadPool(accounts);
         Future[] futures = new Future[accounts];
@@ -69,6 +81,12 @@ public class FundsTransferTest {
         }
         exec.shutdownNow();
         System.out.println("==========================================\n");
+
+        try {
+            System.out.println("Starting step 4 in 2 seconds...");
+            Thread.sleep(2000);
+        } catch (InterruptedException ignored) {
+        }
 
         System.out.println("Step 4: Validating funds");
         Transaction t4 = fac.create();
