@@ -1,6 +1,6 @@
 package edu.ucsb.cs.mdcc.txn;
 
-import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
+import edu.ucsb.cs.mdcc.config.AppServerConfiguration;
 import edu.ucsb.cs.mdcc.config.Member;
 import edu.ucsb.cs.mdcc.messaging.RemoteAppServer;
 import edu.ucsb.cs.mdcc.paxos.AppServer;
@@ -13,7 +13,7 @@ public class TransactionFactory {
     private AppServerService appServer;
 
     public TransactionFactory() {
-        MDCCConfiguration config = MDCCConfiguration.getConfiguration();
+        AppServerConfiguration config = AppServerConfiguration.getConfiguration();
         if (config.getAppServerUrl() == null) {
             this.local = true;
             this.appServer = new AppServer();

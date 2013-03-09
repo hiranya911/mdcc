@@ -1,13 +1,10 @@
 package edu.ucsb.cs.mdcc.paxos;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import edu.ucsb.cs.mdcc.Option;
-import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
+import edu.ucsb.cs.mdcc.config.AppServerConfiguration;
 import edu.ucsb.cs.mdcc.config.Member;
 import edu.ucsb.cs.mdcc.messaging.MDCCCommunicator;
 import org.apache.commons.logging.Log;
@@ -33,10 +30,10 @@ public class FastPaxosVoteListener implements VoteResultListener {
     }
 
     public void start() {
-        Member[] members = MDCCConfiguration.getConfiguration().getMembers();
-        List<Option> fastOptions = new ArrayList<Option>();
+        AppServerConfiguration config = AppServerConfiguration.getConfiguration();
+        Map<Integer,List<Option>> fastOptionsMap = new HashMap<Integer, List<Option>>();
+        Map<Integer,List<Accept>> fastAcceptsMap = new HashMap<Integer, List<Accept>>();
         List<Option> classicOptions = new ArrayList<Option>();
-        List<Accept> fastAccepts = new ArrayList<Accept>();
         BallotNumber fastBallot = new BallotNumber(-1, DEFAULT_SERVER_ID);
 
         for (Option option : options) {
@@ -44,20 +41,37 @@ public class FastPaxosVoteListener implements VoteResultListener {
                 if (log.isDebugEnabled()) {
                     log.debug("Running fast accept on: " + option.getKey());
                 }
+                int shardId = config.getShardId(option.getKey());
+                List<Option> fastOptions = fastOptionsMap.get(shardId);
+                if (fastOptions == null) {
+                    fastOptions = new ArrayList<Option>();
+                    fastOptionsMap.put(shardId, fastOptions);
+                }
         		fastOptions.add(option);
+
+                List<Accept> fastAccepts = fastAcceptsMap.get(shardId);
+                if (fastAccepts == null) {
+                    fastAccepts = new ArrayList<Accept>();
+                    fastAcceptsMap.put(shardId, fastAccepts);
+                }
         		fastAccepts.add(new Accept(txnId, fastBallot, option));
         	} else {
         		classicOptions.add(option);
         	}
         }
         
-        PaxosBulkVoteCounter fastCallback = new PaxosBulkVoteCounter(fastOptions, this);
-        if (fastAccepts.size() > 0) {
-	        for (Member member : members) {
-	            communicator.sendBulkAcceptAsync(member, fastAccepts, fastCallback);
-	        }
+        for (Integer shardId : fastOptionsMap.keySet()) {
+            List<Option> fastOptions = fastOptionsMap.get(shardId);
+            List<Accept> fastAccepts = fastAcceptsMap.get(shardId);
+            Member[] members = config.getMembers(shardId);
+            PaxosBulkVoteCounter fastCallback = new PaxosBulkVoteCounter(fastOptions, this, members.length);
+            if (fastAccepts.size() > 0) {
+                for (Member member : members) {
+                    communicator.sendBulkAcceptAsync(member, fastAccepts, fastCallback);
+                }
+            }
         }
-        
+
         
         for (Option option : classicOptions) {
             if (log.isDebugEnabled()) {
@@ -65,6 +79,7 @@ public class FastPaxosVoteListener implements VoteResultListener {
             }
             boolean done = false;
             ClassicPaxosResultObserver observer = new ClassicPaxosResultObserver(option, this);
+            Member[] members = config.getMembers(option.getKey());
             for (Member member : members) {
                 if (communicator.runClassicPaxos(member, txnId,
                         option, observer)) {
@@ -95,7 +110,7 @@ public class FastPaxosVoteListener implements VoteResultListener {
                 log.info("Possible conflict detected on key: " +
                         option.getKey() + " - Switching to Classic Paxos mode");
                 option.setClassic();
-                Member[] members = MDCCConfiguration.getConfiguration().getMembers();
+                Member[] members = AppServerConfiguration.getConfiguration().getMembers(option.getKey());
                 ClassicPaxosResultObserver observer = new ClassicPaxosResultObserver(option, this);
                 for (Member member : members) {
                     if (communicator.runClassicPaxos(member, txnId,

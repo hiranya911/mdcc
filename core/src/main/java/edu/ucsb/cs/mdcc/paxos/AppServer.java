@@ -6,7 +6,7 @@ import java.util.concurrent.Executors;
 
 import edu.ucsb.cs.mdcc.Option;
 import edu.ucsb.cs.mdcc.Result;
-import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
+import edu.ucsb.cs.mdcc.config.AppServerConfiguration;
 import edu.ucsb.cs.mdcc.config.Member;
 import edu.ucsb.cs.mdcc.messaging.AppServerServiceHandler;
 import edu.ucsb.cs.mdcc.messaging.MDCCAppServerService;
@@ -24,13 +24,13 @@ public class AppServer implements AppServerService {
 
     private static final Log log = LogFactory.getLog(AppServer.class);
 
-	private MDCCConfiguration configuration;
+	private AppServerConfiguration configuration;
     private MDCCCommunicator communicator;
     private TServer server;
     private ExecutorService exec;
 
     public AppServer() {
-        this.configuration = MDCCConfiguration.getConfiguration();
+        this.configuration = AppServerConfiguration.getConfiguration();
         this.communicator = new MDCCCommunicator();
 	}
 
@@ -39,7 +39,7 @@ public class AppServer implements AppServerService {
     }
     
 	public Result read(String key) {
-        Member[] members = configuration.getMembers();
+        Member[] members = configuration.getMembers(key);
         ReadValue r = null;
         int memberIndex = 0;
         while (r == null && memberIndex < members.length) {
@@ -56,8 +56,6 @@ public class AppServer implements AppServerService {
 	
 	public boolean commit(String txnId, Collection<Option> options) {
 		boolean success;
-        Member[] members = configuration.getMembers();
-        
         FastPaxosVoteListener voteListener = new FastPaxosVoteListener(options,
                 communicator, txnId);
         voteListener.start();
@@ -80,8 +78,12 @@ public class AppServer implements AppServerService {
         success = voteListener.getAccepts() == options.size();
         // No need to call commit for read-only txns
         if (options.size() > 0) {
-            for (Member member : members) {
-                communicator.sendDecideAsync(member, txnId, success);
+            int shards = configuration.getShards();
+            for (int i = 0; i < shards; i++) {
+                Member[] members = configuration.getMembers(i);
+                for (Member member : members) {
+                    communicator.sendDecideAsync(member, txnId, success);
+                }
             }
         }
 

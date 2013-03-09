@@ -1,7 +1,7 @@
 package edu.ucsb.cs.mdcc.txn;
 
 import edu.ucsb.cs.mdcc.MDCCException;
-import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
+import edu.ucsb.cs.mdcc.config.AppServerConfiguration;
 import edu.ucsb.cs.mdcc.config.Member;
 import edu.ucsb.cs.mdcc.dao.Database;
 import edu.ucsb.cs.mdcc.paxos.Transaction;
@@ -41,10 +41,12 @@ public class MDCCClient {
         options.addOption("n", true, "Number of transactions executed by each user");
         options.addOption("t", true, "Total number of unique keys");
         options.addOption("w", true, "Number of unique keys per worker");
+        options.addOption("s", true, "Shard ID");
+        options.addOption("p", true, "Primary server ID");
         options.addOption("silent", false, "Enable silent mode");
 
         CommandLineParser parser = new BasicParser();
-        MDCCConfiguration config = MDCCConfiguration.getConfiguration();
+        AppServerConfiguration config = AppServerConfiguration.getConfiguration();
         if (config.getAppServerUrl() != null) {
             System.out.println("Connecting to remote app server: " + config.getAppServerUrl());
         }
@@ -137,14 +139,28 @@ public class MDCCClient {
                 }
                 blindWriteTransaction(fac, key, Database.DELETE_VALUE_STRING);
             } else if ("primary".equals(cmdArgs[0])) {
-                if (cmdArgs.length == 2 && fac.isLocal()) {
-                    if (!config.reorderMembers(cmdArgs[1])) {
-                        System.out.println("Invalid server ID: " + cmdArgs[1]);
+                int shardId = 0;
+                String serverId;
+                if (cmd.hasOption("s")) {
+                    shardId = Integer.parseInt(cmd.getOptionValue("s"));
+                    if (shardId >= config.getShards()) {
+                        System.out.println("Invalid shard ID");
+                        continue;
                     }
+                }
+                if (cmd.hasOption("p")) {
+                    serverId = cmd.getOptionValue("p");
+                } else {
+                    System.out.println("Primary server ID not specified");
+                    continue;
+                }
+
+                if (!config.reorderMembers(shardId, serverId)) {
+                    System.out.println("Invalid server ID: " + cmdArgs[1]);
                 }
 
                 if (fac.isLocal()) {
-                    Member primary = config.getMembers()[0];
+                    Member primary = config.getMembers(shardId)[0];
                     System.out.print("Primary Storage Node: " + primary.getProcessId() + " [");
                     System.out.println(primary.getHostName() + ":" + primary.getPort() + "]");
                 } else {
@@ -153,14 +169,19 @@ public class MDCCClient {
             } else if ("servers".equals(cmdArgs[0])) {
                 if (fac.isLocal()) {
                     boolean first = true;
-                    for (Member member : config.getMembers()) {
-                        System.out.print(member.getProcessId() + " [");
-                        System.out.print(member.getHostName() + ":" + member.getPort() + "]");
-                        if (first) {
-                            System.out.print(" [Primary]");
-                            first = false;
+                    int shards = config.getShards();
+                    for (int i = 0; i < shards; i++) {
+                        System.out.println("Shard " + i);
+                        System.out.println("=======");
+                        for (Member member : config.getMembers(i)) {
+                            System.out.print(member.getProcessId() + " [");
+                            System.out.print(member.getHostName() + ":" + member.getPort() + "]");
+                            if (first) {
+                                System.out.print(" [Primary]");
+                                first = false;
+                            }
+                            System.out.println();
                         }
-                        System.out.println();
                     }
                 } else {
                     System.out.println("App Server: " + config.getAppServerUrl());

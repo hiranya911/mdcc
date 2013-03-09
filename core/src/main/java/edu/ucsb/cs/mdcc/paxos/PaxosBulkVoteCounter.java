@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import edu.ucsb.cs.mdcc.config.MDCCConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.TException;
@@ -27,9 +26,8 @@ public class PaxosBulkVoteCounter implements AsyncMethodCallback {
     private int numVoters;
     private List<Option> myOptions;
 	
-	public PaxosBulkVoteCounter(List<Option> options, VoteResultListener callback) {
-        MDCCConfiguration config = MDCCConfiguration.getConfiguration();
-        this.numVoters = config.getMembers().length;
+	public PaxosBulkVoteCounter(List<Option> options, VoteResultListener callback, int members) {
+        this.numVoters = members;
 		this.callback = callback;
 		this.myOptions = options;
 		this.classicQuorum = (numVoters / 2) + 1;

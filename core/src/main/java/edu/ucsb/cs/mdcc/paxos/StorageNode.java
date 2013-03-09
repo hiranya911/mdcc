@@ -251,7 +251,11 @@ public class StorageNode extends Agent {
                     PaxosVoteCounter prepareVoteCounter = new PaxosVoteCounter(option, prepareListener);
                     Prepare prepare = new Prepare(key, ballot, record.getClassicEndVersion());
                     for (Member member : members) {
-                        communicator.sendPrepareAsync(member, prepare, prepareVoteCounter);
+                        if (member.isLocal()) {
+                            prepareVoteCounter.onComplete(true);
+                        } else {
+                            communicator.sendPrepareAsync(member, prepare, prepareVoteCounter);
+                        }
                     }
 
                     if (prepareListener.getResult()) {
