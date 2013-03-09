@@ -92,7 +92,8 @@ public class StorageNode extends Agent {
         long oldVersion = accept.getOldVersion();
         byte[] value = accept.getValue();
 
-        synchronized (accept.getKey().intern()) {
+        keyLock.lock(accept.getKey());
+        try {
             Record record = db.get(key);
             if (record.getOutstanding() != null &&
                     !transaction.equals(record.getOutstanding())) {
@@ -116,24 +117,27 @@ public class StorageNode extends Agent {
                 db.put(record);
                 log.debug("option accepted");
             } else {
-				log.debug("option denied");
+                log.debug("option denied");
             }
 
             TransactionRecord txnRecord = db.getTransactionRecord(transaction);
             txnRecord.addOption(new Option(key, value, record.getVersion(), false));
             db.putTransactionRecord(txnRecord);
-			return success;
-		}
-	}
+            return success;
+        } finally {
+            keyLock.unlock(accept.getKey());
+        }
+
+    }
 
 	public void onDecide(String transaction, boolean commit) {
 		TransactionRecord txnRecord = db.getTransactionRecord(transaction);
 
-        synchronized (this) {
-            for (Option option : txnRecord.getOptions()) {
-                keyLock.lock(option.getKey());
-            }
+        List<String> keys = new ArrayList<String>();
+        for (Option option : txnRecord.getOptions()) {
+            keys.add(option.getKey());
         }
+        keyLock.lock(keys);
 
         try {
             if (commit) {
@@ -160,11 +164,7 @@ public class StorageNode extends Agent {
                 }
             }
         } finally {
-            synchronized (this) {
-                for (Option option : txnRecord.getOptions()) {
-                    keyLock.unlock(option.getKey());
-                }
-            }
+            keyLock.unlock(keys);
         }
 
         if (!txnRecord.isComplete()) {
