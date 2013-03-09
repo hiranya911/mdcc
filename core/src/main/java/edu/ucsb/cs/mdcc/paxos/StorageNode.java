@@ -22,8 +22,6 @@ public class StorageNode extends Agent {
 
     private MDCCCommunicator communicator;
 
-    private KeySetLock<String> keyLock = new KeySetLock<String>();
-
     public StorageNode() {
         this.config = MDCCConfiguration.getConfiguration();
         this.communicator = new MDCCCommunicator();
@@ -92,8 +90,7 @@ public class StorageNode extends Agent {
         long oldVersion = accept.getOldVersion();
         byte[] value = accept.getValue();
 
-        keyLock.lock(accept.getKey());
-        try {
+        synchronized (key.intern()) {
             Record record = db.get(key);
             if (record.getOutstanding() != null &&
                     !transaction.equals(record.getOutstanding())) {
@@ -124,25 +121,16 @@ public class StorageNode extends Agent {
             txnRecord.addOption(new Option(key, value, record.getVersion(), false));
             db.putTransactionRecord(txnRecord);
             return success;
-        } finally {
-            keyLock.unlock(accept.getKey());
         }
-
     }
 
 	public void onDecide(String transaction, boolean commit) {
 		TransactionRecord txnRecord = db.getTransactionRecord(transaction);
 
-        List<String> keys = new ArrayList<String>();
-        for (Option option : txnRecord.getOptions()) {
-            keys.add(option.getKey());
-        }
-        keyLock.lock(keys);
-
-        try {
-            if (commit) {
-                log.debug("Received Commit decision on transaction id: " + transaction);
-                for (Option option : txnRecord.getOptions()) {
+        if (commit) {
+            log.debug("Received Commit decision on transaction id: " + transaction);
+            for (Option option : txnRecord.getOptions()) {
+                synchronized (option.getKey().intern()) {
                     Record record = db.get(option.getKey());
                     if (record.getVersion() <= option.getOldVersion()) {
                         record.setVersion(option.getOldVersion() + 1);
@@ -150,21 +138,21 @@ public class StorageNode extends Agent {
                         record.setOutstanding(null);
                         db.put(record);
                     }
-                    log.debug("[COMMIT] Saved option to DB");
                 }
-            } else {
-                log.info("Received Abort on transaction id: " + transaction);
-                for (Option option : txnRecord.getOptions()) {
+                log.debug("[COMMIT] Saved option to DB");
+            }
+        } else {
+            log.info("Received Abort on transaction id: " + transaction);
+            for (Option option : txnRecord.getOptions()) {
+                synchronized (option.getKey().intern()) {
                     Record record = db.get(option.getKey());
                     if (transaction.equals(record.getOutstanding())) {
                         record.setOutstanding(null);
                     }
                     db.put(record);
-                    log.debug("[ABORT] Not saving option to DB");
                 }
+                log.debug("[ABORT] Not saving option to DB");
             }
-        } finally {
-            keyLock.unlock(keys);
         }
 
         if (!txnRecord.isComplete()) {
@@ -174,14 +162,9 @@ public class StorageNode extends Agent {
     }
 
 	public ReadValue onRead(String key) {
-        try {
-            keyLock.lock(key);
-            Record record = db.get(key);
-            return new ReadValue(record.getVersion(), record.getClassicEndVersion(),
-                    ByteBuffer.wrap(record.getValue()));
-        } finally {
-            keyLock.unlock(key);
-        }
+        Record record = db.get(key);
+        return new ReadValue(record.getVersion(), record.getClassicEndVersion(),
+                ByteBuffer.wrap(record.getValue()));
     }
 
 	public static void main(String[] args) {
