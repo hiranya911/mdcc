@@ -98,7 +98,7 @@ public class StorageNode extends Agent {
                         " - Denying the new option (" + record.getOutstanding() + ")");
                 TransactionRecord txnRecord = db.getTransactionRecord(transaction);
                 txnRecord.addOption(new Option(key, value, record.getVersion(), false));
-                db.putTransactionRecord(txnRecord);
+                db.weakPutTransactionRecord(txnRecord);
                 return false;
             }
 
@@ -111,7 +111,7 @@ public class StorageNode extends Agent {
 
             if (success) {
                 record.setOutstanding(transaction);
-                db.put(record);
+                db.weakPut(record);
                 log.debug("option accepted");
             } else {
                 log.debug("option denied");
@@ -119,7 +119,7 @@ public class StorageNode extends Agent {
 
             TransactionRecord txnRecord = db.getTransactionRecord(transaction);
             txnRecord.addOption(new Option(key, value, record.getVersion(), false));
-            db.putTransactionRecord(txnRecord);
+            db.weakPutTransactionRecord(txnRecord);
             return success;
         }
     }

@@ -44,4 +44,12 @@ public class InMemoryDatabase implements Database {
     public void putTransactionRecord(TransactionRecord record) {
         transactions.put(record.getTransactionId(), record);
     }
+
+    public void weakPut(Record record) {
+        db.put(record.getKey(), record);
+    }
+
+    public void weakPutTransactionRecord(TransactionRecord record) {
+        transactions.put(record.getTransactionId(), record);
+    }
 }

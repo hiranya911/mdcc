@@ -7,10 +7,11 @@ import java.util.Comparator;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class TransactionRecord {
+public class TransactionRecord extends Cacheable {
 
     private String transactionId;
     private boolean complete = false;
+    private boolean dirty;
     private Set<Option> options = new TreeSet<Option>(new Comparator<Option>() {
         public int compare(Option o1, Option o2) {
             return o1.getKey().compareTo(o2.getKey());
@@ -42,5 +43,13 @@ public class TransactionRecord {
         if (!commit) {
             options.clear();
         }
+    }
+
+    public boolean isDirty() {
+        return dirty;
+    }
+
+    public void setDirty(boolean dirty) {
+        this.dirty = dirty;
     }
 }

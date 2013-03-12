@@ -263,6 +263,14 @@ public class HBase implements Database {
 		}
     }
 
+    public void weakPut(Record record) {
+        put(record);
+    }
+
+    public void weakPutTransactionRecord(TransactionRecord record) {
+        putTransactionRecord(record);
+    }
+
     private void handleException(String msg, Exception e) {
         log.error(msg, e);
         throw new MDCCException(msg, e);

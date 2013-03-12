@@ -17,7 +17,11 @@ public interface Database {
 
     public void put(Record record);
 
+    public void weakPut(Record record);
+
     public TransactionRecord getTransactionRecord(String transactionId);
 
     public void putTransactionRecord(TransactionRecord record);
+
+    public void weakPutTransactionRecord(TransactionRecord record);
 }

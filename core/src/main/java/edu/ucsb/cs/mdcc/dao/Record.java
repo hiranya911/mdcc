@@ -2,7 +2,7 @@ package edu.ucsb.cs.mdcc.dao;
 
 import edu.ucsb.cs.mdcc.paxos.BallotNumber;
 
-public class Record {
+public class Record extends Cacheable {
 
     private String key;
     private byte[] value = new byte[]{};
@@ -11,6 +11,7 @@ public class Record {
     private BallotNumber ballot = new BallotNumber(0, "");
     private boolean prepared = false;
     private String outstanding = null;
+    private boolean dirty;
 
     public Record(String key) {
         this.key = key;
@@ -66,5 +67,13 @@ public class Record {
 
     public void setValue(byte[] value) {
         this.value = value;
+    }
+
+    public boolean isDirty() {
+        return dirty;
+    }
+
+    public void setDirty(boolean dirty) {
+        this.dirty = dirty;
     }
 }

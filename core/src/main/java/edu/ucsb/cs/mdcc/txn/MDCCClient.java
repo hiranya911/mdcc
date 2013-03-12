@@ -60,7 +60,7 @@ public class MDCCClient {
             int total = 1;
             int keysPerWorker = 1;
 
-            System.out.print("> ");
+            System.out.print("mdcc> ");
             String command = reader.readLine();
             String[] cmdArgs = translateCommandline(command);
             try {
@@ -168,9 +168,9 @@ public class MDCCClient {
                 }
             } else if ("servers".equals(cmdArgs[0])) {
                 if (fac.isLocal()) {
-                    boolean first = true;
                     int shards = config.getShards();
                     for (int i = 0; i < shards; i++) {
+                        boolean first = true;
                         System.out.println("Shard " + i);
                         System.out.println("=======");
                         for (Member member : config.getMembers(i)) {
@@ -186,6 +186,24 @@ public class MDCCClient {
                 } else {
                     System.out.println("App Server: " + config.getAppServerUrl());
                 }
+            } else if ("shard".equals(cmdArgs[0])) {
+                if (cmd.hasOption("k")) {
+                    key = cmd.getOptionValue("k");
+                    int shardId = config.getShardId(key);
+                    System.out.println("Shard ID: " + shardId);
+                    boolean first = true;
+                    for (Member member : config.getMembers(shardId)) {
+                        System.out.print(member.getProcessId() + " [");
+                        System.out.print(member.getHostName() + ":" + member.getPort() + "]");
+                        if (first) {
+                            System.out.print(" [Primary]");
+                            first = false;
+                        }
+                        System.out.println();
+                    }
+                } else {
+                    System.out.println("Object key unspecified");
+                }
             } else if ("quit".equals(cmdArgs[0])) {
                 break;
             } else if ("help".equals(cmdArgs[0])) {
@@ -198,6 +216,7 @@ public class MDCCClient {
                 System.out.println("delete -k key          Delete the specified object\n");
                 System.out.println("primary [serverId]     Display/Set the primary backend server\n");
                 System.out.println("servers                List all the backend servers\n");
+                System.out.println("shard -k key           Describe the shard a particular key belongs to\n");
                 System.out.println("help                   Display this help message\n");
                 System.out.println("quit                   Terminate the client application\n");
             } else {
@@ -240,6 +259,7 @@ public class MDCCClient {
             futures.add(exec.submit(workers[i]));
         }
 
+        long time = 0L;
         for (int i = 0; i < c; i++) {
             try {
                 futures.get(i).get();
@@ -247,12 +267,15 @@ public class MDCCClient {
             }
             success += workers[i].success;
             failure += workers[i].failure;
+            time += workers[i].timeElapsed;
         }
         long end = System.currentTimeMillis();
         int total = success + failure;
         System.out.println("\nSuccessful: " + success + "/" + total);
         System.out.println("Failed: " + failure + "/" + total);
         System.out.println("Time elapsed: " + (end - start) + "ms");
+        System.out.println("Throughput: " + total/((end - start)/1000.0) + " TPS");
+        System.out.println("Average latency: " + time/(double) total + "ms");
     }
 
     private static void randomBlindWriteTransactions(final TransactionFactory fac, int c, int r, int k, int t) {
@@ -275,6 +298,7 @@ public class MDCCClient {
             futures.add(exec.submit(workers[i]));
         }
 
+        long time = 0L;
         for (int i = 0; i < c; i++) {
             try {
                 futures.get(i).get();
@@ -282,6 +306,7 @@ public class MDCCClient {
             }
             success += workers[i].success;
             failure += workers[i].failure;
+            time += workers[i].timeElapsed;
         }
         long end = System.currentTimeMillis();
 
@@ -289,6 +314,8 @@ public class MDCCClient {
         System.out.println("\nSuccessful: " + success + "/" + total);
         System.out.println("Failed: " + failure + "/" + total);
         System.out.println("Time elapsed: " + (end - start) + "ms");
+        System.out.println("Throughput: " + total/((end - start)/1000.0) + " TPS");
+        System.out.println("Average latency: " + time/(double) total + "ms");
     }
 
     private static void blindWriteTransaction(TransactionFactory fac, String key, String value) {
@@ -316,6 +343,7 @@ public class MDCCClient {
         List<String> keys;
         int success;
         int failure;
+        long timeElapsed;
 
         private IndexedReadWorker(int index, TransactionFactory fac, int requests,
                                   int keyCount, List<String> keys) {
@@ -326,6 +354,7 @@ public class MDCCClient {
             this.keys = keys;
             this.success = 0;
             this.failure = 0;
+            this.timeElapsed = 0;
         }
 
         public void run() {
@@ -334,6 +363,7 @@ public class MDCCClient {
                 int keyIndex = (baseKey + (i % keyCount)) % keys.size();
                 String key = keys.get(keyIndex);
                 Transaction txn = fac.create();
+                long start = System.currentTimeMillis();
                 try {
                     txn.begin();
                     byte[] value = txn.read(key);
@@ -347,6 +377,8 @@ public class MDCCClient {
                         System.out.println("[Thread-" + index + "] Error: " + e.getMessage());
                     }
                     failure++;
+                } finally {
+                    timeElapsed += System.currentTimeMillis() - start;
                 }
             }
         }
@@ -361,6 +393,7 @@ public class MDCCClient {
         List<String> keys;
         int success;
         int failure;
+        long timeElapsed;
 
         private IndexedWriteWorker(int index, TransactionFactory fac, int requests,
                                    int keyCount, List<String> keys) {
@@ -371,6 +404,7 @@ public class MDCCClient {
             this.keys = keys;
             this.success = 0;
             this.failure = 0;
+            this.timeElapsed = 0L;
         }
 
         public void run() {
@@ -379,6 +413,7 @@ public class MDCCClient {
                 int keyIndex = (baseKey + (i % keyCount)) % keys.size();
                 String key = keys.get(keyIndex);
                 Transaction txn = fac.create();
+                long start = System.currentTimeMillis();
                 try {
                     txn.begin();
                     String value = "random_value_" + index + "_" + i + "_" + System.currentTimeMillis();
@@ -393,6 +428,8 @@ public class MDCCClient {
                         System.out.println("[Thread-" + index + "] Error: " + e.getMessage());
                     }
                     failure++;
+                }  finally {
+                    timeElapsed += (System.currentTimeMillis() - start);
                 }
             }
         }

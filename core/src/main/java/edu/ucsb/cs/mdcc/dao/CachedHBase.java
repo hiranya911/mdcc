@@ -2,15 +2,23 @@ package edu.ucsb.cs.mdcc.dao;
 
 import edu.ucsb.cs.mdcc.util.LRUCache;
 
+import java.util.Map;
+
 public class CachedHBase extends HBase {
 
-    private final LRUCache<String,Record> records = new LRUCache<String, Record>(1000);
+    private final LRUCache<String,Record> records = new RecordLRUCache<String, Record>(1000, this);
     private final LRUCache<String,TransactionRecord> transactions =
-            new LRUCache<String,TransactionRecord>(100);
+            new RecordLRUCache<String,TransactionRecord>(100, this);
 
     @Override
     public void put(Record record) {
+        record.setDirty(false);
         super.put(record);
+        records.put(record.getKey(), record);
+    }
+
+    public void weakPut(Record record) {
+        record.setDirty(true);
         records.put(record.getKey(), record);
     }
 
@@ -31,7 +39,13 @@ public class CachedHBase extends HBase {
 
     @Override
     public void putTransactionRecord(TransactionRecord record) {
+        record.setDirty(false);
         super.putTransactionRecord(record);
+        transactions.put(record.getTransactionId(), record);
+    }
+
+    public void weakPutTransactionRecord(TransactionRecord record) {
+        record.setDirty(true);
         transactions.put(record.getTransactionId(), record);
     }
 
@@ -48,5 +62,28 @@ public class CachedHBase extends HBase {
             }
         }
         return record;
+    }
+
+    private static class RecordLRUCache<String,V extends Cacheable> extends LRUCache<String,V> {
+
+        private Database db;
+
+        public RecordLRUCache(int maxEntries, Database database) {
+            super(maxEntries);
+            this.db = database;
+        }
+
+        @Override
+        protected boolean isRemovable(Map.Entry<String,V> eldest) {
+            Cacheable value = eldest.getValue();
+            if (value.isDirty()) {
+                if (value instanceof Record) {
+                    db.put((Record) value);
+                } else if (value instanceof TransactionRecord) {
+                    db.putTransactionRecord((TransactionRecord) value);
+                }
+            }
+            return true;
+        }
     }
 }
