@@ -7,17 +7,16 @@ import edu.ucsb.cs.mdcc.paxos.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.thrift.TException;
+import org.apache.commons.pool.KeyedObjectPool;
+import org.apache.commons.pool.impl.StackKeyedObjectPool;
 import org.apache.thrift.async.AsyncMethodCallback;
 import org.apache.thrift.async.TAsyncClientManager;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.server.TServer;
-import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TNonblockingServerTransport;
 import org.apache.thrift.transport.TNonblockingSocket;
-import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.server.TNonblockingServer;
@@ -37,6 +36,11 @@ public class MDCCCommunicator {
     private ExecutorService exec;
     private TServer server;
     private TAsyncClientManager clientManager;
+
+    private KeyedObjectPool<Member,TTransport> blockingPool =
+            new StackKeyedObjectPool<Member, TTransport>(new ThriftConnectionPool());
+    private KeyedObjectPool<Member,TNonblockingSocket> nonBlockingPool =
+            new StackKeyedObjectPool<Member, TNonblockingSocket>(new ThriftNonBlockingConnectionPool());
 
     public MDCCCommunicator() {
         try {
@@ -75,36 +79,26 @@ public class MDCCCommunicator {
         exec.shutdownNow();
     }
 
-    //check whether a node is up and reachable
-	public boolean ping(Member member) {
-        String host = member.getHostName();
-        int port = member.getPort();
-        TTransport transport = new TFramedTransport(new TSocket(host, port));
-        try {
-            MDCCCommunicationService.Client client = getClient(transport);
-            return client.ping();
-        } catch (TException e) {
-            handleException(host, e);
-            return false;
-        } finally {
-            close(transport);
-        }
-    }
-
     public boolean runClassicPaxos(Member member, String transaction,
                                 Option option, AsyncMethodCallback voting) {
+        AsyncMethodCallbackDecorator callback = null;
         try {
-            TNonblockingSocket socket = new TNonblockingSocket(member.getHostName(),
-                    member.getPort());
+            TNonblockingSocket socket = nonBlockingPool.borrowObject(member);
+            callback = new AsyncMethodCallbackDecorator(voting, socket, member, nonBlockingPool);
             TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
             MDCCCommunicationService.AsyncClient client =
                     new MDCCCommunicationService.AsyncClient(protocolFactory,
                             clientManager, socket);
             ByteBuffer value = ByteBuffer.wrap(option.getValue());
             client.runClassic(transaction, option.getKey(), option.getOldVersion(),
-                    value, voting);
+                    value, callback);
             return true;
         } catch (Exception e) {
+            if (callback != null) {
+                callback.onError(e);
+            } else {
+                voting.onError(e);
+            }
             handleException(member.getHostName(), e);
             return false;
         }
@@ -113,10 +107,8 @@ public class MDCCCommunicator {
 	public void sendAcceptAsync(Member member, edu.ucsb.cs.mdcc.paxos.Accept accept, PaxosVoteCounter voting) {
         AsyncMethodCallbackDecorator callback = null;
 		try {
-            TNonblockingSocket socket = new TNonblockingSocket(
-                    member.getHostName(),
-                    member.getPort());
-            callback = new AsyncMethodCallbackDecorator(voting, socket);
+            TNonblockingSocket socket = nonBlockingPool.borrowObject(member);
+            callback = new AsyncMethodCallbackDecorator(voting, socket, member, nonBlockingPool);
             TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
             MDCCCommunicationService.AsyncClient client =
                     new MDCCCommunicationService.AsyncClient(
@@ -137,10 +129,8 @@ public class MDCCCommunicator {
 	public void sendBulkAcceptAsync(Member member, List<edu.ucsb.cs.mdcc.paxos.Accept> fastAccepts, PaxosBulkVoteCounter fastCallback) {
         AsyncMethodCallbackDecorator callback = null;
 		try {
-            TNonblockingSocket socket = new TNonblockingSocket(
-                    member.getHostName(),
-                    member.getPort());
-            callback = new AsyncMethodCallbackDecorator(fastCallback, socket);
+            TNonblockingSocket socket = nonBlockingPool.borrowObject(member);
+            callback = new AsyncMethodCallbackDecorator(fastCallback, socket, member, nonBlockingPool);
             TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
             MDCCCommunicationService.AsyncClient client =
                     new MDCCCommunicationService.AsyncClient(
@@ -165,9 +155,8 @@ public class MDCCCommunicator {
     public void sendPrepareAsync(Member member, Prepare prepare, PaxosVoteCounter voting) {
         AsyncMethodCallbackDecorator callback = null;
         try {
-            TNonblockingSocket socket = new TNonblockingSocket(member.getHostName(),
-                    member.getPort());
-            callback = new AsyncMethodCallbackDecorator(voting, socket);
+            TNonblockingSocket socket = nonBlockingPool.borrowObject(member);
+            callback = new AsyncMethodCallbackDecorator(voting, socket, member, nonBlockingPool);
             TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
             MDCCCommunicationService.AsyncClient client =
                     new MDCCCommunicationService.AsyncClient(protocolFactory,
@@ -185,7 +174,7 @@ public class MDCCCommunicator {
     }
 
 	public void sendRecoverAsync(Member member, Map<String,Long> versions, RecoverySet callback) {
-		try {
+        try {
 			TNonblockingSocket socket = new TNonblockingSocket(member.getHostName(),
 			member.getPort());
 			TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
@@ -201,9 +190,8 @@ public class MDCCCommunicator {
 	public boolean sendDecideAsync(Member member, String transaction, boolean commit) {
         AsyncMethodCallbackDecorator callback = null;
         try {
-            TNonblockingSocket socket = new TNonblockingSocket(member.getHostName(),
-                    member.getPort());
-            callback = new AsyncMethodCallbackDecorator(socket);
+            TNonblockingSocket socket = nonBlockingPool.borrowObject(member);
+            callback = new AsyncMethodCallbackDecorator(socket, member, nonBlockingPool);
             TBinaryProtocol.Factory protocolFactory = new TBinaryProtocol.Factory();
             MDCCCommunicationService.AsyncClient client =
                     new MDCCCommunicationService.AsyncClient(protocolFactory,
@@ -219,34 +207,32 @@ public class MDCCCommunicator {
     }
 	
 	public ReadValue get(Member member, String key) {
-        String host = member.getHostName();
-        int port = member.getPort();
-        TTransport transport = new TFramedTransport(new TSocket(host, port));
+        TTransport transport = null;
+        boolean error = false;
         try {
-            MDCCCommunicationService.Client client = getClient(transport);
+            transport = blockingPool.borrowObject(member);
+            TProtocol protocol = new TBinaryProtocol(transport);
+            MDCCCommunicationService.Client client = new MDCCCommunicationService.Client(protocol);
             return client.read(key);
-        } catch (TException e) {
-            handleException(host, e);
+        } catch (Exception e) {
+            error = true;
+            handleException(member.getHostName(), e);
             return null;
         } finally {
-            close(transport);
+            if (transport != null) {
+                try {
+                    if (error) {
+                        blockingPool.invalidateObject(member, transport);
+                    } else {
+                        blockingPool.returnObject(member, transport);
+                    }
+                } catch (Exception ignored) {
+                }
+            }
         }
 	}
 	
-	private MDCCCommunicationService.Client getClient(
-            TTransport transport) throws TTransportException {
-        transport.open();
-        TProtocol protocol = new TBinaryProtocol(transport);
-        return new MDCCCommunicationService.Client(protocol);
-    }
-
-    private void close(TTransport transport) {
-        if (transport.isOpen()) {
-            transport.close();
-        }
-    }
-
-    private void handleException(String target, Exception e) {
+	private void handleException(String target, Exception e) {
         String msg = "Error contacting the remote member: " + target;
         log.warn(msg, e);
     }

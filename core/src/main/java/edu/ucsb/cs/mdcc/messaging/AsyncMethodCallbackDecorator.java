@@ -1,20 +1,30 @@
 package edu.ucsb.cs.mdcc.messaging;
 
+import edu.ucsb.cs.mdcc.config.Member;
+import org.apache.commons.pool.KeyedObjectPool;
 import org.apache.thrift.async.AsyncMethodCallback;
-import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TNonblockingSocket;
 
 public class AsyncMethodCallbackDecorator implements AsyncMethodCallback {
 
     private AsyncMethodCallback callback;
-    private TTransport transport;
+    private TNonblockingSocket transport;
+    private Member member;
+    private KeyedObjectPool<Member,TNonblockingSocket> pool;
 
-    public AsyncMethodCallbackDecorator(AsyncMethodCallback callback, TTransport transport) {
+    public AsyncMethodCallbackDecorator(AsyncMethodCallback callback, TNonblockingSocket transport,
+                                        Member member, KeyedObjectPool<Member, TNonblockingSocket> pool) {
         this.callback = callback;
         this.transport = transport;
+        this.member = member;
+        this.pool = pool;
     }
 
-    public AsyncMethodCallbackDecorator(TTransport transport) {
+    public AsyncMethodCallbackDecorator(TNonblockingSocket transport, Member member,
+                                        KeyedObjectPool<Member, TNonblockingSocket> pool) {
         this.transport = transport;
+        this.member = member;
+        this.pool = pool;
     }
 
     public void onComplete(Object o) {
@@ -23,7 +33,10 @@ public class AsyncMethodCallbackDecorator implements AsyncMethodCallback {
                 callback.onComplete(o);
             }
         } finally {
-            transport.close();
+            try {
+                pool.returnObject(member, transport);
+            } catch (Exception ignored) {
+            }
         }
     }
 
@@ -33,7 +46,10 @@ public class AsyncMethodCallbackDecorator implements AsyncMethodCallback {
                 callback.onError(e);
             }
         } finally {
-            transport.close();
+            try {
+                pool.invalidateObject(member, transport);
+            } catch (Exception ignored) {
+            }
         }
     }
 }

@@ -21,7 +21,7 @@ public class AppServerConfiguration {
     private AppServerConfiguration(Properties properties) {
         this.properties = properties;
 
-        Map<Integer,Collection<Member>> tempMembers = new HashMap<Integer, Collection<Member>>();
+        Map<Integer,List<Member>> tempMembers = new HashMap<Integer,List<Member>>();
         for (String property : properties.stringPropertyNames()) {
             if (property.startsWith("mdcc.server")) {
                 int shardId = Integer.parseInt(property.substring(12, property.indexOf('.', 13)));
@@ -30,7 +30,7 @@ public class AppServerConfiguration {
                 String[] connection = value.split(":");
                 Member member = new Member(connection[0],
                         Integer.parseInt(connection[1]), processId, false);
-                Collection<Member> temp = tempMembers.get(shardId);
+                List<Member> temp = tempMembers.get(shardId);
                 if (temp == null) {
                     temp = new ArrayList<Member>();
                     tempMembers.put(shardId, temp);
@@ -39,7 +39,18 @@ public class AppServerConfiguration {
             }
         }
 
-        for (Map.Entry<Integer,Collection<Member>> entry : tempMembers.entrySet()) {
+        for (Map.Entry<Integer,List<Member>> entry : tempMembers.entrySet()) {
+            Collections.sort(entry.getValue(), new Comparator<Member>() {
+                public int compare(Member o1, Member o2) {
+                    try {
+                        int o1Id = Integer.parseInt(o1.getProcessId());
+                        int o2Id = Integer.parseInt(o2.getProcessId());
+                        return o1Id - o2Id;
+                    } catch (NumberFormatException e) {
+                        return o1.getProcessId().compareTo(o2.getProcessId());
+                    }
+                }
+            });
             members.put(entry.getKey(), entry.getValue().toArray(
                     new Member[entry.getValue().size()]));
         }
@@ -76,7 +87,7 @@ public class AppServerConfiguration {
     }
 
     public int getShardId(String key) {
-        return key.hashCode() % members.size();
+        return Math.abs(key.hashCode() % members.size());
     }
 
     public int getShards() {

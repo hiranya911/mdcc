@@ -368,17 +368,17 @@ public class MDCCClient {
                     txn.begin();
                     byte[] value = txn.read(key);
                     txn.commit();
+                    timeElapsed += System.currentTimeMillis() - start;
                     if (!silent.get()) {
                         System.out.println("[Thread-" + index + "] " + key + ": " + new String(value));
                     }
                     success++;
                 } catch (Exception e) {
+                    timeElapsed += System.currentTimeMillis() - start;
                     if (!silent.get()) {
                         System.out.println("[Thread-" + index + "] Error: " + e.getMessage());
                     }
                     failure++;
-                } finally {
-                    timeElapsed += System.currentTimeMillis() - start;
                 }
             }
         }
@@ -419,17 +419,17 @@ public class MDCCClient {
                     String value = "random_value_" + index + "_" + i + "_" + System.currentTimeMillis();
                     txn.write(key, value.getBytes());
                     txn.commit();
+                    timeElapsed += (System.currentTimeMillis() - start);
                     if (!silent.get()) {
                         System.out.println("[Thread-" + index + "] " + key + ": " + value);
                     }
                     success++;
                 } catch (TransactionException e) {
+                    timeElapsed += (System.currentTimeMillis() - start);
                     if (!silent.get()) {
                         System.out.println("[Thread-" + index + "] Error: " + e.getMessage());
                     }
                     failure++;
-                }  finally {
-                    timeElapsed += (System.currentTimeMillis() - start);
                 }
             }
         }

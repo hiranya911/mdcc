@@ -56,6 +56,18 @@ public class Member {
 	public void setLocal(boolean local) {
 		this.local = local;
 	}
-	
-	
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Member) {
+            Member member = (Member) obj;
+            return member.getHostName().equals(hostName) && member.getPort() == port;
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return hostName.hashCode() + procId.hashCode() + port;
+    }
 }
