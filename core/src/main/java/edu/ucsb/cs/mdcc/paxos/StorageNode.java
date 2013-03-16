@@ -96,9 +96,28 @@ public class StorageNode extends Agent {
                     !transaction.equals(record.getOutstanding())) {
                 log.warn("Outstanding option detected on " + key +
                         " - Denying the new option (" + record.getOutstanding() + ")");
-                TransactionRecord txnRecord = db.getTransactionRecord(transaction);
-                txnRecord.addOption(new Option(key, value, record.getVersion(), false));
-                db.weakPutTransactionRecord(txnRecord);
+                synchronized (transaction.intern()) {
+                    TransactionRecord txnRecord = db.getTransactionRecord(transaction);
+                    Option option = new Option(key, value, record.getVersion(), false);
+                    switch (txnRecord.getStatus()) {
+                        case TransactionRecord.STATUS_COMMITTED:
+                            txnRecord.addOption(option);
+                            if (record.getVersion() <= option.getOldVersion()) {
+                                record.setVersion(option.getOldVersion() + 1);
+                                record.setValue(option.getValue());
+                                record.setOutstanding(null);
+                                db.put(record);
+                            }
+                            db.putTransactionRecord(txnRecord);
+                            log.info("Applied delayed option");
+                            break;
+                        case TransactionRecord.STATUS_ABORTED:
+                            break;
+                        default:
+                            txnRecord.addOption(option);
+                            db.weakPutTransactionRecord(txnRecord);
+                    }
+                }
                 return false;
             }
 
@@ -117,47 +136,67 @@ public class StorageNode extends Agent {
                 log.debug("option denied");
             }
 
-            TransactionRecord txnRecord = db.getTransactionRecord(transaction);
-            txnRecord.addOption(new Option(key, value, record.getVersion(), false));
-            db.weakPutTransactionRecord(txnRecord);
+            synchronized (transaction.intern()) {
+                TransactionRecord txnRecord = db.getTransactionRecord(transaction);
+                Option option = new Option(key, value, record.getVersion(), false);
+                switch (txnRecord.getStatus()) {
+                    case TransactionRecord.STATUS_COMMITTED:
+                        txnRecord.addOption(option);
+                        if (record.getVersion() <= option.getOldVersion()) {
+                            record.setVersion(option.getOldVersion() + 1);
+                            record.setValue(option.getValue());
+                            record.setOutstanding(null);
+                            db.put(record);
+                        }
+                        db.putTransactionRecord(txnRecord);
+                        log.info("Applied delayed option");
+                        break;
+                    case TransactionRecord.STATUS_ABORTED:
+                        break;
+                    default:
+                        txnRecord.addOption(option);
+                        db.weakPutTransactionRecord(txnRecord);
+                }
+            }
             return success;
         }
     }
 
 	public void onDecide(String transaction, boolean commit) {
-		TransactionRecord txnRecord = db.getTransactionRecord(transaction);
-
-        if (commit) {
-            log.debug("Received Commit decision on transaction id: " + transaction);
-            for (Option option : txnRecord.getOptions()) {
-                synchronized (option.getKey().intern()) {
-                    Record record = db.get(option.getKey());
-                    if (record.getVersion() <= option.getOldVersion()) {
-                        record.setVersion(option.getOldVersion() + 1);
-                        record.setValue(option.getValue());
-                        record.setOutstanding(null);
+        synchronized (transaction.intern()) {
+            TransactionRecord txnRecord = db.getTransactionRecord(transaction);
+            if (commit) {
+                log.debug("Received Commit decision on transaction id: " + transaction);
+                for (Option option : txnRecord.getOptions()) {
+                    synchronized (option.getKey().intern()) {
+                        Record record = db.get(option.getKey());
+                        if (record.getVersion() <= option.getOldVersion()) {
+                            record.setVersion(option.getOldVersion() + 1);
+                            record.setValue(option.getValue());
+                            record.setOutstanding(null);
+                            db.put(record);
+                        }
+                    }
+                    log.debug("[COMMIT] Saved option to DB");
+                }
+            } else {
+                log.info("Received Abort on transaction id: " + transaction);
+                for (Option option : txnRecord.getOptions()) {
+                    synchronized (option.getKey().intern()) {
+                        Record record = db.get(option.getKey());
+                        if (transaction.equals(record.getOutstanding())) {
+                            record.setOutstanding(null);
+                        }
                         db.put(record);
                     }
+                    log.debug("[ABORT] Not saving option to DB");
                 }
-                log.debug("[COMMIT] Saved option to DB");
             }
-        } else {
-            log.info("Received Abort on transaction id: " + transaction);
-            for (Option option : txnRecord.getOptions()) {
-                synchronized (option.getKey().intern()) {
-                    Record record = db.get(option.getKey());
-                    if (transaction.equals(record.getOutstanding())) {
-                        record.setOutstanding(null);
-                    }
-                    db.put(record);
-                }
-                log.debug("[ABORT] Not saving option to DB");
-            }
-        }
 
-        if (!txnRecord.isComplete()) {
-            txnRecord.finish(commit);
-            db.putTransactionRecord(txnRecord);
+            if (txnRecord.getStatus() == TransactionRecord.STATUS_UNDECIDED) {
+                txnRecord.finish(commit);
+                db.putTransactionRecord(txnRecord);
+            }
         }
     }
 
@@ -183,14 +222,16 @@ public class StorageNode extends Agent {
         BallotNumber ballotNumber = prepare.getBallotNumber();
         long classicEndVersion = prepare.getClassicEndVersion();
 
-        Record record = db.get(key);
-        BallotNumber existingBallot = record.getBallot();
-        if (existingBallot.compareTo(ballotNumber) > 0) {
-            return false;
-        }
+        synchronized (key.intern()) {
+            Record record = db.get(key);
+            BallotNumber existingBallot = record.getBallot();
+            if (existingBallot.compareTo(ballotNumber) > 0) {
+                return false;
+            }
 
-        record.setClassicEndVersion(classicEndVersion);
-        db.put(record);
+            record.setClassicEndVersion(classicEndVersion);
+            db.put(record);
+        }
         return true;
 	}
 
@@ -226,6 +267,13 @@ public class StorageNode extends Agent {
                 Record record;
                 synchronized (this) {
                     record = db.get(key);
+                    if (record.getClassicEndVersion() < record.getVersion()) {
+                        long classicEndVersion = record.getVersion() + 4;
+                        record.setClassicEndVersion(classicEndVersion);
+                        log.info("Switching to fast Paxos on version: " + classicEndVersion);
+                        db.put(record);
+                    }
+
                     if (record.getOutstanding() != null) {
                         if (!transaction.equals(record.getOutstanding())) {
                             log.warn("Outstanding (classic) option found for: " + key);
@@ -244,7 +292,6 @@ public class StorageNode extends Agent {
                     log.info("Running classic Paxos prepare phase on: " + record.getKey());
                     ballot = new BallotNumber(ballot.getNumber() + 1, leader.getProcessId());
                     record.setBallot(ballot);
-                    record.setClassicEndVersion(record.getVersion() + 4);
                     db.put(record);
 
                     ClassicPaxosVoteListener prepareListener = new ClassicPaxosVoteListener();

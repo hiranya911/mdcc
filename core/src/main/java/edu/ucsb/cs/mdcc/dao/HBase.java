@@ -41,7 +41,7 @@ public class HBase implements Database {
     public static final String BALLOT_NUMBER = "ballotNumber";
     public static final String OUTSTANDING = "outstanding";
 
-    public static final String COMPLETE = "complete";
+    public static final String STATUS = "status";
     public static final String OPTIONS = "options";
 
     private static final String NULL = "NULL";
@@ -106,7 +106,7 @@ public class HBase implements Database {
                 VALUE, VERSION, PREPARED, CLASSIC_END_VERSION,
                 BALLOT_NUMBER, OUTSTANDING
         };
-    	String[] transactionFamilies = { COMPLETE, OPTIONS };
+    	String[] transactionFamilies = { STATUS, OPTIONS };
     	try {
 			createTableIfNotExists(RECORDS_TABLE, recordFamilies);
 	    	createTableIfNotExists(TRANSACTIONS_TABLE, transactionFamilies);
@@ -160,8 +160,8 @@ public class HBase implements Database {
     		
     		HTable table = tables.get(TRANSACTIONS_TABLE);
             Put put = new Put(record.getTransactionId().getBytes());    		
-    		put.add(Bytes.toBytes(COMPLETE), QUALIFIER,
-                    Bytes.toBytes(record.isComplete()));
+    		put.add(Bytes.toBytes(STATUS), QUALIFIER,
+                    Bytes.toBytes(record.getStatus()));
     		put.add(Bytes.toBytes(OPTIONS), QUALIFIER,
     				optionCollectionBytes);
             table.put(put);
@@ -245,9 +245,9 @@ public class HBase implements Database {
 	        }
             for(KeyValue kv : rs.raw()){
                 String familyName = Bytes.toString(kv.getFamily());
-                if (COMPLETE.equals(familyName)){
-                    String columnValue =  Bytes.toString(kv.getValue());
-                    record.finish(Boolean.valueOf(columnValue));
+                if (STATUS.equals(familyName)){
+                    int columnValue = Bytes.toInt(kv.getValue());
+                    record.setStatus(columnValue);
                 } else if(OPTIONS.equals(familyName)){
                     byte[] valueBytes =  kv.getValue();
                     Collection<Option> options = Utils.deserialize(valueBytes);

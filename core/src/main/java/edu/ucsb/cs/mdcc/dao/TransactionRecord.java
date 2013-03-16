@@ -9,8 +9,12 @@ import java.util.TreeSet;
 
 public class TransactionRecord extends Cacheable {
 
+    public static final int STATUS_UNDECIDED = 100;
+    public static final int STATUS_COMMITTED = 101;
+    public static final int STATUS_ABORTED = 102;
+
     private String transactionId;
-    private boolean complete = false;
+    private int status = STATUS_UNDECIDED;
     private boolean dirty;
     private Set<Option> options = new TreeSet<Option>(new Comparator<Option>() {
         public int compare(Option o1, Option o2) {
@@ -34,13 +38,19 @@ public class TransactionRecord extends Cacheable {
         return transactionId;
     }
 
-    public boolean isComplete() {
-        return complete;
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
     }
 
     public void finish(boolean commit) {
-        this.complete = true;
-        if (!commit) {
+        if (commit) {
+            status = STATUS_COMMITTED;
+        } else {
+            status = STATUS_ABORTED;
             options.clear();
         }
     }
